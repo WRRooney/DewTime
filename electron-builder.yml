@@ -4,12 +4,21 @@
 appId: io.dewtime.app
 productName: DewTime
 
+# GitHub Releases publish target. `electron-builder --publish always` (run by the
+# release workflow on each native runner) creates/updates a draft Release for the
+# tag and uploads artifacts plus the latest*.yml / *.blockmap metadata that
+# electron-updater consumes for in-app auto-update.
+publish:
+  provider: github
+  owner: WRRooney
+  repo: DewTime
+
 # Pack the native better-sqlite3 binary exactly as it sits in node_modules.
-# The Docker Wine cross-build has no node-gyp Windows toolchain, so an
-# electron-builder rebuild would silently fall back to the Linux .node and ship
-# a binary Windows cannot load. scripts/build-win.mjs places the correct
-# win32/x64 prebuilt before packaging; this flag stops electron-builder from
-# clobbering it. See .planning/debug/windows-app-silent-crash.md.
+# better-sqlite3 is rebuilt for Electron's ABI by the `postinstall`
+# (electron-rebuild) step during `npm ci`, so electron-builder must NOT run its
+# own rebuild on top — npmRebuild:false makes it pack node_modules as-is, which
+# is both deterministic and correct on the native CI runners (each runner builds
+# its own platform's binary). See .planning/debug/windows-app-silent-crash.md.
 npmRebuild: false
 
 directories:

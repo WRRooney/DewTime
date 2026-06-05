@@ -1,0 +1,71 @@
+# .github/workflows/release.yml
+#
+# Build and publish DewTime release artifacts on a version tag.
+#
+# Trigger: push a tag like `v1.0.0` (must match package.json `version`).
+# Each native runner builds its own platform — NO Docker/Wine cross-build:
+#   - ubuntu-latest  -> AppImage          (+ latest-linux.yml)
+#   - windows-latest -> portable + NSIS   (+ latest.yml, *.blockmap)
+#
+# electron-builder publishes to a GitHub *draft* Release for the tag (provider +
+# owner/repo come from electron-builder.yml). Review the draft on the Releases
+# page, then click Publish. The latest*.yml / *.blockmap metadata enables
+# in-app auto-update later via electron-updater.
+#
+# better-sqlite3 is a native addon: `npm ci` runs the `postinstall`
+# (electron-rebuild) so node_modules holds the correct Electron-ABI binary for
+# the runner's platform; electron-builder packs it as-is (npmRebuild:false).
+
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  # Allow a manual run for dry-runs / re-publishing a tag from the UI.
+  workflow_dispatch:
+
+# Avoid overlapping publishes to the same release.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create the Release and upload assets
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # postinstall (electron-rebuild) MUST run — better-sqlite3 needs to load
+      # against Electron's Node ABI. Do not pass any flag that suppresses npm
+      # lifecycle scripts.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer + main bundles
+        run: npm run build
+
+      - name: Package + publish (Linux)
+        if: runner.os == 'Linux'
+        run: npx electron-builder --linux AppImage --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package + publish (Windows)
+        if: runner.os == 'Windows'
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

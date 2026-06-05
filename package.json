@@ -11,8 +11,6 @@
     "dev": "electron-vite dev",
     "dev:no-sandbox": "electron-vite dev -- --no-sandbox",
     "build": "electron-vite build",
-    "build:win": "docker run --rm -v \"$PWD\":/project -v timerz-electron-cache:/root/.cache/electron -v timerz-ebuilder-cache:/root/.cache/electron-builder -w /project electronuserland/builder:wine bash -c \"npm run build:win:dockerized\"",
-    "build:win:dockerized": "electron-vite build && node scripts/build-win.mjs; rc=$?; chown -R \"$(stat -c %u:%g .)\" dist out node_modules/better-sqlite3 2>/dev/null || true; exit $rc",
     "build:win:native": "electron-vite build && electron-builder --win --publish=never",
     "build:linux": "electron-vite build && electron-builder --linux AppImage --publish=never",
     "test": "npm rebuild better-sqlite3 --build-from-source && vitest run --config vitest.main.config.ts",

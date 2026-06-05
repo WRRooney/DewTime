@@ -42,12 +42,20 @@ npm run dev      # launch the app in development
 
 ## Building
 
-Portable + installer artifacts are written to `dist/`.
+Releases are built and published by CI — push a `vX.Y.Z` tag (matching
+`package.json` version) and the [release workflow](.github/workflows/release.yml)
+builds each platform on its own native runner and uploads a draft GitHub Release
+(Linux AppImage + Windows portable/NSIS, with auto-update metadata).
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+To build locally (artifacts written to `dist/`):
 
 ```bash
 npm run build:linux       # Linux AppImage
-npm run build:win:native  # Windows portable .exe + NSIS installer (on Windows)
-npm run build:win         # Windows cross-build from Linux via Docker (Wine)
+npm run build:win:native  # Windows portable .exe + NSIS installer (run on Windows)
 ```
 
 ## Testing
