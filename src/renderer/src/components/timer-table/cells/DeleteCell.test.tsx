@@ -31,7 +31,7 @@ function makeTimer(overrides: Partial<Timer> = {}): Timer {
     project_id: null,
     description: 'foo',
     notes: '',
-    created_at: 1700000000,
+    created_at: 1700000000 as Timer['created_at'],
     offset: null,
     totalSeconds: 0,
     running: false,

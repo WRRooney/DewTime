@@ -23,6 +23,7 @@
 //   - 01-03-PLAN.md Task 2 (Phase 1 = primitives only)
 //   - 02-01-PLAN.md (Phase 2 fills stop + stopActive)
 
+import type Database from 'better-sqlite3'
 import { getDb } from '../database'
 import { NotFoundError, ValidationError } from '@shared/errors'
 import { nowSeconds } from '@shared/time'
@@ -30,14 +31,14 @@ import type { EpochSeconds } from '@shared/time'
 import type { TimeEntry } from '@shared/ipc'
 
 let stmts: {
-  insert: ReturnType<ReturnType<typeof getDb>['prepare']>
-  byId: ReturnType<ReturnType<typeof getDb>['prepare']>
-  listByTimer: ReturnType<ReturnType<typeof getDb>['prepare']>
-  running: ReturnType<ReturnType<typeof getDb>['prepare']>
-  stopRunning: ReturnType<ReturnType<typeof getDb>['prepare']>
+  insert: Database.Statement<unknown[]>
+  byId: Database.Statement<unknown[]>
+  listByTimer: Database.Statement<unknown[]>
+  running: Database.Statement<unknown[]>
+  stopRunning: Database.Statement<unknown[]>
   // Phase 5 D-09: service-bypass timestamp setters (pure writes, no FSM transition)
-  setStart: ReturnType<ReturnType<typeof getDb>['prepare']>
-  setEnd: ReturnType<ReturnType<typeof getDb>['prepare']>
+  setStart: Database.Statement<unknown[]>
+  setEnd: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {

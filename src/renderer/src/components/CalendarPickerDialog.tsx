@@ -95,7 +95,9 @@ export function CalendarPickerDialog(): JSX.Element | null {
           }
         }}
         weekStartsOn={weekStart === 6 ? 0 : 1} // D-10 mapping: app 0=Mon→rdp 1, app 6=Sun→rdp 0
-        className={styles.picker}
+        // `?? ''` because noUncheckedIndexedAccess types CSS-module access as
+        // string|undefined, and DayPicker's className is strictly `string`.
+        className={styles.picker ?? ''}
       />
     </div>
   )

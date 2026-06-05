@@ -35,12 +35,11 @@ import { EventEmitter } from 'node:events'
 const mocks = vi.hoisted(() => ({
   screenMock: {
     getAllDisplays: vi.fn<
-      [],
-      Array<{ workArea: { x: number; y: number; width: number; height: number } }>
+      () => Array<{ workArea: { x: number; y: number; width: number; height: number } }>
     >(),
   },
-  settingsGet: vi.fn<[string], unknown>(),
-  settingsSet: vi.fn<[string, unknown], void>(),
+  settingsGet: vi.fn<(key: string) => unknown>(),
+  settingsSet: vi.fn<(key: string, value: unknown) => void>(),
 }))
 
 vi.mock('electron', () => ({

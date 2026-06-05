@@ -78,7 +78,7 @@ describe('main entry — createWindow webPreferences (T-01-01)', () => {
     createWindow()
 
     expect(BrowserWindow).toHaveBeenCalledTimes(1)
-    const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as {
+    const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as {
       webPreferences: Record<string, unknown>
     }
     expect(opts).toBeDefined()
@@ -191,7 +191,7 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
     createWindow({ bounds: { width: 800, height: 600 } })
 
     expect(BrowserWindow).toHaveBeenCalledTimes(1)
-    const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Record<
+    const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
       string,
       unknown
     >
@@ -213,7 +213,7 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()
-      const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Record<
+      const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
         string,
         unknown
       >
@@ -231,7 +231,7 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()
-      const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Record<
+      const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
         string,
         unknown
       >
@@ -247,7 +247,7 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()
-      const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Record<
+      const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
         string,
         unknown
       >
@@ -262,7 +262,7 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
 
     createWindow()
 
-    const opts = (BrowserWindow as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Record<
+    const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
       string,
       unknown
     >

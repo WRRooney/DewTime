@@ -22,6 +22,7 @@
 
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import type { Timer } from '@shared/ipc'
+import type { EpochSeconds } from '@shared/time'
 
 /**
  * Fetches timers whose created_at falls in the half-open epoch range
@@ -32,7 +33,13 @@ import type { Timer } from '@shared/ipc'
 export function useDayTimers(fromEpoch: number, toEpoch: number) {
   return useQuery<Timer[]>({
     queryKey: ['timers', { from: fromEpoch, to: toEpoch }],
-    queryFn: () => window.api.timers.list({ fromEpoch, toEpoch }),
+    // Brand at the IPC boundary (sanctioned `as EpochSeconds` read-boundary cast,
+    // see @shared/time) — callers pass plain epoch-second numbers.
+    queryFn: () =>
+      window.api.timers.list({
+        fromEpoch: fromEpoch as EpochSeconds,
+        toEpoch: toEpoch as EpochSeconds,
+      }),
     staleTime: 100, // D-12 — same rationale as useTimers
     // On a date change the key changes; keepPreviousData holds the prior result
     // (instead of undefined) until the new fetch resolves, so `data` never flips
@@ -50,7 +57,13 @@ export function useDayTimers(fromEpoch: number, toEpoch: number) {
 export function useWeekTimers(fromEpoch: number, toEpoch: number) {
   return useQuery<Timer[]>({
     queryKey: ['timers', { from: fromEpoch, to: toEpoch }],
-    queryFn: () => window.api.timers.list({ fromEpoch, toEpoch }),
+    // Brand at the IPC boundary (sanctioned `as EpochSeconds` read-boundary cast,
+    // see @shared/time) — callers pass plain epoch-second numbers.
+    queryFn: () =>
+      window.api.timers.list({
+        fromEpoch: fromEpoch as EpochSeconds,
+        toEpoch: toEpoch as EpochSeconds,
+      }),
     staleTime: 100, // D-12 — same rationale as useTimers
     placeholderData: keepPreviousData, // hold prior data across date-key changes (see useDayTimers)
   })

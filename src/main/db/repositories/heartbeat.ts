@@ -10,12 +10,13 @@
 //     intentionally NOT a FK — avoids cascade complexity)
 //   - 01-03-PLAN.md Task 2 (Phase 1 = primitives; scheduler wires in Phase 2)
 
+import type Database from 'better-sqlite3'
 import { getDb } from '../database'
 import type { EpochSeconds } from '@shared/time'
 
 let stmts: {
-  upsert: ReturnType<ReturnType<typeof getDb>['prepare']>
-  read: ReturnType<ReturnType<typeof getDb>['prepare']>
+  upsert: Database.Statement<unknown[]>
+  read: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {

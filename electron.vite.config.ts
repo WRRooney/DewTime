@@ -15,6 +15,12 @@ export default defineConfig({
       },
     },
     build: {
+      // electron-vite@5's MainBuildOptions extends vite's BuildEnvironmentOptions,
+      // which only exists in vite@6+. On vite@5 that import resolves to `any` and
+      // `rollupOptions` is dropped from the type, so this valid (runtime-honored)
+      // option trips an excess-property check. Remove this directive once vite is
+      // on ^6 — @ts-expect-error will then fail, flagging it for cleanup.
+      // @ts-expect-error see comment above (electron-vite@5 / vite@5 type drift)
       rollupOptions: {
         // CRITICAL: better-sqlite3 is a native .node addon; must NOT be bundled.
         // externalizeDepsPlugin() above auto-externalizes dependencies (NOT
@@ -43,6 +49,8 @@ export default defineConfig({
       },
     },
     build: {
+      // See main.build above — same electron-vite@5 / vite@5 type drift.
+      // @ts-expect-error remove once vite is on ^6 (BuildEnvironmentOptions)
       rollupOptions: {
         // Sandboxed preload scripts can ONLY use CommonJS — Electron docs:
         // https://www.electronjs.org/docs/latest/tutorial/sandbox#preload

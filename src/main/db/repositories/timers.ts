@@ -41,6 +41,7 @@
 //   - 001_initial.sql (ON DELETE CASCADE on time_entries.timer_id)
 //   - 01-03-PLAN.md Task 2 (Phase 1 = primitives only)
 
+import type Database from 'better-sqlite3'
 import { getDb } from '../database'
 import { NotFoundError } from '@shared/errors'
 import { nowSeconds } from '@shared/time'
@@ -48,15 +49,15 @@ import type { EpochSeconds } from '@shared/time'
 import type { Timer } from '@shared/ipc'
 
 let stmts: {
-  insert: ReturnType<ReturnType<typeof getDb>['prepare']>
-  byId: ReturnType<ReturnType<typeof getDb>['prepare']>
-  listWithTotals: ReturnType<ReturnType<typeof getDb>['prepare']>
-  filteredList: ReturnType<ReturnType<typeof getDb>['prepare']>
-  setDescription: ReturnType<ReturnType<typeof getDb>['prepare']>
-  del: ReturnType<ReturnType<typeof getDb>['prepare']>
-  setProject: ReturnType<ReturnType<typeof getDb>['prepare']>
-  setOffset: ReturnType<ReturnType<typeof getDb>['prepare']>
-  setNotes: ReturnType<ReturnType<typeof getDb>['prepare']>
+  insert: Database.Statement<unknown[]>
+  byId: Database.Statement<unknown[]>
+  listWithTotals: Database.Statement<unknown[]>
+  filteredList: Database.Statement<unknown[]>
+  setDescription: Database.Statement<unknown[]>
+  del: Database.Statement<unknown[]>
+  setProject: Database.Statement<unknown[]>
+  setOffset: Database.Statement<unknown[]>
+  setNotes: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {

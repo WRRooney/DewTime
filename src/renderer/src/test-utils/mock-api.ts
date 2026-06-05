@@ -28,9 +28,14 @@ import type { ElectronApi } from '@shared/ipc'
 // DeepPartial type helper — allows callers to override any subset of the API
 // shape without having to supply every method on every namespace.
 // ---------------------------------------------------------------------------
-type DeepPartial<T> = T extends object
-  ? { [P in keyof T]?: DeepPartial<T[P]> }
-  : T
+// Functions are objects, so guard them FIRST — otherwise DeepPartial recurses
+// into a method's own keys (apply/call/bind…) and collapses the call signature
+// to `{}`, which then fails to assign back to the namespace API types.
+type DeepPartial<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends object
+    ? { [P in keyof T]?: DeepPartial<T[P]> }
+    : T
 
 // ---------------------------------------------------------------------------
 // Builder

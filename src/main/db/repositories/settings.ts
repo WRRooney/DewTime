@@ -16,14 +16,15 @@
 //     widget_mode, auto_launch — all JSON-encoded)
 //   - timerz/services/settings_service.py (v1 SettingsService DEFAULTS dict)
 
+import type Database from 'better-sqlite3'
 import { getDb } from '../database'
 import { NotFoundError } from '@shared/errors'
 import type { SettingKey, SettingValue } from '@shared/ipc'
 
 let stmts: {
-  get: ReturnType<ReturnType<typeof getDb>['prepare']>
-  upsert: ReturnType<ReturnType<typeof getDb>['prepare']>
-  list: ReturnType<ReturnType<typeof getDb>['prepare']>
+  get: Database.Statement<unknown[]>
+  upsert: Database.Statement<unknown[]>
+  list: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {

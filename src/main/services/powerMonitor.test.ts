@@ -231,7 +231,7 @@ describe('powerMonitor — resume listener restarts heartbeat (CRASH-02)', () =>
     // Call-order assertion: checkResume's invocationCallOrder index MUST be
     // less than emitNow's — i.e., checkResume ran first.
     expect(checkResumeSpy.mock.invocationCallOrder[0]).toBeLessThan(
-      emitNow.mock.invocationCallOrder[0],
+      emitNow.mock.invocationCallOrder[0]!,
     )
   })
 })

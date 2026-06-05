@@ -8,6 +8,7 @@
 //     lazy `getStmts()` avoids the import-order constraint)
 //   - timerz/db/models.py (v1 Project: id, project_number nullable, project_name)
 
+import type Database from 'better-sqlite3'
 import { getDb } from '../database'
 import { NotFoundError } from '@shared/errors'
 import type { Project } from '@shared/ipc'
@@ -16,10 +17,10 @@ import type { Project } from '@shared/ipc'
 // `resetStmtCache()` between cases (after `closeDb()`) so a fresh DB
 // connection gets fresh prepared statements.
 let stmts: {
-  insert: ReturnType<ReturnType<typeof getDb>['prepare']>
-  byId: ReturnType<ReturnType<typeof getDb>['prepare']>
-  list: ReturnType<ReturnType<typeof getDb>['prepare']>
-  updateNumber: ReturnType<ReturnType<typeof getDb>['prepare']>
+  insert: Database.Statement<unknown[]>
+  byId: Database.Statement<unknown[]>
+  list: Database.Statement<unknown[]>
+  updateNumber: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {

@@ -19,5 +19,5 @@
     },
     "types": ["vite/client"]
   },
-  "include": ["src/renderer/**/*", "src/shared/**/*"]
+  "include": ["src/renderer/**/*", "src/shared/**/*", "vitest.setup.renderer.ts"]
 }
