@@ -1,0 +1,94 @@
+/*
+ * src/renderer/src/components/CalendarPickerDialog.module.css
+ * Native <dialog> surface for the rdp calendar picker modal.
+ * Dialog surface (.dialog, .footer, .btn) copied from ConfirmDialog.module.css.
+ * rdp dark-theme overrides via --rdp-* CSS variable overrides on .picker
+ * and :global(.rdp-*) selectors (required — rdp class names are NOT module-scoped).
+ *
+ * A-01: ALL color values are var(--*) references — zero hex/HSL/rgb literals.
+ *        Exceptions: layout constraints (280px, 420px, 80vh, 32px) and the
+ *        --rdp-cell-size: 36px rdp variable (06-UI-SPEC.md § Spacing exception).
+ * A-02: zero force-override directives in this file.
+ * A-21: rdp base stylesheet lives in the .tsx component file, not here
+ *        (preserves global scope — RESEARCH Pitfall 5).
+ *
+ * Refs:
+ *   - 06-05-PLAN.md Task 2
+ *   - 06-PATTERNS.md § CalendarPickerDialog.module.css
+ *   - 06-UI-SPEC.md § Calendar picker dialog — dialog surface + CSS overrides
+ */
+
+/* ── Popover surface ─────────────────────────────────────────────────────── */
+/* Anchored below the date control (top/left set inline from the trigger rect).
+   position: fixed → the getBoundingClientRect viewport coords map directly. */
+
+.popover {
+  position: fixed;
+  z-index: 50;
+  width: 280px; /* 7 cells × ~36px + padding — tight around the calendar grid */
+  max-height: min(80vh, 420px);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  overflow: auto;
+  box-shadow: var(--shadow-calendar); /* Phase 6 token — more lift than --shadow-dropdown */
+}
+
+/* ── rdp CSS variable overrides + dark-theme selectors ──────────────────── */
+
+/* Override rdp default theme with project tokens.
+ * --rdp-cell-size: 36px is the only non-token literal permitted here
+ * (rdp CSS variable; documented as a project-level exception in 06-UI-SPEC.md). */
+.picker {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: var(--color-accent);
+  --rdp-accent-color-dark: var(--color-accent-hover);
+  --rdp-background-color: var(--color-bg-hover);
+  --rdp-background-color-dark: var(--color-bg-hover);
+  --rdp-selected-color: var(--color-accent-fg);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  font-family: var(--font-stack);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+/* :global() wrappers required — rdp class names are not module-scoped (RESEARCH Pitfall 5).
+ * All color values are var(--*) references — no hex/HSL literals (A-01). */
+.picker :global(.rdp-day) {
+  color: var(--color-fg);
+}
+
+.picker :global(.rdp-day_outside) {
+  color: var(--color-fg-muted);
+  opacity: 0.4;
+}
+
+.picker :global(.rdp-day_today:not(.rdp-day_selected)) {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+}
+
+.picker :global(.rdp-head_cell) {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg-muted);
+}
+
+.picker :global(.rdp-caption_label) {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+}
+
+.picker :global(.rdp-nav_button) {
+  color: var(--color-fg);
+}
+
+.picker :global(.rdp-nav_button:hover) {
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,188 @@
+/*
+ * src/renderer/src/styles/tokens.css
+ * Dark-only Phase 3 theme tokens — declared on :root so the future light-theme
+ * override (SET-FUT-03 — deferred) can drop in as a sibling theme selector
+ * without renaming a single token. Every literal HSL/px value in the renderer
+ * surface MUST live here; component CSS modules read via `var(--*)` only
+ * (UI-SPEC A-01).
+ *
+ * Refs:
+ *   - 03-UI-SPEC.md § Color / § Spacing Scale / § Typography / § Radii
+ *   - 03-CONTEXT.md D-22 (vanilla CSS Modules), D-23 (tokens on :root), D-25 (file layout)
+ *   - 03-RESEARCH.md § Code Examples — CSS Modules with :root tokens
+ *
+ * BINDING — the literal `hsl(220 13% 11%)` for --color-bg MUST equal the hex
+ * `#181b21` used by BrowserWindow.backgroundColor in src/main/index.ts (UI-SPEC
+ * § Hex equivalents — eliminates the white flash on window restore).
+ */
+:root {
+  /* Surface layers (60% + 30%) */
+  --color-bg: hsl(220 13% 11%);
+  --color-bg-elevated: hsl(220 13% 16%);
+  --color-bg-hover: hsl(220 13% 20%);
+
+  /* Foreground (text + icon stroke) */
+  --color-fg: hsl(220 14% 92%);
+  --color-fg-muted: hsl(220 10% 65%);
+
+  /* Border + structural lines */
+  --color-border: hsl(220 10% 24%);
+
+  /* Accent (10%) — reserved use only (UI-SPEC § Color § Accent reserved for) */
+  --color-accent: hsl(192 80% 45%);
+  --color-accent-hover: hsl(192 80% 38%);
+  --color-accent-fg: hsl(0 0% 100%);
+
+  /* Destructive — close-button hover affordance only in Phase 3 */
+  --color-danger: hsl(0 65% 50%);
+  --color-danger-fg: hsl(0 0% 100%);
+
+  /* Overlay — native <dialog>::backdrop */
+  --color-overlay: hsl(220 13% 5% / 0.6);
+
+  /* Spacing scale — base unit 4px (UI-SPEC § Spacing Scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Radii (UI-SPEC § Radii + shadows) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  /* Typography — system stack, no web fonts (D-26 zero new deps) */
+  --font-stack:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-stack-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, 'Courier New',
+    monospace;
+
+  /* Font sizes (UI-SPEC § Typography § Scale) */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+
+  /* Font weights — two only */
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+
+  /* Line heights */
+  --line-height-tight: 1.3;
+  --line-height-default: 1.4;
+  --line-height-body: 1.5;
+}
+
+/* Phase 4 additions per UI-SPEC § Color new-tokens block.
+ * Appended below the existing :root { ... } block — do NOT redefine any
+ * existing Phase 3 token (A-15 grep gate).
+ * Refs: 04-UI-SPEC.md § Color / CONTEXT D-29 */
+:root {
+  /* Row interaction states (new for Phase 4) */
+  --color-row-hover:    hsl(220 13% 14%);   /* subtle wash on row hover — between bg and bg-elevated */
+  --color-row-selected: hsl(220 13% 18%);   /* persistent selection (reserved; Phase 4 has no multi-select) */
+
+  /* Status semantics (new for Phase 4) */
+  --color-success:      hsl(142 60% 45%);   /* ▶ start-icon stroke; "ready to run" affordance */
+
+  /* Destructive hover (new for Phase 4) */
+  --color-danger-hover: hsl(0 65% 42%);     /* darken danger by ~8% for ConfirmDialog Delete :hover (A-01 clean) */
+}
+
+/* Phase 5 additions per 05-UI-SPEC.md § New token summary.
+ * Appended below the Phase 4 block — do NOT redefine any existing token (A-15).
+ * Refs: 05-UI-SPEC.md § Color / 05-CONTEXT.md D-01 */
+:root {
+  /* Dropdown surface — cmdk combobox list floats above the table row */
+  --color-dropdown-bg:          hsl(220 13% 13%);  /* between --color-bg and --color-bg-elevated; sits above the row without full dialog elevation */
+  --color-dropdown-item-hover:  hsl(220 13% 18%);  /* item hover — matches --color-row-selected for visual consistency */
+
+  /* Popup form field surface — datetime-local inputs + offset input inside the dialog */
+  --color-input-bg:             hsl(220 13% 14%);  /* slightly elevated above dialog bg; gives inputs depth without a loud border */
+
+  /* Dropdown shadow (optional but encouraged for A-01 cleanliness) */
+  --shadow-dropdown:            0 4px 12px hsl(0 0% 0% / 0.4);
+}
+
+/* Phase 6 additions per 06-UI-SPEC.md § New token summary.
+ * Appended below the Phase 5 block — do NOT redefine any existing token (A-15).
+ * Refs: 06-UI-SPEC.md § Color */
+:root {
+  /* Calendar popup shadow — positional popup needs more lift than inline dropdowns */
+  --shadow-calendar: 0 8px 24px hsl(0 0% 0% / 0.5);
+}
+
+/* Ignition-parity redesign additions.
+ * Re-skins the table + header to echo the v0 Ignition Perspective screens:
+ * pill Start/Stop buttons, accent week-total chip, zebra rows, prominent
+ * monospace durations. Appended below — no existing token redefined (A-15).
+ */
+:root {
+  /* Larger display size for the "Timers" screen title (Ignition 18px header) */
+  --font-size-xl: 20px;
+
+  /* Zebra striping — faint accent wash on alternate rows (Ignition rgba(45,151,229,0.05)) */
+  --color-row-zebra: hsl(192 80% 45% / 0.06);
+
+  /* Success hover — darken --color-success ~7% for the START pill :hover */
+  --color-success-hover: hsl(142 60% 38%);
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────
+ * Applied by useThemeStore as <html data-theme="light">. Overrides ONLY the
+ * color tokens (spacing / radii / typography are theme-agnostic). Every dark
+ * token above has a light counterpart here so var(--*) lookups resolve without
+ * gaps when the attribute flips. Note: BrowserWindow.backgroundColor in main is
+ * the dark hex, so a cold start in light theme shows a brief dark flash — a
+ * deferred polish item, not a correctness issue.
+ */
+:root[data-theme='light'] {
+  /* Surfaces */
+  --color-bg: hsl(220 24% 97%);
+  --color-bg-elevated: hsl(0 0% 100%);
+  --color-bg-hover: hsl(220 16% 91%);
+
+  /* Foreground */
+  --color-fg: hsl(220 28% 16%);
+  --color-fg-muted: hsl(220 10% 42%);
+
+  /* Border */
+  --color-border: hsl(220 14% 82%);
+
+  /* Accent — slightly deeper than dark-theme accent for contrast on light */
+  --color-accent: hsl(192 80% 38%);
+  --color-accent-hover: hsl(192 80% 31%);
+  --color-accent-fg: hsl(0 0% 100%);
+
+  /* Destructive */
+  --color-danger: hsl(0 68% 48%);
+  --color-danger-fg: hsl(0 0% 100%);
+
+  /* Overlay */
+  --color-overlay: hsl(220 13% 30% / 0.35);
+
+  /* Row interaction states */
+  --color-row-hover: hsl(220 18% 94%);
+  --color-row-selected: hsl(220 18% 90%);
+
+  /* Status */
+  --color-success: hsl(142 55% 36%);
+  --color-success-hover: hsl(142 55% 30%);
+
+  /* Destructive hover */
+  --color-danger-hover: hsl(0 68% 42%);
+
+  /* Dropdown + input surfaces */
+  --color-dropdown-bg: hsl(0 0% 100%);
+  --color-dropdown-item-hover: hsl(220 16% 92%);
+  --color-input-bg: hsl(220 24% 96%);
+
+  /* Shadows — lighter ambient shadow on a light surface */
+  --shadow-dropdown: 0 4px 12px hsl(220 20% 30% / 0.18);
+  --shadow-calendar: 0 8px 24px hsl(220 20% 30% / 0.22);
+
+  /* Zebra — accent tint reads a touch stronger on a light row */
+  --color-row-zebra: hsl(192 80% 42% / 0.08);
+}

@@ -1,0 +1,130 @@
+# .github/workflows/ci.yml
+#
+# Plan 01-05 / PKG-04 + TEST-01 — Ubuntu + Windows matrix CI.
+#
+# Refs:
+#   - RESEARCH.md §10 lines ~1383-1448 (Minimal workflow + cache key)
+#   - RESEARCH.md §6 lines ~1029-1057 (postinstall lifecycle must run; do not
+#     suppress npm scripts on install — better-sqlite3 needs electron-rebuild)
+#   - RESEARCH.md §9 Option C lines ~1370-1376 (two-rebuild dance:
+#       npm rebuild for vitest, electron-rebuild for smoke)
+#
+# Rationale: discovering Electron ABI / asar drift in Phase 7 with five phases
+# of feature code on top is the trap CONTEXT.md tries to avoid. Shipping CI
+# now means any subsequent phase gets immediate ABI / asar feedback on push.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Cache Electron + electron-gyp headers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~/.electron
+            ~/.electron-gyp
+          # Without package-lock.json the key falls back to the OS — acceptable
+          # for the first runs. After `npm install` is committed the lock file
+          # will tighten the key.
+          key: ${{ runner.os }}-electron-${{ hashFiles('package-lock.json') }}
+
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 xvfb
+
+      - name: Install dependencies
+        # NOTE: postinstall (electron-rebuild) MUST run here — required for
+        # better-sqlite3 to load against Electron's Node ABI (RESEARCH.md §6).
+        # Do not pass any flag that suppresses npm lifecycle scripts.
+        run: npm ci
+
+      # ------------------------------------------------------------------
+      # System-Node phase: type checks + vitest.
+      # vitest uses the host Node ABI, so rebuild better-sqlite3 against it
+      # before running tests (RESEARCH.md §9 Option C).
+      # ------------------------------------------------------------------
+      - name: Rebuild better-sqlite3 for system Node (for vitest)
+        run: npm rebuild better-sqlite3 --build-from-source
+
+      - name: Type check (main + preload + shared)
+        run: npx tsc --noEmit -p tsconfig.node.json
+
+      - name: Type check (renderer)
+        run: npx tsc --noEmit -p tsconfig.web.json
+
+      - name: Vitest (main-process unit tests)
+        run: npx vitest run --config vitest.main.config.ts
+
+      # ------------------------------------------------------------------
+      # Electron-Node phase: restore better-sqlite3 ABI to Electron's Node,
+      # then run the packaged-binary smoke (build + package + spawn binary).
+      # ------------------------------------------------------------------
+      - name: Restore better-sqlite3 for Electron ABI
+        run: npx electron-rebuild -f -w better-sqlite3
+
+      - name: Packaged-binary smoke test (Linux)
+        if: runner.os == 'Linux'
+        # scripts/smoke-packaged.ts prefixes xvfb-run --auto-servernum
+        # internally when CI === 'true' AND platform is linux.
+        run: npx tsx scripts/smoke-packaged.ts
+        env:
+          CI: 'true'
+
+      - name: Packaged-binary smoke test (Windows)
+        if: runner.os == 'Windows'
+        run: npx tsx scripts/smoke-packaged.ts
+        env:
+          CI: 'true'
+
+      - name: Build app for E2E (electron-vite build)
+        if: runner.os == 'Linux'
+        run: npx electron-vite build
+
+      - name: E2E tests (Linux, xvfb-run)
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" \
+            npx playwright test --config playwright.config.ts
+        env:
+          CI: 'true'
+          TIMERZ_NO_SANDBOX: '1'
+
+      - name: Upload AppImage artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DewTime-linux-AppImage
+          path: dist/*.AppImage
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload Windows artifacts (portable + NSIS installer)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DewTime-windows
+          path: dist/*.exe
+          retention-days: 14
+          if-no-files-found: warn

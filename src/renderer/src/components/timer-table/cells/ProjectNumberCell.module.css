@@ -1,0 +1,70 @@
+/*
+ * src/renderer/src/components/timer-table/cells/ProjectNumberCell.module.css
+ *
+ * A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
+ * A-02: forced-value overrides (!) are forbidden.
+ * A-14: no contenteditable — cell uses <input> swap-to-input pattern.
+ *
+ * Mirrors DescriptionCell.module.css exactly, adding .emptyNoProject
+ * for the no-project-assigned state (cursor:default, non-editable).
+ *
+ * Refs:
+ *   - 05-UI-SPEC.md § ProjectNumberCell (token/sizing spec)
+ *   - 05-PATTERNS.md § ProjectNumberCell.module.css
+ */
+
+/* Flex wrapper holding the editable number + the copy button. */
+.cellWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+}
+
+/* Rest state: the clickable text span fills the remaining width (click = edit). */
+.text {
+  flex: 1 1 auto;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+  color: var(--color-fg);
+  line-height: var(--line-height-body);
+}
+
+/* Muted placeholder when project is assigned but project_number is null */
+.placeholder {
+  color: var(--color-fg-muted);
+  cursor: text;
+}
+
+/* No-project state: a non-editable muted dash. Clicking does nothing. */
+.emptyNoProject {
+  color: var(--color-fg-muted);
+  cursor: default;
+  display: block;
+}
+
+/* Edit state: controlled <input> filling the cell.
+ * The accent border replaces the outline — one permitted exception per UI-SPEC
+ * (A-01 exception documented: border acts as the focus indicator). */
+.input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  outline: none;
+  font: inherit;
+}
+
+/* Focus-visible accent outline on the input for keyboard nav */
+.input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

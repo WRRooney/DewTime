@@ -1,0 +1,126 @@
+/*
+ * src/renderer/src/components/SettingsDialog.module.css
+ * Native <dialog> surface + ::backdrop overlay + form regions + button
+ * variants. Every color/space/radius/font value reads from a :root token in
+ * tokens.css (UI-SPEC A-01). Zero animation (A-10) — the <dialog> appears
+ * instantly on showModal() and disappears instantly on close().
+ *
+ * Refs:
+ *   - 03-UI-SPEC.md § Settings dialog (verbatim values)
+ *   - Anti-patterns A-01 (no color literals), A-02 (no cascade-escape),
+ *     A-10 (no animation)
+ */
+
+.dialog {
+  width: min(360px, 100% - 32px);
+  max-height: min(80vh, 480px);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+}
+
+.header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+.body {
+  padding: var(--space-4);
+}
+
+.fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.legend {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg);
+  padding: 0;
+  margin: 0 0 var(--space-3) 0;
+}
+
+.radioRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  cursor: default;
+}
+
+.radioRow:not(:last-child) {
+  margin-bottom: var(--space-3);
+}
+
+.radioRow input[type='radio'] {
+  accent-color: var(--color-accent);
+  cursor: default;
+  width: 16px;
+  height: 16px;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  margin: var(--space-3) 0 0 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-4);
+  /* margin-top pushes the button row below the form body's bottom padding;
+     the negative space + border-top reads as the visual divider. */
+}
+
+.btn {
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  min-width: 64px;
+  cursor: default;
+}
+
+.btn:hover {
+  background: var(--color-bg-hover);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btnPrimary {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.btnPrimary:hover {
+  background: var(--color-accent-hover);
+}

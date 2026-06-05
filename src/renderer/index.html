@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP: defense in depth. Primary defense for T-01-01/T-01-02 is
+      sandbox:true + contextIsolation:true + nodeIntegration:false (plan 04).
+      'unsafe-inline' permitted for style only (Vite/React HMR injects style tags
+      in dev; production keeps the inline style allowance for parity).
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>DewTime</title>
+  </head>
+  <!--
+    body background: hex equivalent of --color-bg (hsl(220 13% 11%)) — see
+    src/renderer/src/styles/tokens.css. This inline style applies BEFORE
+    globals.css resolves; pairs with BrowserWindow.backgroundColor '#181b21'
+    in src/main/index.ts to eliminate the white first-paint flash on window
+    restore (03-UI-SPEC.md § Window restore visual moment). CSP allows
+    inline style via 'unsafe-inline' in the meta directive above.
+  -->
+  <body style="background:#181b21">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

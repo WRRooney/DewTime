@@ -1,0 +1,55 @@
+# electron-builder.yml
+# Source: RESEARCH.md §7 (electron-builder Minimum Config — PKG-04)
+# Refs: electron.build/configuration, electron.build/contents (asarUnpack)
+appId: io.dewtime.app
+productName: DewTime
+
+# Pack the native better-sqlite3 binary exactly as it sits in node_modules.
+# The Docker Wine cross-build has no node-gyp Windows toolchain, so an
+# electron-builder rebuild would silently fall back to the Linux .node and ship
+# a binary Windows cannot load. scripts/build-win.mjs places the correct
+# win32/x64 prebuilt before packaging; this flag stops electron-builder from
+# clobbering it. See .planning/debug/windows-app-silent-crash.md.
+npmRebuild: false
+
+directories:
+  output: dist
+  buildResources: build
+files:
+  - "out/**"
+  - "package.json"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md,test,tests}"
+
+# CRITICAL: native .node binaries must be outside asar so the OS loader can mmap them.
+# D-20 defensive double-glob: `**/*.node` catches any native module, and
+# `**/better-sqlite3/**` catches the entire better-sqlite3 package (including
+# build/Release/better_sqlite3.node + sibling JS shim files it loads via relative path).
+asarUnpack:
+  - "**/*.node"
+  - "**/better-sqlite3/**"
+
+# Ship the app icon into the packaged app's resources/ dir so the main process
+# can set BrowserWindow.icon at runtime via process.resourcesPath/icon.png
+# (Linux window/taskbar). buildResources (build/) is build-time only and is not
+# copied into the app, hence this explicit extraResources entry.
+extraResources:
+  - from: build/icon.png
+    to: icon.png
+
+win:
+  # PKG-03 + owner request (2026-06-04): ship both a portable single-exe and an NSIS installer.
+  target:
+    - portable
+    - nsis
+  icon: build/icon.ico
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+linux:
+  target: AppImage
+  category: Utility
+  icon: build/icon.png

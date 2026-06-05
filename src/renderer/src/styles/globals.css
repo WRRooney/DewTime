@@ -1,0 +1,32 @@
+/*
+ * src/renderer/src/styles/globals.css
+ * Global resets reading from :root tokens. Imported once at the top of
+ * src/renderer/src/main.tsx so styles load before React mount — the pairing
+ * with BrowserWindow.backgroundColor '#181b21' eliminates the white flash
+ * between OS-window allocation and renderer first paint (UI-SPEC § Window
+ * restore visual moment).
+ *
+ * Refs:
+ *   - 03-UI-SPEC.md § Layout under the title bar (body global layout block)
+ *   - 03-RESEARCH.md § Code Examples — globals.css
+ */
+@import './tokens.css';
+
+html,
+body,
+#root {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-stack);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}

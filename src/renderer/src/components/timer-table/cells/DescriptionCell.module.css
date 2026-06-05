@@ -1,0 +1,55 @@
+/*
+ * src/renderer/src/components/timer-table/cells/DescriptionCell.module.css
+ *
+ * A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
+ * A-02: forced-value overrides are forbidden in Phase 4 CSS modules.
+ *
+ * Refs:
+ *   - 04-UI-SPEC.md § DescriptionCell (token/sizing spec)
+ *   - 04-RESEARCH.md § Pattern 5 (canonical DescriptionCell template)
+ */
+
+/* Rest state: the clickable text span fills the cell so the entire <td> is a click target. */
+/* Flex wrapper: copy button (left) + right-aligned description text. */
+.cellWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+}
+
+.text {
+  flex: 1 1 auto;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+  color: var(--color-fg);
+  line-height: 44px; /* vertically center within the taller Ignition-parity row */
+  text-align: right; /* Ignition right-aligns the description toward the duration column */
+}
+
+/* Muted placeholder when timer.description === "" */
+.placeholder {
+  color: var(--color-fg-muted);
+  cursor: text;
+}
+
+/* Edit state: controlled <input> filling the cell.
+ * border acts as the focus indicator — outline: none is acceptable ONLY here
+ * because the accent border replaces it (one permitted exception per UI-SPEC). */
+.input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  outline: none;
+  font: inherit;
+  text-align: right; /* match the right-aligned rest state (Ignition) */
+}

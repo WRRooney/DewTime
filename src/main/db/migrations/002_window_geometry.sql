@@ -1,0 +1,22 @@
+-- src/main/db/migrations/002_window_geometry.sql
+-- Phase 3 migration: seed the composite `settings.window_geometry` row.
+-- Replaces the never-seeded legacy `window.x|y|width|height` stubs that
+-- Phase 1's 001_initial.sql intentionally did NOT create — see CONTEXT
+-- D-09 for the composite JSON shape decision (single key, JSON value,
+-- nullable x/y as "center on first launch" sentinel).
+--
+-- Why INSERT OR IGNORE (not INSERT OR REPLACE):
+--   Plan 03-02's window-geometry writer persists real bounds back to this
+--   row at runtime. If a user upgrades to a build where this migration
+--   has not yet run (impossible by design, but defensive), and then the
+--   migration runs over a row written by the live writer, OR IGNORE
+--   preserves the user's saved bounds. OR REPLACE would clobber them.
+--   See RESEARCH § Pitfall 9 + Plan 03-01 Task 1 <behavior>.
+--
+-- Refs:
+--   - 03-CONTEXT.md D-09 (composite JSON key; nullable x/y sentinel)
+--   - 03-RESEARCH.md § Pattern 9 (literal SQL shape)
+--   - 03-01-PLAN.md Task 1
+--   - 001_initial.sql (settings table schema — immutable per Phase 1 D-08)
+
+INSERT OR IGNORE INTO settings (key, value) VALUES ('settings.window_geometry', '{"x":null,"y":null,"width":800,"height":600}');

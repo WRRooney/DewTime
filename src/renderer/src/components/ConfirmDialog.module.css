@@ -1,0 +1,95 @@
+/*
+ * src/renderer/src/components/ConfirmDialog.module.css
+ * Native <dialog> surface for delete confirmation modal.
+ * Surface CSS copied verbatim from SettingsDialog.module.css (UI-SPEC § ConfirmDialog).
+ * Phase 4 changes: .btnDanger replaces .btnPrimary; cursor: pointer for
+ * content-affordance buttons (UI-SPEC § Cursor).
+ *
+ * Refs:
+ *   - 04-UI-SPEC.md § ConfirmDialog (surface + footer + button variants)
+ *   - 04-CONTEXT.md D-24 (same native <dialog> pattern as Phase 3 SettingsDialog)
+ *   - Anti-patterns A-01 (no color literals), A-02 (no !important), A-10 (no animation)
+ */
+
+.dialog {
+  width: min(360px, 100% - 32px);
+  max-height: min(80vh, 480px);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+}
+
+.header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+.body {
+  padding: var(--space-4);
+}
+
+.copy {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-body);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Default (Cancel) button — Phase 4 changes cursor to pointer (content-affordance).
+   All other values copied verbatim from SettingsDialog.module.css .btn */
+.btn {
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  min-width: 64px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--color-bg-hover);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Destructive (Delete) button — Phase 4 replaces .btnPrimary with .btnDanger.
+   --color-danger-hover token added in plan 04-06 (tokens.css Phase 4 additions). */
+.btnDanger {
+  background: var(--color-danger);
+  color: var(--color-danger-fg);
+  border: 1px solid var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.btnDanger:hover {
+  background: var(--color-danger-hover);
+}

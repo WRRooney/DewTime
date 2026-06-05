@@ -1,0 +1,27 @@
+.planning
+node_modules/
+out/
+dist/
+*.log
+# Environment files — never commit any (public repo). Allow .env.example only.
+.env
+.env.*
+!.env.example
+.vite/
+
+# TypeScript incremental compile metadata (composite: true projects emit these
+# next to the tsconfig — generated artifacts, not source).
+*.tsbuildinfo
+
+# Playwright E2E output
+test-results/
+playwright-report/
+
+# transient app-icon rasterization workdir (scripts/generate-icons.sh)
+.icon-build-tmp/
+
+# Python artifacts (legacy — the app is now Electron/TypeScript)
+.venv/
+__pycache__/
+.pytest_cache/
+.python-version

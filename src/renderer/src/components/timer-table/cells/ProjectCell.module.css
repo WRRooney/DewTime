@@ -1,0 +1,155 @@
+/*
+ * src/renderer/src/components/timer-table/cells/ProjectCell.module.css
+ *
+ * A-01: NO hex/HSL/RGB literals — only var(--*) tokens (exception: currentColor,
+ *   none, transparent are permitted as per UI-SPEC). --shadow-dropdown token
+ *   covers the one shadow value.
+ * A-02: no !important.
+ * A-17: cmdk Command root element only — the Dialog variant is forbidden here.
+ *
+ * Refs:
+ *   - 05-UI-SPEC.md § ProjectCell (container, dropdown, item, chevron spec)
+ *   - 05-PATTERNS.md § ProjectCell.tsx
+ */
+
+/* Cell container — relative positioning anchor for the absolutely-positioned dropdown. */
+.container {
+  position: relative;
+  width: 100%;
+  height: var(--space-6); /* 32px — matches row height; opening dropdown must not shift row (D-05) */
+  cursor: text;
+}
+
+.container:hover {
+  background: var(--color-bg-hover);
+}
+
+/* The closed-state trigger span fills the container width. */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  cursor: text;
+}
+
+/* Display text when a project is assigned */
+.displayText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-fg);
+  font-size: var(--font-size-base);
+}
+
+/* Muted placeholder when no project is assigned */
+.placeholder {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-base);
+}
+
+/* Inline chevron — subdued affordance, hidden in open state (trigger is not rendered) */
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+  margin-left: var(--space-1);
+}
+
+/* Open state modifier on container */
+.containerOpen {
+  /* Ensure the open container reserves the same height as the closed state
+     so the row does not shift when the dropdown opens */
+  height: auto;
+  min-height: var(--space-6);
+}
+
+/* cmdk Command root — the dropdown panel positioned absolutely below the trigger */
+.commandRoot {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  min-width: 100%;
+  max-width: 280px;
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+}
+
+/* Command.Input — the search/filter input at the top of the dropdown */
+.input {
+  width: 100%;
+  background: transparent;
+  color: var(--color-fg);
+  border: none;
+  border-bottom: 1px solid var(--color-accent);
+  outline: none;
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+  font-size: var(--font-size-base);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Command.List — scrollable container for the dropdown items */
+.list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Command.Item — individual project option */
+.item {
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  color: var(--color-fg);
+  font-size: var(--font-size-base);
+}
+
+.item[aria-selected="true"],
+.item:hover {
+  background: var(--color-dropdown-item-hover);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* Command.Empty — rendered when no items match (shows the Create affordance) */
+.createItem {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* The Create "…" button inside Command.Empty */
+.createButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.createButton:hover {
+  color: var(--color-fg);
+}
+
+.createButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

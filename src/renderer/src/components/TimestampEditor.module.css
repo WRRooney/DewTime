@@ -1,0 +1,208 @@
+/*
+ * src/renderer/src/components/TimestampEditor.module.css
+ * Full-window timestamp/offset/notes editor (Phase 5 UAT follow-up — separate
+ * editor window, no longer a modal dialog). Surface tokens match the rest of
+ * the app; the window itself provides the frame/move/resize chrome.
+ *
+ * Anti-patterns:
+ *   A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
+ *   A-02: no forced-property overrides.
+ */
+
+/* --- Window body --- */
+/* Non-scrolling flex column: the entries list scrolls, offset + notes stay pinned. */
+.body {
+  box-sizing: border-box;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+/* Popup heading — the Ignition popup-header band ("<timer description>"). */
+.heading {
+  flex-shrink: 0;
+  margin: 0 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Entries list (FIELD-04) — scrolls; offset/notes below remain visible. */
+.entriesList {
+  flex: 1 1 auto;
+  min-height: 0; /* allow the flex child to shrink so overflow-y actually scrolls */
+  overflow-y: auto;
+}
+
+/* Ignition entry row: numbered badge on the left, fields to the right. */
+.entryRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-3);
+}
+
+.entryRow:last-child {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* "1." style index badge — fixed width so all rows align. */
+.entryIndex {
+  flex: 0 0 auto;
+  min-width: 18px;
+  font-family: var(--font-stack-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg-muted);
+  line-height: var(--line-height-tight);
+  padding-top: 2px;
+}
+
+.entryBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entryLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg-muted);
+}
+
+/* Start/End sit side by side (wider window now); wrap on a narrow drag-resize. */
+.entryFields {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.field {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg-muted);
+}
+
+/* datetime-local input — full width within the stacked field */
+.datetimeInput {
+  background: var(--color-input-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.datetimeInput:focus {
+  border-color: var(--color-accent);
+}
+
+/* D-08: running entry end is disabled */
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Empty entries state */
+.noEntries {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* --- Sections (offset + notes) — pinned below the scrolling entries list. */
+.section {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.sectionLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+/* Ignition inline offset row: "Offset  [ 0 ]  min" */
+.offsetRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.offsetRow .sectionLabel {
+  margin-bottom: 0;
+}
+
+.offsetUnit {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+/* Offset input (FIELD-05) */
+.offsetInput {
+  background: var(--color-input-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  outline: none;
+  width: 80px;
+}
+
+.offsetInput:focus {
+  border-color: var(--color-accent);
+}
+
+/* Notes textarea (FIELD-06) */
+.notesTextarea {
+  background: var(--color-input-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  font: inherit;
+  resize: vertical;
+  width: 100%;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.notesTextarea:focus {
+  border-color: var(--color-accent);
+}
+
+.notesTextarea::placeholder {
+  color: var(--color-fg-muted);
+}

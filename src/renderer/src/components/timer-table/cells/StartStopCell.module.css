@@ -1,0 +1,51 @@
+/*
+ * src/renderer/src/components/timer-table/cells/StartStopCell.module.css
+ * Ignition-parity Start/Stop PILL button (psc-Timer/ButtonStopped|ButtonRunning).
+ *
+ * Filled, rounded, monospace, uppercase with letter-spacing — START is the
+ * --color-success green, STOP is the --color-danger red. White label on both.
+ * Replaces the Phase 4 bare ▶/■ icon button.
+ *
+ * Refs:
+ *   - .planning/examples/ignition_timer_table_div.html (psc-Timer/Button* pills)
+ *   - Anti-patterns A-01 (no color literals), A-02 (no !important)
+ */
+
+.btn {
+  min-width: 64px;
+  height: 26px;
+  padding: 0 var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-stack-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-fg);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* "Start" — green pill (success), drives a timer from idle */
+.notRunning {
+  background: var(--color-success);
+}
+.notRunning:hover {
+  background: var(--color-success-hover);
+}
+
+/* "Stop" — red pill (danger), halts the running timer */
+.running {
+  background: var(--color-danger);
+}
+.running:hover {
+  background: var(--color-danger-hover);
+}

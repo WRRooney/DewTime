@@ -1,0 +1,190 @@
+/*
+ * src/renderer/src/components/DateNavToolbar.module.css
+ * Styles for the date-navigation toolbar row and its live total readouts.
+ *
+ * DailyTotal and WeeklyTotal import this module (they share the toolbar's
+ * class namespace rather than having a separate CSS file per component).
+ *
+ * A-01: ALL colors via var(--*) — zero hex/HSL/rgb literals.
+ * A-02: No !important.
+ * A-03: No inline style={{ color|background }} in components — use classes here.
+ *
+ * Refs:
+ *   - 06-PATTERNS.md § DateNavToolbar.module.css
+ *   - 06-UI-SPEC.md § Date-navigation toolbar row
+ */
+
+/* ──────────────────────────────────────────
+   Wrapper
+   ────────────────────────────────────────── */
+
+.dateNavToolbar {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+/* ──────────────────────────────────────────
+   Rows
+   ────────────────────────────────────────── */
+
+/* Title row: "Timers" heading + week-total chip (Ignition header band). */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ──────────────────────────────────────────
+   Title + week-total chip
+   ────────────────────────────────────────── */
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+  color: var(--color-fg);
+}
+
+.weekTotalLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+/* The accent chip wrapping the live weekly total (Ignition --callToActionHighlight pill). */
+.weekPill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* Value text inside the chip — white on accent, monospace, tabular for steady width. */
+.weekPillValue {
+  color: var(--color-accent-fg);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ──────────────────────────────────────────
+   Day total (nav row, right edge)
+   ────────────────────────────────────────── */
+
+.dayTotalLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  margin-left: var(--space-2);
+}
+
+.dayTotalValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-fg);
+}
+
+/* ──────────────────────────────────────────
+   Nav + Calendar buttons
+   ────────────────────────────────────────── */
+
+.navBtn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-fg);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.navBtn:hover         { background: var(--color-bg-hover); }
+.navBtn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* ──────────────────────────────────────────
+   Clickable date (between the arrows) → opens the calendar picker
+   ────────────────────────────────────────── */
+
+.dateBtn {
+  min-width: 160px;
+  height: 28px;
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-stack-mono); /* Ignition rendered the date in monospace */
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-normal);
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dateBtn:hover         { background: var(--color-bg-hover); border-color: var(--color-border); }
+.dateBtn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* ──────────────────────────────────────────
+   Jump to Today (only rendered when off the current day)
+   ────────────────────────────────────────── */
+
+.jumpTodayBtn {
+  height: 28px;
+  padding: 0 var(--space-3);
+  margin-left: var(--space-2);
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.jumpTodayBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+.jumpTodayBtn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* Pushes the day-total readout to the right edge of the nav row. */
+.spacer {
+  flex: 1;
+}
+
+/* ──────────────────────────────────────────
+   Totals row text elements
+   ────────────────────────────────────────── */
+
+.totalLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-fg-muted);
+}
+
+.totalValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  font-family: var(--font-stack-mono);
+  color: var(--color-fg);
+}
+
+.totalSep {
+  color: var(--color-fg-muted);
+}
+
+/* Loading / error state — muted opacity for —:—:— placeholder (A-03 compliant) */
+.totalLoading {
+  opacity: 0.4;
+}
