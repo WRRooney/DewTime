@@ -50,6 +50,10 @@ import { startHeartbeat, stopHeartbeat } from '@main/services/heartbeat'
 //   - windowGeometry.attachListeners(win) runs AFTER createWindow so the
 //     'moved' / 'resized' / 'close' listeners are bound to the live window.
 import * as windowGeometry from '@main/services/window-geometry'
+// Auto-update wiring (electron-updater → GitHub Releases). initUpdater no-ops on
+// unpackaged dev runs, so it is safe to call unconditionally after the window
+// exists.
+import { initUpdater } from '@main/services/updater'
 // Phase 4 (Plan 04-05 / D-11 / 04-CONTEXT D-11):
 //   - tickService.emitNow() is called in the powerMonitor.on('resume') handler
 //     AFTER checkResume() so the renderer receives one immediate tick:update
@@ -392,6 +396,9 @@ export async function runMain(): Promise<void> {
   // D-10: bind moved/resized (debounced) + close (flush) on the live window.
   // Idempotent — service detaches any prior window before binding the new one.
   windowGeometry.attachListeners(win)
+
+  // Start auto-update checks (packaged builds only; no-ops in dev).
+  initUpdater(win)
 
   app.on('window-all-closed', () => {
     // macOS convention: apps stay alive when all windows close. Not strictly
