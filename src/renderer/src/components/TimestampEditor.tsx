@@ -4,6 +4,7 @@ import styles from './TimestampEditor.module.css'
 import { useTimers } from '@/hooks/useTimers'
 import { useEntriesForTimer } from '@/hooks/useEntriesForTimer'
 import { useSetEntryStart, useSetEntryEnd } from '@/hooks/useSetEntryTimestamps'
+import { useDeleteEntry } from '@/hooks/useDeleteEntry'
 import { useSetOffset } from '@/hooks/useSetOffset'
 import { useSetNotes } from '@/hooks/useSetNotes'
 import { epochToDatetimeLocal, datetimeLocalToEpoch } from '@/utils/epoch-datetime'
@@ -15,6 +16,7 @@ interface EntryRowProps {
   idx: number
   onCommitStart: (entryId: number, ts: EpochSeconds) => void
   onCommitEnd: (entryId: number, ts: EpochSeconds) => void
+  onDelete: (entryId: number) => void
 }
 
 /**
@@ -22,7 +24,7 @@ interface EntryRowProps {
  * state so the user can type or pick a date; draft resyncs from the persisted
  * entry after a save (refetch) or external change.
  */
-function EntryRow({ entry, idx, onCommitStart, onCommitEnd }: EntryRowProps): JSX.Element {
+function EntryRow({ entry, idx, onCommitStart, onCommitEnd, onDelete }: EntryRowProps): JSX.Element {
   const isRunning = entry.end_timestamp === null
   const [startStr, setStartStr] = useState(() => epochToDatetimeLocal(entry.start_timestamp))
   const [endStr, setEndStr] = useState(() =>
@@ -106,6 +108,31 @@ function EntryRow({ entry, idx, onCommitStart, onCommitEnd }: EntryRowProps): JS
         </div>
         </div>
       </div>
+      {/* Delete this entry pair — hidden for the running entry (no end to pair). */}
+      {!isRunning && (
+        <button
+          type="button"
+          className={styles.entryDelete}
+          aria-label={`Delete entry ${idx + 1}`}
+          title="Delete entry"
+          onClick={() => onDelete(entry.id)}
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M2.5 4h11M6.5 4V2.8c0-.4.3-.8.8-.8h1.4c.5 0 .8.4.8.8V4M4 4l.6 9c0 .5.4.9.9.9h5c.5 0 .9-.4.9-.9L12 4M6.5 7v4M9.5 7v4" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
@@ -123,6 +150,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
 
   const setStart = useSetEntryStart()
   const setEnd = useSetEntryEnd()
+  const deleteEntry = useDeleteEntry()
   const setOffset = useSetOffset()
   const setNotes = useSetNotes()
 
@@ -157,6 +185,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
             idx={idx}
             onCommitStart={(entryId, ts) => setStart.mutate({ entryId, ts })}
             onCommitEnd={(entryId, ts) => setEnd.mutate({ entryId, ts })}
+            onDelete={(entryId) => deleteEntry.mutate({ entryId })}
           />
         ))}
       </div>

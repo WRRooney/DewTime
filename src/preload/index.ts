@@ -115,6 +115,8 @@ const api: ElectronApi = {
       invokeWrapped<void>('timeEntries.setStart', { entryId, ts }),
     setEnd: (entryId: number, ts: number) =>
       invokeWrapped<void>('timeEntries.setEnd', { entryId, ts }),
+    deleteEntry: (entryId: number) =>
+      invokeWrapped<void>('timeEntries.deleteEntry', { entryId }),
   },
   settings: {
     get: <K extends SettingKey>(key: K) =>

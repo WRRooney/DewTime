@@ -21,6 +21,7 @@ let stmts: {
   // Pure timestamp setters — no FSM transition (see setStart/setEnd below).
   setStart: Database.Statement<unknown[]>
   setEnd: Database.Statement<unknown[]>
+  del: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {
@@ -48,6 +49,7 @@ function getStmts() {
     setEnd: db.prepare(
       `UPDATE time_entries SET end_timestamp = ? WHERE id = ?`,
     ),
+    del: db.prepare(`DELETE FROM time_entries WHERE id = ?`),
   }
   return stmts
 }
@@ -171,5 +173,20 @@ export function setEnd(entryId: number, endTs: EpochSeconds): void {
     throw new ValidationError('end_timestamp must be after start_timestamp')
   }
   const info = getStmts().setEnd.run([endTs, entryId])
+  if (info.changes === 0) throw new NotFoundError(`time_entries ${entryId} not found`)
+}
+
+/**
+ * Delete a completed (stopped) time entry. Refuses to delete the running entry
+ * (end_timestamp IS NULL) — that would orphan the heartbeat's timer_entry_id and
+ * silently end tracking; stop the timer first. Throws NotFoundError if missing.
+ */
+export function deleteEntry(entryId: number): void {
+  const entry = getStmts().byId.get(entryId) as TimeEntry | undefined
+  if (!entry) throw new NotFoundError(`time_entries ${entryId} not found`)
+  if (entry.end_timestamp === null) {
+    throw new ValidationError('cannot delete a running entry')
+  }
+  const info = getStmts().del.run([entryId])
   if (info.changes === 0) throw new NotFoundError(`time_entries ${entryId} not found`)
 }

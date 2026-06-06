@@ -13,8 +13,10 @@ import {
   stop,
   stopActive,
   getRunning,
+  deleteEntry,
   resetStmtCache as resetTimeEntries,
 } from './timeEntries'
+import { NotFoundError, ValidationError } from '@shared/errors'
 
 describe('timeEntries repository — CRUD round-trip', () => {
   beforeEach(() => {
@@ -126,5 +128,40 @@ describe('timeEntries repository — stop/stopActive', () => {
     expect(stillRunning!.timer_id).toBe(timerA.id)
     expect(stillRunning!.id).toBe(startedA.id)
     expect(stillRunning!.end_timestamp).toBeNull()
+  })
+})
+
+describe('timeEntries repository — deleteEntry', () => {
+  beforeEach(() => {
+    closeDb()
+    resetTimers()
+    resetTimeEntries()
+    initDb(':memory:')
+    runMigrations()
+  })
+
+  afterEach(() => {
+    closeDb()
+    resetTimers()
+    resetTimeEntries()
+  })
+
+  it('deletes a stopped entry', () => {
+    const timer = createTimer({ projectId: null, description: 'task' })
+    const entry = start(timer.id)
+    stopActive() // give it an end_timestamp so it is deletable
+    deleteEntry(entry.id)
+    expect(listByTimer(timer.id)).toHaveLength(0)
+  })
+
+  it('refuses to delete the running entry (ValidationError)', () => {
+    const timer = createTimer({ projectId: null, description: 'task' })
+    const entry = start(timer.id) // still running (end_timestamp IS NULL)
+    expect(() => deleteEntry(entry.id)).toThrow(ValidationError)
+    expect(listByTimer(timer.id)).toHaveLength(1)
+  })
+
+  it('throws NotFoundError for a missing entry', () => {
+    expect(() => deleteEntry(999_999)).toThrow(NotFoundError)
   })
 })

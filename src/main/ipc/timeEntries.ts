@@ -20,6 +20,7 @@ import {
   listByTimer as listByTimerRepo,
   setStart as setStartRepo,
   setEnd as setEndRepo,
+  deleteEntry as deleteEntryRepo,
 } from '@main/db/repositories/timeEntries'
 import { handler } from './system'
 import type { EpochSeconds } from '@shared/time'
@@ -32,6 +33,7 @@ import {
   CheckResumeArgsSchema,
   SetStartArgsSchema,
   SetEndArgsSchema,
+  DeleteEntryArgsSchema,
 } from '@shared/contracts/timeEntries'
 
 /**
@@ -114,6 +116,15 @@ export const handleSetEnd = handler(
 )
 
 /**
+ * `timeEntries.deleteEntry(entryId)` — delete a stopped entry. The repo rejects
+ * deleting the running entry (ValidationError) and missing ids (NotFoundError).
+ */
+export const handleDeleteEntry = handler(
+  DeleteEntryArgsSchema,
+  async ({ entryId }) => deleteEntryRepo(entryId),
+)
+
+/**
  * Register the `timeEntries.*` IPC channels with `ipcMain`.
  *
  * The `_evt` parameter is intentionally unused — handler bodies must not
@@ -132,4 +143,5 @@ export function registerTimeEntriesHandlers(
   ipc.handle('timeEntries.checkResume', (_evt, args) => handleCheckResume(args))
   ipc.handle('timeEntries.setStart', (_evt, args) => handleSetStart(args))
   ipc.handle('timeEntries.setEnd', (_evt, args) => handleSetEnd(args))
+  ipc.handle('timeEntries.deleteEntry', (_evt, args) => handleDeleteEntry(args))
 }

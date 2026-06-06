@@ -78,9 +78,9 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       listByTimer: stub('timeEntries.listByTimer') as ElectronApi['timeEntries']['listByTimer'],
       getRunning: stub('timeEntries.getRunning') as ElectronApi['timeEntries']['getRunning'],
       checkResume: stub('timeEntries.checkResume') as ElectronApi['timeEntries']['checkResume'],
-      // Phase 5 D-09: timestamp edit bridges (setStart/setEnd)
       setStart: stub('timeEntries.setStart') as ElectronApi['timeEntries']['setStart'],
       setEnd: stub('timeEntries.setEnd') as ElectronApi['timeEntries']['setEnd'],
+      deleteEntry: stub('timeEntries.deleteEntry') as ElectronApi['timeEntries']['deleteEntry'],
     },
     settings: {
       get: stub('settings.get') as ElectronApi['settings']['get'],

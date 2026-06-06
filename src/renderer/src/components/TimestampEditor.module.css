@@ -53,6 +53,33 @@
   margin-bottom: 0;
 }
 
+/* Per-entry delete (trash) — ghost icon that turns danger-red on hover. */
+.entryDelete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-fg-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.entryDelete:hover {
+  background: var(--color-danger);
+  color: var(--color-danger-fg);
+}
+
+.entryDelete:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* "1." style index badge — fixed width so all rows align. */
 .entryIndex {
   flex: 0 0 auto;

@@ -204,6 +204,11 @@ export interface TimeEntriesApi {
    * or end <= start. Throws NotFoundError when entryId does not exist.
    */
   setEnd(entryId: number, ts: EpochSeconds): Promise<void>
+  /**
+   * Delete a stopped time entry. Throws ValidationError when the entry is still
+   * running, NotFoundError when entryId does not exist.
+   */
+  deleteEntry(entryId: number): Promise<void>
 }
 
 export interface SettingsApi {

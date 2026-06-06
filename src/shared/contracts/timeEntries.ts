@@ -58,3 +58,12 @@ export const SetEndArgsSchema = z.object({
   ts: z.number().int().positive(), // EpochSeconds; repo checks ts > start_timestamp
 })
 export type SetEndArgs = z.infer<typeof SetEndArgsSchema>
+
+/**
+ * `timeEntries.deleteEntry(entryId)`. Repo refuses to delete the running entry
+ * (end_timestamp IS NULL); Zod gate is structural only.
+ */
+export const DeleteEntryArgsSchema = z.object({
+  entryId: z.number().int().positive(),
+})
+export type DeleteEntryArgs = z.infer<typeof DeleteEntryArgsSchema>
