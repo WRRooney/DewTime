@@ -27,7 +27,11 @@
 
 import { test as base, expect } from '@playwright/test'
 import { _electron as electron } from 'playwright'
-import Database from 'better-sqlite3'
+// Seed with Node's built-in SQLite (no native-addon ABI). better-sqlite3 can't
+// be used here: the Electron app launched below needs it built for Electron's
+// ABI, which is incompatible with the system-Node ABI this test process runs
+// under. Requires NODE_OPTIONS=--experimental-sqlite (set by the e2e CI step).
+import { DatabaseSync } from 'node:sqlite'
 import * as fs from 'node:fs/promises'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -97,10 +101,10 @@ const test = base.extend<{ userDataDir: string }>({
 test('crash-recovery: seeded stale heartbeat + running entry → timer shows as running on boot', async ({ userDataDir }) => {
   // --- Seed the DB before launching Electron (D-04 seeding pattern) ---
   const dbPath = path.join(userDataDir, 'timerz.db')
-  const db = new Database(dbPath)
+  const db = new DatabaseSync(dbPath)
   // Enable WAL mode + foreign keys (mirrors production database.ts)
-  db.pragma('journal_mode = WAL')
-  db.pragma('foreign_keys = ON')
+  db.exec('PRAGMA journal_mode = WAL')
+  db.exec('PRAGMA foreign_keys = ON')
   // Apply inline schema
   db.exec(SCHEMA_SQL)
 
@@ -110,14 +114,14 @@ test('crash-recovery: seeded stale heartbeat + running entry → timer shows as 
     `INSERT INTO timers (project_id, description, notes, created_at, offset) VALUES (?, ?, ?, ?, ?)`
   )
   const timerInfo = timerInsert.run(null, 'Seeded crash-recovery', '', nowEpoch - 700, null)
-  const timerId = timerInfo.lastInsertRowid as number
+  const timerId = Number(timerInfo.lastInsertRowid)
 
   // Seed: running time entry (end_timestamp IS NULL = still running)
   const entryInsert = db.prepare(
     `INSERT INTO time_entries (timer_id, start_timestamp, end_timestamp) VALUES (?, ?, ?)`
   )
   const entryInfo = entryInsert.run(timerId, nowEpoch - 700, null)
-  const entryId = entryInfo.lastInsertRowid as number
+  const entryId = Number(entryInfo.lastInsertRowid)
 
   // Seed: stale heartbeat (600s ago >> CRASH_THRESHOLD_SECONDS=300 → crash-suspect)
   const staleBeatAt = nowEpoch - 2 * CRASH_THRESHOLD_SECONDS

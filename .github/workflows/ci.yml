@@ -111,6 +111,9 @@ jobs:
         env:
           CI: 'true'
           TIMERZ_NO_SANDBOX: '1'
+          # crash-recovery.e2e.ts seeds the DB via node:sqlite (avoids the
+          # better-sqlite3 ABI clash with the Electron app); flag-gated on Node 22.
+          NODE_OPTIONS: '--experimental-sqlite'
 
       - name: Upload AppImage artifact
         if: runner.os == 'Linux'

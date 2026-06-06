@@ -16,8 +16,11 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/*.e2e.ts',        // D-02: explicit; keeps out of npm test globs
+  testMatch: '**/*.e2e.ts',        // explicit; keeps out of npm test globs
   timeout: 30_000,
+  // Cold Electron start + first IPC round-trip can exceed the 5s default on CI
+  // runners; 10s absorbs the first-paint latency without masking real hangs.
+  expect: { timeout: 10_000 },
   retries: process.env['CI'] ? 1 : 0,
   reporter: process.env['CI'] ? 'github' : 'list',
   use: {
