@@ -16,9 +16,10 @@ import { useSettings, type WeekStart } from '../contexts/SettingsContext'
 
 export const SettingsDialog = forwardRef<HTMLDialogElement>(
   function SettingsDialog(_, ref): JSX.Element {
-    const { weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop } = useSettings()
+    const { weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop, autoUpdate, setAutoUpdate } = useSettings()
     const [draft, setDraft] = useState<WeekStart>(weekStart)
     const [draftAlwaysOnTop, setDraftAlwaysOnTop] = useState<boolean>(alwaysOnTop)
+    const [draftAutoUpdate, setDraftAutoUpdate] = useState<boolean>(autoUpdate)
     const [error, setError] = useState<string | null>(null)
 
     // Defensive sync: if the context's weekStart changes from another source
@@ -35,6 +36,11 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
       setDraftAlwaysOnTop(alwaysOnTop)
     }, [alwaysOnTop])
 
+    // Defensive sync for autoUpdate — mirrors the alwaysOnTop pattern above.
+    useEffect(() => {
+      setDraftAutoUpdate(autoUpdate)
+    }, [autoUpdate])
+
     const close = (): void => {
       if (typeof ref === 'object' && ref !== null && ref.current !== null) {
         ref.current.close()
@@ -50,6 +56,8 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
         await setWeekStart(draft)
         await window.api.settings.set('settings.always_on_top', draftAlwaysOnTop)
         await setAlwaysOnTop(draftAlwaysOnTop)
+        await window.api.settings.set('settings.auto_update', draftAutoUpdate)
+        await setAutoUpdate(draftAutoUpdate)
         setError(null)
         return true
       } catch (err) {
@@ -63,6 +71,7 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
     const handleCancel = (): void => {
       setDraft(weekStart)
       setDraftAlwaysOnTop(alwaysOnTop)
+      setDraftAutoUpdate(autoUpdate)
       setError(null)
       close()
     }
@@ -124,6 +133,17 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
                 onChange={(e) => setDraftAlwaysOnTop(e.target.checked)}
               />
               Always on top
+            </label>
+          </fieldset>
+          <fieldset className={`${styles.fieldset} ${styles.fieldsetSpaced}`}>
+            <legend className={styles.legend}>Updates</legend>
+            <label className={styles.radioRow}>
+              <input
+                type="checkbox"
+                checked={draftAutoUpdate}
+                onChange={(e) => setDraftAutoUpdate(e.target.checked)}
+              />
+              Automatic updates
             </label>
           </fieldset>
           {error !== null && (

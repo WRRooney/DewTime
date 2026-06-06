@@ -17,6 +17,9 @@ export interface SettingsContextValue {
   alwaysOnTop: boolean
   /** Optimistic cache rehydrate — caller has already persisted via IPC. */
   setAlwaysOnTop: (value: boolean) => Promise<void>
+  autoUpdate: boolean
+  /** Optimistic cache rehydrate — caller has already persisted via IPC. */
+  setAutoUpdate: (value: boolean) => Promise<void>
   /** Re-fetch from `window.api.settings.list()`. Called automatically on mount. */
   refresh: () => Promise<void>
 }
@@ -35,12 +38,16 @@ export function SettingsProvider({
 }): JSX.Element {
   const [weekStart, setWeekStartState] = useState<WeekStart>(0)
   const [alwaysOnTop, setAlwaysOnTopState] = useState<boolean>(false)
+  // Default true — current behavior is updates always enabled.
+  const [autoUpdate, setAutoUpdateState] = useState<boolean>(true)
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
       const all = await window.api.settings.list()
       setWeekStartState(narrowWeekStart(all['settings.week_start']))
       setAlwaysOnTopState(all['settings.always_on_top'] === true)
+      // Default true: only an explicit stored false disables updates (missing/undefined stays true).
+      setAutoUpdateState(all['settings.auto_update'] !== false)
     } catch (err) {
       // Mount-time failure means settings IPC is broken; keep the seeded default and log.
       // eslint-disable-next-line no-console
@@ -56,12 +63,16 @@ export function SettingsProvider({
     setAlwaysOnTopState(value)
   }, [])
 
+  const setAutoUpdate = useCallback(async (value: boolean): Promise<void> => {
+    setAutoUpdateState(value)
+  }, [])
+
   useEffect(() => {
     void refresh()
   }, [refresh])
 
   return (
-    <Ctx.Provider value={{ weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop, refresh }}>
+    <Ctx.Provider value={{ weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop, autoUpdate, setAutoUpdate, refresh }}>
       {children}
     </Ctx.Provider>
   )
