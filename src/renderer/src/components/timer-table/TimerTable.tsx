@@ -27,12 +27,12 @@ const columnHelper = createColumnHelper<Timer>()
 const columns = [
   columnHelper.display({
     id: 'projectNumber',
-    header: 'PROJECT',
+    header: '#',
     cell: ({ row }) => <ProjectNumberCell timer={row.original} />,
   }),
   columnHelper.display({
     id: 'project',
-    header: '',
+    header: 'PROJECT',
     cell: ({ row }) => <ProjectCell timer={row.original} />,
   }),
   columnHelper.accessor('description', {

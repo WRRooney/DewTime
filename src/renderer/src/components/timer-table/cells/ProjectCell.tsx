@@ -14,6 +14,7 @@ import type { Timer } from '@shared/ipc'
 import { useProjects } from '@/hooks/useProjects'
 import { useSetProject } from '@/hooks/useSetProject'
 import { useCreateProject } from '@/hooks/useCreateProject'
+import { CopyButton } from '@/components/CopyButton'
 
 interface ProjectCellProps {
   timer: Timer
@@ -89,34 +90,39 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
       ref={containerRef}
       className={`${styles.container}${open ? ` ${styles.containerOpen}` : ''}`}
     >
-      {/* Closed state trigger */}
+      {/* Closed state trigger + copy button (copy shown only when a project is set) */}
       {!open && (
-        <span
-          className={styles.trigger}
-          data-testid="project-trigger"
-          onClick={() => {
-            setOpen(true)
-            setSearch('')
-          }}
-        >
-          {displayName !== null
-            ? <span className={styles.displayText}>{displayName}</span>
-            : <span className={styles.placeholder}>(no project)</span>}
-          <svg
-            className={styles.chevron}
-            width="10"
-            height="6"
-            viewBox="0 0 10 6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            focusable="false"
+        <span className={styles.cellWrap}>
+          <span
+            className={styles.trigger}
+            data-testid="project-trigger"
+            onClick={() => {
+              setOpen(true)
+              setSearch('')
+            }}
           >
-            <path d="M1 1l4 4 4-4" />
-          </svg>
+            {displayName !== null
+              ? <span className={styles.displayText}>{displayName}</span>
+              : <span className={styles.placeholder}>(no project)</span>}
+            <svg
+              className={styles.chevron}
+              width="10"
+              height="6"
+              viewBox="0 0 10 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M1 1l4 4 4-4" />
+            </svg>
+          </span>
+          {displayName !== null && (
+            <CopyButton value={displayName} label="Copy project name" />
+          )}
         </span>
       )}
 

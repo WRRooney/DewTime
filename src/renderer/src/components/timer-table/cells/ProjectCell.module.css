@@ -10,12 +10,22 @@
   background: var(--color-bg-hover);
 }
 
-/* The closed-state trigger span fills the container width. */
+/* Closed-state wrapper: trigger fills the row, copy button sits at the end. */
+.cellWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+}
+
+/* The closed-state trigger span fills the available width beside the copy button. */
 .trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   cursor: text;
 }
