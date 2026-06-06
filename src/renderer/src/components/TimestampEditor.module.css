@@ -1,12 +1,6 @@
 /*
- * src/renderer/src/components/TimestampEditor.module.css
- * Full-window timestamp/offset/notes editor (Phase 5 UAT follow-up — separate
- * editor window, no longer a modal dialog). Surface tokens match the rest of
- * the app; the window itself provides the frame/move/resize chrome.
- *
- * Anti-patterns:
- *   A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
- *   A-02: no forced-property overrides.
+ * Full-window timestamp/offset/notes editor. Rendered in a separate
+ * BrowserWindow; the window itself provides the frame/move/resize chrome.
  */
 
 /* --- Window body --- */
@@ -36,7 +30,7 @@
   text-overflow: ellipsis;
 }
 
-/* --- Entries list (FIELD-04) — scrolls; offset/notes below remain visible. */
+/* Entries list — scrolls; offset/notes below remain visible. */
 .entriesList {
   flex: 1 1 auto;
   min-height: 0; /* allow the flex child to shrink so overflow-y actually scrolls */
@@ -124,7 +118,7 @@
   border-color: var(--color-accent);
 }
 
-/* D-08: running entry end is disabled */
+/* Running entry end is disabled */
 .disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -169,7 +163,7 @@
   color: var(--color-fg-muted);
 }
 
-/* Offset input (FIELD-05) */
+/* Offset input */
 .offsetInput {
   background: var(--color-input-bg);
   color: var(--color-fg);
@@ -185,7 +179,7 @@
   border-color: var(--color-accent);
 }
 
-/* Notes textarea (FIELD-06) */
+/* Notes textarea */
 .notesTextarea {
   background: var(--color-input-bg);
   color: var(--color-fg);

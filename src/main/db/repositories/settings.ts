@@ -1,20 +1,7 @@
-// src/main/db/repositories/settings.ts
 // Typed get/set over the `settings` table. Values are JSON-encoded in the
-// `value TEXT` column — see 001_initial.sql for the seeded defaults and
-// CONTEXT.md "Specific Ideas" on the JSON round-trip.
-//
-// All SQL uses `?` placeholders — T-01-04 mitigation.
-//
-// Trust model: Zod schemas in `src/shared/contracts/settings.ts` validate the
-// `key` ∈ SettingKey AND the `value` shape per K BEFORE values reach this
-// layer (D-15). Runtime trust here is fine — we cast via `as` only.
-//
-// Refs:
-//   - CONTEXT.md D-09 (pure functions, lazy stmt cache)
-//   - CONTEXT.md D-15 (Zod at the IPC boundary; this layer trusts the caller)
-//   - 001_initial.sql (5 seeded defaults: week_start, dark_mode, auto_pause,
-//     widget_mode, auto_launch — all JSON-encoded)
-//   - timerz/services/settings_service.py (v1 SettingsService DEFAULTS dict)
+// `value TEXT` column. Zod schemas at the IPC boundary validate key and value
+// before reaching this layer; this layer trusts the caller.
+// All SQL uses `?` placeholders to prevent SQL injection.
 
 import type Database from 'better-sqlite3'
 import { getDb } from '../database'
@@ -49,7 +36,7 @@ export function resetStmtCache(): void {
 /**
  * Typed get. Returns the parsed JSON value cast to the K-dependent type.
  * Throws NotFoundError if the key has no row (shouldn't happen for seeded
- * keys; useful for window.* before the first window-position save).
+ * keys; can occur for window geometry before the first save).
  */
 export function get<K extends SettingKey>(key: K): SettingValue<K> {
   const row = getStmts().get.get(key) as { value: string } | undefined
@@ -68,7 +55,7 @@ export function set<K extends SettingKey>(key: K, value: SettingValue<K>): void 
 
 /**
  * Return all settings as a key→parsed-value record. Used by the settings UI
- * (Phase 3) to render the full settings panel in one IPC round-trip.
+ * to render the full settings panel in one IPC round-trip.
  */
 export function getAll(): Record<string, unknown> {
   const rows = getStmts().list.all() as Array<{ key: string; value: string }>

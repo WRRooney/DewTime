@@ -1,9 +1,4 @@
-// src/shared/contracts/projects.ts
-// Zod schemas for the `projects.*` IPC namespace. Handlers land in Phase 2.
-//
-// Refs:
-//   - CONTEXT.md D-15
-//   - src/shared/ipc.ts ProjectsApi
+// Zod schemas for the `projects.*` IPC namespace.
 import { z } from 'zod'
 
 /** `projects.list()` — no arguments. */

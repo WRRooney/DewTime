@@ -1,4 +1,3 @@
-// src/renderer/src/utils/format-hours.ts
 // Billing-style quarter-hour rounding + decimal-hours formatting for the
 // duration copy-button (Ignition v0 copied a floating-point hours total like
 // "22.75" / "0.00").

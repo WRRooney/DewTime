@@ -1,25 +1,7 @@
-// src/renderer/src/components/TitleBar.tsx
-// 32 px frameless title bar — drag region across the background, no-drag on
-// the gear (Open settings) and close (Close window) icon buttons. The gear
-// click invokes the parent-supplied `onOpenSettings` handler (which calls
-// dialogRef.current?.showModal() in App). The close click invokes
-// `window.api.system.closeWindow()` directly — the IPC bridge is the single
-// integration point.
-//
-// Both icons are inline SVGs (no icon library — D-22, D-26). They use
-// `stroke="currentColor"` so the button's color flows through; UI-SPEC A-12
-// forbids hex / hsl / rgb stroke or fill literals.
-//
-// Refs:
-//   - 03-UI-SPEC.md § Title bar (full visual contract + literal SVG markup)
-//   - 03-CONTEXT.md D-05 (32 px header), D-06 (button order — close rightmost),
-//     D-07 (close → window.api.system.closeWindow), D-08 (gear → showModal)
-//   - 03-RESEARCH.md § Pitfall 1 (no-drag mandatory on interactive children)
 import styles from './TitleBar.module.css'
 import { useThemeStore } from '@/stores/useThemeStore'
 
 interface TitleBarProps {
-  /** Invoked by the gear button — App opens the dialog via dialogRef.current?.showModal() (D-08). */
   onOpenSettings: () => void
 }
 
@@ -40,10 +22,7 @@ export function TitleBar({ onOpenSettings }: TitleBarProps): JSX.Element {
     <header className={styles.titleBar}>
       <div className={styles.brand}>
         {/* DewTime brand mark (clock crescent + rising checkmark). Fill flows
-            from `currentColor` so it tracks the title bar fg in both themes —
-            UI-SPEC A-12 forbids hex/hsl/rgb literals here. Source art:
-            assets/dewtime-logo.svg (group transform kept so absolute path
-            coords land inside the viewBox). */}
+            from `currentColor` so it tracks the title bar fg in both themes. */}
         <svg
           className={styles.logo}
           width="18"
@@ -116,7 +95,7 @@ export function TitleBar({ onOpenSettings }: TitleBarProps): JSX.Element {
           title="Open settings"
           onClick={onOpenSettings}
         >
-          {/* Gear/cog (Feather "settings") — clearly a cog, not a sun/contrast glyph */}
+          {/* Gear/cog */}
           <svg
             width="16"
             height="16"
@@ -140,7 +119,7 @@ export function TitleBar({ onOpenSettings }: TitleBarProps): JSX.Element {
           title="Close window"
           onClick={handleClose}
         >
-          {/* Close: two crossing strokes, 9 px diagonal (UI-SPEC § Inline SVG: close) */}
+          {/* Close: two crossing strokes */}
           <svg
             width="16"
             height="16"

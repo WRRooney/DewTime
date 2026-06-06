@@ -1,22 +1,8 @@
-/*
- * src/renderer/src/components/timer-table/cells/ProjectCell.module.css
- *
- * A-01: NO hex/HSL/RGB literals — only var(--*) tokens (exception: currentColor,
- *   none, transparent are permitted as per UI-SPEC). --shadow-dropdown token
- *   covers the one shadow value.
- * A-02: no !important.
- * A-17: cmdk Command root element only — the Dialog variant is forbidden here.
- *
- * Refs:
- *   - 05-UI-SPEC.md § ProjectCell (container, dropdown, item, chevron spec)
- *   - 05-PATTERNS.md § ProjectCell.tsx
- */
-
 /* Cell container — relative positioning anchor for the absolutely-positioned dropdown. */
 .container {
   position: relative;
   width: 100%;
-  height: var(--space-6); /* 32px — matches row height; opening dropdown must not shift row (D-05) */
+  height: var(--space-6); /* 32px — matches row height so opening the dropdown doesn't shift the row */
   cursor: text;
 }
 

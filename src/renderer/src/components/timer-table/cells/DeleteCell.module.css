@@ -1,13 +1,7 @@
 /*
- * src/renderer/src/components/timer-table/cells/DeleteCell.module.css
- * 24×24 icon button for × timer deletion (UI-SPEC § DeleteCell).
- *
- * Destructive intent signaled by stroke color flip (--color-fg-muted → --color-danger)
- * on :hover ONLY — NO background wash (UI-SPEC: "transparent in both rest AND hover").
- *
- * Refs:
- *   - 04-UI-SPEC.md § DeleteCell (exact token assignments + hover behavior)
- *   - Anti-patterns A-01 (no color literals), A-02 (no !important)
+ * 24×24 icon button for × timer deletion.
+ * Destructive intent signaled by stroke color flip on :hover only —
+ * background stays transparent in both rest and hover states.
  */
 
 .btn {

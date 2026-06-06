@@ -1,13 +1,5 @@
-// src/shared/contracts/timers.ts
-// Zod schemas for the `timers.*` IPC namespace. Schemas ship in Phase 1 so
-// the contract shape is locked; the handlers that consume them land in
-// Phase 2 (TimerService FSM + dispatch). Every schema is `z.object({...})`
-// (not a bare validator) so the dispatcher can call `.safeParse(args)`
-// uniformly.
-//
-// Refs:
-//   - CONTEXT.md D-15 (Zod at boundary; no .transform/.refine in Phase 1)
-//   - src/shared/ipc.ts TimersApi (the type these schemas validate against)
+// Zod schemas for the `timers.*` IPC namespace.
+// Every schema is `z.object({...})` so the dispatcher can call `.safeParse(args)` uniformly.
 import { z } from 'zod'
 
 /** Epoch-seconds bounds: 1_700_000_000 (post-Nov-2023) ≤ x < 2_000_000_000 (year 2033 guard). */

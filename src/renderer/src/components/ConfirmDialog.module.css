@@ -1,14 +1,6 @@
 /*
- * src/renderer/src/components/ConfirmDialog.module.css
  * Native <dialog> surface for delete confirmation modal.
- * Surface CSS copied verbatim from SettingsDialog.module.css (UI-SPEC § ConfirmDialog).
- * Phase 4 changes: .btnDanger replaces .btnPrimary; cursor: pointer for
- * content-affordance buttons (UI-SPEC § Cursor).
- *
- * Refs:
- *   - 04-UI-SPEC.md § ConfirmDialog (surface + footer + button variants)
- *   - 04-CONTEXT.md D-24 (same native <dialog> pattern as Phase 3 SettingsDialog)
- *   - Anti-patterns A-01 (no color literals), A-02 (no !important), A-10 (no animation)
+ * Surface tokens mirror SettingsDialog; .btnDanger replaces .btnPrimary.
  */
 
 .dialog {
@@ -58,8 +50,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* Default (Cancel) button — Phase 4 changes cursor to pointer (content-affordance).
-   All other values copied verbatim from SettingsDialog.module.css .btn */
+/* Default (Cancel) button */
 .btn {
   background: transparent;
   color: var(--color-fg);
@@ -81,8 +72,7 @@
   outline-offset: 2px;
 }
 
-/* Destructive (Delete) button — Phase 4 replaces .btnPrimary with .btnDanger.
-   --color-danger-hover token added in plan 04-06 (tokens.css Phase 4 additions). */
+/* Destructive (Delete) button */
 .btnDanger {
   background: var(--color-danger);
   color: var(--color-danger-fg);

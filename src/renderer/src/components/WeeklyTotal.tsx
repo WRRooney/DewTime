@@ -1,17 +1,3 @@
-// src/renderer/src/components/WeeklyTotal.tsx
-// Live weekly total readout — subscribes to useWeekTimers + useTickStore.
-//
-// Identical to DailyTotal but uses useWeekTimers for the week-scoped query.
-// The tick subscription and non-running-base formula are identical (RESEARCH
-// Pattern 5 / E5 — see DailyTotal.tsx for detailed comments).
-//
-// Imports CSS from DateNavToolbar.module.css (shared namespace — no separate file).
-//
-// Refs:
-//   - 06-04-PLAN.md Task 2
-//   - 06-PATTERNS.md § WeeklyTotal.tsx
-//   - 06-UI-SPEC.md § Daily and weekly total readouts
-
 import styles from './DateNavToolbar.module.css'
 import { useWeekTimers } from '@/hooks/useDateTimers'
 import { useTickStore } from '@/stores/useTickStore'
@@ -27,7 +13,7 @@ interface WeeklyTotalProps {
 
 /**
  * Renders the live weekly total HH:MM:SS for timers in [fromEpoch, toEpoch).
- * Subscribes to useTickStore for per-second updates (DATE-08).
+ * Subscribes to useTickStore for per-second updates.
  */
 export function WeeklyTotal({ fromEpoch, toEpoch, className }: WeeklyTotalProps): JSX.Element {
   const { data: timers = [], isLoading, isError } = useWeekTimers(fromEpoch, toEpoch)
@@ -35,7 +21,7 @@ export function WeeklyTotal({ fromEpoch, toEpoch, className }: WeeklyTotalProps)
 
   const extra = className ? ` ${className}` : ''
 
-  // Loading or failed query → sentinel, NOT 00:00:00 (WR-01): a silent zero is
+  // Loading or failed query → sentinel, NOT 00:00:00: a silent zero is
   // indistinguishable from a genuinely empty week (e.g. an out-of-range date).
   if (isLoading || isError) {
     return (
@@ -43,12 +29,12 @@ export function WeeklyTotal({ fromEpoch, toEpoch, className }: WeeklyTotalProps)
     )
   }
 
-  // Non-running base — avoids double-counting the running timer (RESEARCH Pitfall 3)
+  // Non-running base — avoids double-counting the running timer.
   const nonRunning = timers.filter((t: Timer) => !t.running)
   const base = nonRunning.reduce((sum: number, t: Timer) => sum + t.totalSeconds, 0)
 
   const runningTimer = timers.find((t: Timer) => t.running)
-  // liveContrib: use tick.elapsedSeconds if tick is for the running timer;
+  // Use tick.elapsedSeconds if it matches the running timer;
   // fall back to the at-fetch totalSeconds if no matching tick yet.
   const liveContrib =
     tick !== null && runningTimer !== undefined && tick.timerId === runningTimer.id

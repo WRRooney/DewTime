@@ -1,16 +1,11 @@
-// src/main/ipc/editor.ts
-// IPC handlers for the `editor.*` namespace (Phase 5 UAT follow-up).
+// IPC handlers for the `editor.*` namespace.
 //
-//   - editor.open (invoke)          → open/focus the separate timestamp editor
-//                                      window for a timer. Zod-validated.
-//   - editor.notify-changed (send)  → one-way fire-and-forget from the editor
-//                                      window after it persists an edit; main
-//                                      broadcasts 'timerz:data-changed' to all
-//                                      windows so the main window's table refetches.
-//
-// `editor.open` follows the dotted-channel handler<I,O> pattern (Zod gate).
-// `editor.notify-changed` is a colon-free one-way `ipcMain.on` channel (no
-// response), mirroring the tick push channel's fire-and-forget shape.
+//   - editor.open (invoke)         — open/focus the timestamp editor window for
+//                                    a timer. Zod-validated.
+//   - editor.notify-changed (send) — one-way fire-and-forget from the editor
+//                                    window after a successful mutation; main
+//                                    broadcasts 'timerz:data-changed' to all
+//                                    windows so the table refetches.
 
 import { ipcMain } from 'electron'
 import { handler } from './system'

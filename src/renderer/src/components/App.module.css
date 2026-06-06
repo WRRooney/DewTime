@@ -1,17 +1,4 @@
-/*
- * src/renderer/src/components/App.module.css
- * <main> below the title bar. Phase 4 fills <main> with the toolbar +
- * table-wrapper layout (UI-SPEC § Layout under the title bar).
- *
- * A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
- * A-16: tick interval is main-process only (D-06) — never in renderer CSS.
- *
- * Refs:
- *   - 04-UI-SPEC.md § Layout under the title bar (main flex + .toolbar + .tableWrap)
- *   - 04-PATTERNS.md § App.module.css (Phase 4 extensions)
- */
-
-/* Phase 3 baseline preserved; Phase 4 adds flex column layout + overflow clip */
+/* <main> below the title bar — toolbar + table-wrapper flex layout. No color literals. */
 .main {
   flex: 1;
   background: var(--color-bg);
@@ -21,7 +8,6 @@
   overflow: hidden;
 }
 
-/* Toolbar: AddTimerButton lives here; stacks above the table wrapper */
 .toolbar {
   display: flex;
   align-items: center;
@@ -29,7 +15,6 @@
   margin-bottom: var(--space-4);
 }
 
-/* Table wrapper: takes residual height; scrollable; visually contained */
 .tableWrap {
   flex: 1;
   overflow-y: auto;

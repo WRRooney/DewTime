@@ -1,35 +1,3 @@
-// src/renderer/src/components/timer-table/TimerTable.tsx
-// TanStack Table v8 headless host for the Phase 5 timer table (D-01).
-//
-// Column order (left → right):
-//   Project # | Project | Description | Duration | Start/Stop | Delete
-//   (Project # leads with the single "PROJECT" header; project-name header is
-//   empty so the pair reads as one PROJECT group. Columns are percentage-width
-//   and user-resizable — widths persist to localStorage via useColumnWidths.)
-//
-// Row identity: `getRowId: (row) => String(row.id)` so React reconciliation
-// survives reorderings (e.g. after a new-row insert reshuffles ORDER BY created_at DESC) — D-05.
-//
-// D-02: NO virtualisation — plain <tbody> map. Revisit only if row counts > 500.
-//
-// Phase 6 (06-03): switched to useDayTimers(fromEpoch, toEpoch)
-// via useSelectedDateStore + dayRangeOf — table now reflects the selected day only.
-// This component does NOT subscribe to the tick store — only DurationCell does (A-13).
-//
-// Empty state: renders a single colSpan=6 row with the Copywriting Contract text
-//   "No timers yet. Click + Add Timer to create one."
-// Error state: renders a single colSpan=6 row with
-//   "Could not load timers. Try again." in --color-danger.
-// Loading state: empty <tbody> — IPC is < 5 ms; a skeleton would flash (UI-SPEC).
-//
-// Refs:
-//   - 04-CONTEXT.md D-01 (TanStack Table v8 headless API)
-//   - 04-CONTEXT.md D-02 (no virtualisation)
-//   - 05-UI-SPEC.md § Column reconciliation D-05 (6-column order)
-//   - 04-CONTEXT.md D-05 (getRowId row identity)
-//   - 04-RESEARCH.md § Pitfall 7 (colSpan 7->6)
-//   - D-27: plain React + CSS Modules; no Radix/shadcn/Tailwind
-
 import { useRef } from 'react'
 import {
   createColumnHelper,
@@ -56,11 +24,6 @@ import { DeleteCell } from './cells/DeleteCell'
 
 const columnHelper = createColumnHelper<Timer>()
 
-// Column order (left → right). Project # leads, immediately followed by the
-// project name; "PROJECT" is the only header over the pair (project name has an
-// empty header so the two read as one PROJECT group). Action pill + delete sit
-// on the right edge (Ignition v0 row layout).
-//   Project # | Project | Description | Duration | Start/Stop | Delete
 const columns = [
   columnHelper.display({
     id: 'projectNumber',
@@ -97,7 +60,6 @@ const columns = [
 const centerColumns = new Set(['startStop', 'duration', 'delete'])
 
 // Stable left → right id order + default percentage widths (sum = 100).
-// Used by useColumnWidths for the persistent <colgroup>.
 const COLUMN_ORDER = ['projectNumber', 'project', 'description', 'duration', 'startStop', 'delete']
 const DEFAULT_WIDTHS: Record<string, number> = {
   projectNumber: 14,
@@ -110,11 +72,9 @@ const DEFAULT_WIDTHS: Record<string, number> = {
 
 // STABLE module-level references — MUST NOT be recreated per render.
 // `query.data ?? []` with an inline `[]` returns a new array identity every
-// render; while the date-scoped query is pending (data undefined, e.g. right
-// after a prev/next/calendar date change) that fresh `[]` makes TanStack Table
-// treat `data` as changed every render, firing its auto-reset setState → an
-// infinite re-render loop that pegs the thread and starves the IPC that would
-// have populated the data (the date-nav freeze). A shared empty array fixes it.
+// render; while the date-scoped query is pending that fresh `[]` makes TanStack
+// Table treat `data` as changed every render, firing its auto-reset setState →
+// an infinite re-render loop that starves the IPC. A shared empty array fixes it.
 const EMPTY_TIMERS: Timer[] = []
 // getRowId as a stable reference for the same reason (per-render identity churn).
 const getTimerRowId = (row: Timer): string => String(row.id)
@@ -123,24 +83,24 @@ const getTimerRowId = (row: Timer): string => String(row.id)
 // Component
 // ---------------------------------------------------------------------------
 
-/** TanStack Table v8 headless host rendering 6-column timer table (D-01, D-05). */
+/** TanStack Table v8 headless host rendering 6-column timer table. */
 export function TimerTable(): JSX.Element {
   const selectedDate = useSelectedDateStore((s) => s.date)
   const { fromEpoch, toEpoch } = dayRangeOf(selectedDate)
   const query = useDayTimers(fromEpoch, toEpoch)
-  const data = query.data ?? EMPTY_TIMERS // stable empty ref — never a fresh [] (see EMPTY_TIMERS note)
+  const data = query.data ?? EMPTY_TIMERS // stable empty ref — never a fresh []
 
   const table = useReactTable({
     data,
     columns,
-    getRowId: getTimerRowId, // D-05 — row identity survives reorderings; stable ref
+    getRowId: getTimerRowId, // row identity survives reorderings; stable ref
     getCoreRowModel: getCoreRowModel(),
   })
 
   // Persistent percentage column widths (localStorage) + manual resize.
   const { widths, setWidths, persist } = useColumnWidths(COLUMN_ORDER, DEFAULT_WIDTHS)
   const tableRef = useRef<HTMLTableElement>(null)
-  // Active-drag scratch state — kept in a ref so pointermove doesn't churn React state.
+  // Active-drag scratch state — kept in a ref so pointermove doesn't trigger React re-renders.
   const dragRef = useRef<{
     leftId: string
     rightId: string
@@ -215,7 +175,7 @@ export function TimerTable(): JSX.Element {
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </span>
                   )}
-                  {/* Resize handle on the right edge of every column but the last. */}
+                  {/* Resize handle on right edge of every column but the last. */}
                   {!isLast && (
                     <span
                       role="separator"

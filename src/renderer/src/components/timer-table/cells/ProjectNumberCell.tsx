@@ -1,33 +1,10 @@
-// src/renderer/src/components/timer-table/cells/ProjectNumberCell.tsx
-// Swap-to-input editable cell for a project's billing number (D-04 / PROJ-04).
+// Swap-to-input editable cell for a project's billing number.
 //
-// Rest state (no project assigned):
-//   <span class="emptyNoProject">—</span> (U+2014 EM DASH)
-//   cursor: default; clicking does NOTHING (no edit affordance when no project).
-//
-// Rest state (project assigned):
-//   <span class="text" onClick>project_number or muted "—"</span>
-//   cursor: text; click enters edit mode.
-//
-// Edit state: swaps to a controlled <input> filling the cell.
-//   Enter or blur → commit (calls projects.updateNumber if changed).
-//   Escape → revert draft, exit edit mode.
-//
-// Key differences from DescriptionCell:
-//   1. No usePendingFocusStore — no auto-focus on new row (D-04).
-//   2. Renders emptyNoProject "—" (cursor:default, no click) when project_id is null.
-//   3. Commit calls projects.updateNumber(timer.project_id, draft.trim() || null).
-//   4. useEffect resyncs when timer.project_id or the resolved number changes.
-//   5. Resolves project_number client-side from useProjects() cache (D-14).
-//
-// A-14: uses <input> only — NOT contenteditable.
-// A-13: this cell is NOT a tick-store subscriber — only DurationCell subscribes.
-//
-// Refs:
-//   - 05-UI-SPEC.md § ProjectNumberCell (pixel/token/interaction spec)
-//   - 05-PATTERNS.md § ProjectNumberCell.tsx (key differences from DescriptionCell)
-//   - 05-CONTEXT.md D-04 (dedicated inline-editable Project # column)
-//   - 05-CONTEXT.md D-14 (client-side join from useProjects() cache)
+// No project assigned → static muted "—", clicking does nothing.
+// Project assigned → click enters edit mode; Enter/blur commits, Escape reverts.
+// Commit calls projects.updateNumber(timer.project_id, draft.trim() || null).
+// project_number is resolved client-side from the useProjects() cache (no JOIN).
+// No auto-focus on new rows (unlike DescriptionCell). Not a tick-store subscriber.
 
 import { useEffect, useRef, useState } from 'react'
 import styles from './ProjectNumberCell.module.css'
@@ -40,12 +17,12 @@ interface ProjectNumberCellProps {
   timer: Timer
 }
 
-/** Editable Project # cell — blank no-op when no project, swap-to-input when a project is assigned. */
+/** Editable project number cell — no-op when no project is assigned, swap-to-input otherwise. */
 export function ProjectNumberCell({ timer }: ProjectNumberCellProps): JSX.Element {
   const { data: projects } = useProjects()
   const updateNumber = useUpdateProjectNumber()
 
-  // Resolve the current project's number from the cache (D-14 client-side join).
+  // Resolve the current project's number from the shared cache (no JOIN).
   const currentProject = timer.project_id !== null
     ? (projects ?? []).find((p) => p.id === timer.project_id)
     : undefined
@@ -62,8 +39,8 @@ export function ProjectNumberCell({ timer }: ProjectNumberCellProps): JSX.Elemen
     }
   }, [timer.project_id, currentNumber, isEditing])
 
-  // Focus + select after the <input> is committed to the DOM (WR-03 — queueMicrotask
-  // could fire before React commits, leaving inputRef null and the field unfocused).
+  // Focus + select after the <input> is committed to the DOM — queueMicrotask
+  // could fire before React commits, leaving inputRef null and the field unfocused.
   useEffect(() => {
     if (isEditing) {
       inputRef.current?.focus()
@@ -114,7 +91,7 @@ export function ProjectNumberCell({ timer }: ProjectNumberCellProps): JSX.Elemen
     <span className={styles.cellWrap}>
       <span
         onClick={() => {
-          // focus/select happens in the isEditing useEffect after the input commits (WR-03).
+          // focus/select happens in the isEditing useEffect after the input commits.
           setIsEditing(true)
         }}
         className={styles.text}

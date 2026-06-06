@@ -1,14 +1,6 @@
 /*
- * src/renderer/src/components/SettingsDialog.module.css
- * Native <dialog> surface + ::backdrop overlay + form regions + button
- * variants. Every color/space/radius/font value reads from a :root token in
- * tokens.css (UI-SPEC A-01). Zero animation (A-10) — the <dialog> appears
- * instantly on showModal() and disappears instantly on close().
- *
- * Refs:
- *   - 03-UI-SPEC.md § Settings dialog (verbatim values)
- *   - Anti-patterns A-01 (no color literals), A-02 (no cascade-escape),
- *     A-10 (no animation)
+ * Native <dialog> surface + ::backdrop overlay + form regions + button variants.
+ * The <dialog> appears instantly on showModal() and disappears instantly on close().
  */
 
 .dialog {

@@ -1,13 +1,7 @@
-// src/main/db/migrate.ts
 // PRAGMA user_version migration runner. Each migration runs in its own
 // transaction. The user_version bump is inside the SAME transaction so a
 // crash mid-migration leaves the DB at the previous version, never at a
 // partially-applied state.
-//
-// Refs:
-//   - CONTEXT.md D-08 (raw SQL migrations, PRAGMA user_version, partial-apply impossible)
-//   - RESEARCH.md §3 lines ~549-595 (canonical runner pattern; VERIFIED)
-//   - CONTEXT.md "Specific Ideas" — the single-transaction rule is non-negotiable
 
 import { getDb } from './database'
 import { MIGRATIONS } from './migrations'
@@ -36,12 +30,9 @@ export function runMigrations(): void {
 
   for (const m of sorted) {
     if (m.version <= current) continue
-    // The transaction function is synchronous (better-sqlite3 docs/api.md —
-    // "Transaction functions do not work with async functions"). Calling the
-    // returned function executes the body inside BEGIN/COMMIT, rolling back
-    // on any thrown error. The user_version bump being inside the body is
-    // load-bearing — moving it outside the txn re-introduces the partial-
-    // apply window.
+    // better-sqlite3 transaction functions are synchronous. The user_version
+    // bump being inside the same transaction body is load-bearing — moving it
+    // outside would re-introduce the partial-apply window.
     const apply = db.transaction(() => {
       db.exec(m.sql)
       db.pragma(`user_version = ${m.version}`)

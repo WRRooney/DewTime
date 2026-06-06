@@ -1,4 +1,3 @@
-// src/renderer/src/components/CopyButton.tsx
 // Small ghost copy-to-clipboard button used in timer-table cells (project #,
 // description, decimal-hours duration). Echoes the Ignition v0 per-field copy
 // icons.

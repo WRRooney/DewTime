@@ -1,24 +1,22 @@
-// src/main/windows/timestampEditorWindow.ts
-// Separate OS window for the timestamp/offset/notes editor (Phase 5 UAT follow-up).
+// Separate OS window for the timestamp/offset/notes editor.
 //
-// Replaces the in-window modal dialog: the editor is now its own BrowserWindow so
-// the user can resize it, move it aside, or push it behind the main widget. It
-// loads the SAME renderer bundle with a `#editor=<timerId>` hash; the renderer
-// entry (main.tsx) branches on that hash to mount the editor root instead of <App>.
+// The editor is its own BrowserWindow so the user can resize it, move it
+// aside, or push it behind the main widget. It loads the SAME renderer bundle
+// with a `#editor=<timerId>` hash; the renderer entry (main.tsx) branches on
+// that hash to mount the editor root instead of <App>.
 //
-// Security posture mirrors the main window (T-01-01 / DATA-02): contextIsolation,
+// Security posture mirrors the main window: contextIsolation,
 // nodeIntegration:false, sandbox, webSecurity, same built preload bundle.
 //
 // A single editor window is reused across timers — opening a different timer
-// reloads the existing window (loadURL/loadFile always reload) and focuses it.
+// reloads the existing window and focuses it.
 
 import { BrowserWindow } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// ESM __dirname (matches src/main/index.ts) — bundle sits at out/main/, so the
-// preload is one dir over at out/preload/index.cjs and the renderer HTML at
-// out/renderer/index.html.
+// ESM __dirname — bundle sits at out/main/, preload at out/preload/index.cjs,
+// renderer HTML at out/renderer/index.html.
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 

@@ -1,18 +1,3 @@
-/*
- * src/renderer/src/components/timer-table/cells/ProjectNumberCell.module.css
- *
- * A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
- * A-02: forced-value overrides (!) are forbidden.
- * A-14: no contenteditable — cell uses <input> swap-to-input pattern.
- *
- * Mirrors DescriptionCell.module.css exactly, adding .emptyNoProject
- * for the no-project-assigned state (cursor:default, non-editable).
- *
- * Refs:
- *   - 05-UI-SPEC.md § ProjectNumberCell (token/sizing spec)
- *   - 05-PATTERNS.md § ProjectNumberCell.module.css
- */
-
 /* Flex wrapper holding the editable number + the copy button. */
 .cellWrap {
   display: flex;
@@ -49,8 +34,7 @@
 }
 
 /* Edit state: controlled <input> filling the cell.
- * The accent border replaces the outline — one permitted exception per UI-SPEC
- * (A-01 exception documented: border acts as the focus indicator). */
+ * The accent border replaces the outline — border acts as the focus indicator. */
 .input {
   width: 100%;
   height: 100%;

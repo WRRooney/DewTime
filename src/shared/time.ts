@@ -1,13 +1,6 @@
-// src/shared/time.ts
 // Branded epoch-second timestamps. The ONE module that may call Date.now().
 // All other code in main / preload / renderer must obtain epoch seconds via
 // `nowSeconds()` — never raw `Date.now()`, never `Math.round(...)`.
-//
-// Refs:
-//   - CONTEXT.md D-05 (branded EpochSeconds, single sanctioned constructor)
-//   - CONTEXT.md "Specific Ideas" (Math.floor matches v1 Python int(time.time()))
-//   - DATA-04 (timestamps stored as INTEGER seconds, < 2_000_000_000)
-//   - RESEARCH.md §9 lines ~1330-1360 (test contract)
 
 /**
  * Branded epoch-seconds type. A `number` at runtime, but the structural brand
@@ -24,10 +17,8 @@ export type EpochSeconds = number & { readonly __brand: 'EpochSeconds' }
 /**
  * The ONLY sanctioned constructor of `EpochSeconds`. Uses `Math.floor`
  * (NOT `Math.round`) to match v1's Python `int(time.time())` semantics —
- * this matters when v2 reads timer rows persisted by v1: a half-second
- * rounding-up boundary would drift v2 timestamps one second ahead of v1.
- *
- * Forbid raw `Date.now()` outside this module (per CONTEXT.md D-05).
+ * rounding up would drift v2 timestamps one second ahead of rows persisted
+ * by v1. Raw `Date.now()` is forbidden outside this module.
  *
  * @returns the current Unix time in seconds, branded as `EpochSeconds`
  */

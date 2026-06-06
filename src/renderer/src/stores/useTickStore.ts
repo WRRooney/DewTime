@@ -1,27 +1,12 @@
-// src/renderer/src/stores/useTickStore.ts
-// Zustand v5 store for the live tick payload pushed from main each second.
-//
-// Shape (D-09 / D-13):
-//   { tick: { timerId: number; elapsedSeconds: number } | null; setTick(v); clearTick() }
-//
-// Consumer: ONLY DurationCell reads tick via primitive selector `useTickStore(s => s.tick)`.
-// Subscribe path: <TickBridge /> (plan 04-06) calls window.api.tick.subscribe(setTick)
-// in a useEffect and clears on unmount — keeping tick state lifecycle tied to the
-// component tree rather than to module load.
-//
-// NO middleware (no devtools, no persist) per D-13.
-//
-// Refs:
-//   - 04-CONTEXT.md D-09 (tick store shape + consumer contract)
-//   - 04-CONTEXT.md D-13 (Zustand for transient UI state; no middleware)
-//   - 04-RESEARCH.md § Pattern 3 (canonical Zustand store template)
+// Zustand store for the live tick payload pushed from main each second.
+// Only DurationCell reads tick via primitive selector `useTickStore(s => s.tick)`.
+// <TickBridge /> calls window.api.tick.subscribe(setTick) in a useEffect and
+// clears on unmount — keeping tick lifecycle tied to the component tree, not module load.
 
 import { create } from 'zustand'
 import type { TickEventPayload } from '@shared/ipc'
 
-// Re-export TickEventPayload for consumer convenience (consumers import the type
-// from here rather than from @shared/ipc directly — reduces import churn if the
-// shared type ever moves).
+// Re-exported for consumer convenience — reduces import churn if the shared type ever moves.
 export type { TickEventPayload }
 
 interface TickState {

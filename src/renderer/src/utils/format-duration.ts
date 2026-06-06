@@ -1,29 +1,20 @@
-// src/renderer/src/utils/format-duration.ts
-// Pure function implementing the four-rule HH:MM:SS display contract from
-// UI-SPEC § DurationCell formatDuration rules.
+// Pure function: HH:MM:SS display formatting.
 //
 // Rules (in priority order):
-//   1. seconds < 0  → clamp to '00:00:00' (negative offsets are valid in v1;
-//      display never shows negative time — D-10 + 04-SPECIFICS § elapsedSeconds)
+//   1. seconds < 0  → clamp to '00:00:00' (negative offsets are valid; display never shows negative)
 //   2. h < 100      → zero-padded HH:MM:SS (the common case)
 //   3. h >= 100     → hours unpadded + zero-padded MM:SS (e.g. 360_000 s → '100:00:00')
 //   4. Output: digits + colons only — no 'h'/'m'/'s' suffix, no spaces
 //
-// Dependency-free — no imports. Math.floor (not Math.trunc) for deterministic
-// behaviour across negative-adjacent inputs (post-clamp; belt + suspenders).
-//
-// Refs:
-//   - 04-UI-SPEC.md § DurationCell formatDuration rules
-//   - 04-CONTEXT.md D-10 (static fallback for non-running rows)
-//   - 04-CONTEXT.md § Specifics (elapsedSeconds clamp at 0)
+// Dependency-free. Math.floor (not Math.trunc) for deterministic behaviour
+// across negative-adjacent inputs (post-clamp).
 
 /**
- * Formats an elapsed-seconds count as a display string per UI-SPEC § DurationCell.
+ * Formats an elapsed-seconds count as a colon-separated duration string.
+ * Hours are zero-padded to 2 digits when < 100; unpadded when >= 100.
+ * Minutes and seconds are always zero-padded to 2 digits.
  *
  * @param seconds - Total elapsed seconds. May be negative (clamps to '00:00:00').
- * @returns A colon-separated duration string. Hours are zero-padded to 2 digits
- *          when < 100; unpadded when >= 100. Minutes and seconds are always
- *          zero-padded to 2 digits.
  *
  * @example
  * formatDuration(-1)         // '00:00:00'  (clamp)

@@ -1,30 +1,11 @@
-// src/renderer/src/components/timer-table/cells/ProjectCell.tsx
-// cmdk headless type-ahead combobox for project assignment (PROJ-01/02/03).
+// cmdk headless type-ahead combobox for project assignment.
 //
-// Closed state: shows the project name from the useProjects() cache (D-14 client-side
-// join) or "(no project)" placeholder when project_id is null. A 10×6 chevron SVG
-// signals this cell is a dropdown trigger.
-//
-// Open state: absolutely positioned <Command> panel renders below the trigger with a
-// substring filter (`toLowerCase().includes(...)` — PROJ-02, NOT fuzzy — Pitfall 2).
+// Filter is case-insensitive substring, NOT fuzzy — avoids surprising matches.
 // ArrowUp/Down are stopped from propagating to TanStack Table (prevents row nav).
-// Escape closes the dropdown without letting the table consume the key.
-// Click-outside (mousedown listener) closes the dropdown.
-//
-// Select: handleSelect(project.id) → useSetProject.mutate({ id: timer.id, projectId }) → invalidates ['timers'].
-// Create (D-12/D-13): handleCreate(name) — checks for exact-match duplicate first
-//   (case-insensitive, D-13). If none, calls useCreateProject.mutateAsync → invalidates
-//   ['projects'] (done in onSuccess) → then useSetProject.mutateAsync → invalidates ['timers'].
-//
-// A-17: ONLY `Command` root — never the Dialog variant (would instantiate Radix UI Dialog).
-// A-01: CSS Modules + var(--*) tokens only — no hex/HSL/rgb literals.
-// A-13: NOT a tick-store subscriber.
-//
-// Refs:
-//   - 05-UI-SPEC.md § ProjectCell (pixel/token/interaction/copy spec)
-//   - 05-RESEARCH.md § Pattern 1 (cmdk combobox), § Pattern 2 (focus + click-outside)
-//   - 05-CONTEXT.md D-12 (create flow), D-13 (exact-match guard), D-14 (client-side join)
-//   - 05-PATTERNS.md § ProjectCell.tsx
+// Click-outside uses a mousedown listener registered only while the dropdown is open.
+// Create flow checks for a case-insensitive exact match before creating (deduplication).
+// Uses Command root only — never the Dialog variant (which would instantiate Radix Dialog).
+// Not a tick-store subscriber.
 
 import React, { useEffect, useRef, useState } from 'react'
 import { Command } from 'cmdk'
@@ -38,7 +19,7 @@ interface ProjectCellProps {
   timer: Timer
 }
 
-/** Case-insensitive substring filter for cmdk — PROJ-02, NOT fuzzy (Pitfall 2). */
+/** Case-insensitive substring filter for cmdk — NOT fuzzy. */
 const substringFilter = (value: string, searchStr: string): number =>
   value.toLowerCase().includes(searchStr.toLowerCase()) ? 1 : 0
 
@@ -52,13 +33,12 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
   const [search, setSearch] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // D-14: resolve current project name from the shared cache (no JOIN).
   const currentProject = timer.project_id !== null
     ? (projects ?? []).find((p) => p.id === timer.project_id)
     : undefined
   const displayName = currentProject?.project_name ?? null
 
-  // Click-outside close (RESEARCH § Pattern 2 — mousedown listener, registered only while open).
+  // Click-outside close — mousedown listener, registered only while open.
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -79,7 +59,7 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
   }
 
   const handleCreate = async (name: string): Promise<void> => {
-    // D-13: exact-match guard — select existing project instead of creating duplicate.
+    // Exact-match guard — select existing project instead of creating a duplicate.
     const existing = (projects ?? []).find(
       (p) => p.project_name.toLowerCase() === name.toLowerCase(),
     )
@@ -87,18 +67,17 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
       handleSelect(existing.id)
       return
     }
-    // D-12: create-then-select flow. mutateAsync returns the new Project directly,
-    // so selection uses newProject.id (not the cache). useSetProject.onSuccess already
-    // invalidates ['timers'] — no manual re-invalidate needed here (WR-04).
+    // mutateAsync returns the new Project directly, so selection uses newProject.id
+    // (not the cache). useSetProject.onSuccess already invalidates ['timers'].
     const newProject = await createProject.mutateAsync({ name, number: null })
     await setProject.mutateAsync({ id: timer.id, projectId: newProject.id })
     setOpen(false)
     setSearch('')
   }
 
-  // WR-05: the Create affordance must be reachable even when the search is a substring
-  // of an existing project (Command.Empty only renders when ZERO items match). Render it
-  // as a real, always-filterable Command.Item so Enter (no exact match) or click creates.
+  // The Create affordance must be reachable even when the search is a substring of an
+  // existing project (Command.Empty only renders when ZERO items match). Render it as a
+  // real Command.Item so Enter (no exact match) or click creates.
   const trimmedSearch = search.trim()
   const hasExactMatch = (projects ?? []).some(
     (p) => p.project_name.toLowerCase() === trimmedSearch.toLowerCase(),
@@ -141,7 +120,7 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
         </span>
       )}
 
-      {/* Open state — A-17: Command ROOT only (never the Dialog variant) */}
+      {/* Open state — Command ROOT only (never the Dialog variant) */}
       {open && (
         <Command
           filter={substringFilter}
@@ -154,7 +133,7 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
             autoFocus
             className={styles.input}
             onKeyDown={(e) => {
-              // Prevent TanStack Table row navigation (RESEARCH § Pattern 2).
+              // Prevent TanStack Table row navigation.
               if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.stopPropagation()
               }
@@ -182,7 +161,7 @@ const ProjectCell = React.memo(function ProjectCell({ timer }: ProjectCellProps)
             {showCreate && (
               <Command.Item
                 key="__create__"
-                // Value embeds the search so substringFilter always keeps this item visible.
+                // Value embeds the search so substringFilter always keeps this item visible in the list.
                 value={`create-new-${trimmedSearch}`}
                 className={styles.createItem}
                 onSelect={() => {

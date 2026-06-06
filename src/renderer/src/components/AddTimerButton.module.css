@@ -1,11 +1,4 @@
-/*
- * src/renderer/src/components/AddTimerButton.module.css
- * Toolbar "+ Add Timer" button styles (UI-SPEC § Add Timer toolbar).
- *
- * Refs:
- *   - 04-UI-SPEC.md § Add Timer toolbar (exact token assignments)
- *   - Anti-patterns A-01 (no color literals), A-02 (no !important)
- */
+/* Toolbar "+ Add Timer" button styles. No color literals; no !important. */
 
 .addBtn {
   display: inline-flex;

@@ -1,31 +1,18 @@
-// src/shared/contracts/tick.ts
 // Zod schema for the `tick:update` one-way push channel payload.
 //
-// Channel literal: 'tick:update' (colon convention for one-way events, D-07).
-// This contract is NOT validated by ipcMain.handle — tick is a one-way
-// webContents.send (main → renderer), so there is no IPC validation gate on
-// the receive side. The schema exists as the canonical source-of-truth for the
-// payload shape and as the assertion source for tick.test.ts (plan 04-04) —
-// the emit-side unit tests parse the payload against this schema to verify
-// correctness.
-//
-// Refs:
-//   - D-07: tick channel name, TickEventPayload shape (timerId + elapsedSeconds)
-//   - D-08: cleanup-returning subscribe; preload bridge wraps ipcRenderer.on
-//   - src/shared/ipc.ts TickEventPayload (one source of truth; this file
-//     re-exports the type from there to avoid duplication)
+// NOT validated by ipcMain.handle — tick is a one-way webContents.send
+// (main → renderer). The schema is the canonical source-of-truth for the
+// payload shape; emit-side unit tests parse against it to verify correctness.
 import { z } from 'zod'
 import type { TickEventPayload } from '../ipc'
 
 /**
- * Zod schema mirroring `TickEventPayload` from `src/shared/ipc.ts` (D-07).
+ * Zod schema mirroring `TickEventPayload` from `src/shared/ipc.ts`.
  *
- * - `timerId`: identifies which timer is currently ticking. Must be a positive
- *   integer (row PK from the `timers` table — zero or negative is invalid).
+ * - `timerId`: row PK from the `timers` table — must be a positive integer.
  * - `elapsedSeconds`: non-negative elapsed count. Main computes
- *   `Math.max(0, nowSeconds() - entry.start_timestamp)` before emitting; the
- *   `min(0)` constraint here enforces that invariant at the schema level.
- *   Negative elapsed is invalid (clock skew or bug — plan 04-04 clamps to 0).
+ *   `Math.max(0, nowSeconds() - entry.start_timestamp)` before emitting;
+ *   `min(0)` enforces that invariant at the schema level.
  */
 export const TickEventPayloadSchema = z.object({
   timerId: z.number().int().positive(),
@@ -33,8 +20,7 @@ export const TickEventPayloadSchema = z.object({
 })
 
 /**
- * Re-export `TickEventPayload` from `src/shared/ipc.ts` so consumers MAY
- * import either. One source of truth for the shape lives in ipc.ts; this
- * file's schema is the runtime validator for that shape.
+ * Re-export `TickEventPayload` from `src/shared/ipc.ts` so consumers may
+ * import either. The shape's single source of truth lives in ipc.ts.
  */
 export type { TickEventPayload }

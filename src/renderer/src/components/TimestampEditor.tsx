@@ -1,22 +1,3 @@
-// src/renderer/src/components/TimestampEditor.tsx
-// Windowless timestamp/offset/notes editor form (FIELD-04/05/06).
-//
-// Phase 5 UAT follow-up: the editor moved from an in-window modal <dialog> to a
-// SEPARATE OS window (see src/main/windows/timestampEditorWindow.ts). This
-// component is the form body — it is mounted full-window by <EditorWindow> in the
-// editor BrowserWindow. It takes the target `timerId` as a prop (from the
-// `#editor=<id>` route) rather than from a renderer store.
-//
-// Each datetime-local input is driven by LOCAL draft state (EntryRow) so the
-// user can type or pick a date — a controlled value with a no-op onChange reverts
-// every keystroke/calendar pick.
-//
-// BUG FIX (missing-seconds): all datetime-local inputs now carry step="1" so
-// browsers render and expose the seconds field. epochToDatetimeLocal now returns
-// YYYY-MM-DDTHH:mm:ss (19 chars) so the input value includes seconds precision.
-//
-// Refs:
-//   - 05-CONTEXT.md D-08 (running entry end disabled), D-09 (ordering guard), D-11 (offset seconds)
 
 import { useEffect, useRef, useState } from 'react'
 import styles from './TimestampEditor.module.css'
@@ -164,7 +145,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
         {timer?.description?.trim() || 'Untitled timer'}
       </h1>
 
-      {/* Entries list (FIELD-04) */}
+      {/* Entries list */}
       <div className={styles.entriesList}>
         {entries && entries.length === 0 && (
           <p className={styles.noEntries}>No time entries recorded yet.</p>
@@ -180,7 +161,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
         ))}
       </div>
 
-      {/* Offset section (FIELD-05 / D-11) — Ignition inline "Offset [ 0.0 ] min" row */}
+      {/* Offset section */}
       <div className={styles.section}>
         <div className={styles.offsetRow}>
           <label className={styles.sectionLabel} htmlFor={`offset-${timerId}`}>
@@ -194,7 +175,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
             value={offsetMinutes}
             onChange={(e) => setOffsetMinutes(Number(e.target.value))}
             onBlur={() => {
-              // Pitfall 4: parseInt not parseFloat; negatives allowed (D-11).
+              // parseInt not parseFloat; negatives allowed.
               const seconds = Math.round(parseInt(String(offsetMinutes), 10) * 60) || 0
               // Only persist on real change — a no-op blur must not rewrite the stored offset.
               if (seconds !== (timer?.offset ?? 0)) {
@@ -206,7 +187,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
         </div>
       </div>
 
-      {/* Notes section (FIELD-06) */}
+      {/* Notes section */}
       <div className={styles.section}>
         <label className={styles.sectionLabel} htmlFor={`notes-${timerId}`}>
           Notes

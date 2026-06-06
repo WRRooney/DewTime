@@ -1,16 +1,11 @@
-// src/renderer/src/hooks/useColumnWidths.ts
 // Persistent, percentage-based column widths for the timer table.
 //
-// Widths are stored as PERCENTAGES (summing to 100) so columns scale with the
-// window, and persisted to localStorage so adjustments survive an app restart.
-// localStorage (not the SQLite settings table) is deliberate: column widths are
-// pure renderer view-state, not an app preference synced to the main process —
-// the settings.* IPC contract is a strict Zod discriminated union reserved for
-// real app settings (week_start, window_geometry, …).
+// Widths are percentages (summing to 100) so columns scale with the window.
+// localStorage is used instead of the SQLite settings table because column
+// widths are pure renderer view-state with no need to sync to the main process.
 //
-// TanStack Table's built-in column sizing is px-based and would fight the
-// percentage requirement, so the table renders a <colgroup> from these
-// percentages and drives resize via manual drag handles (see TimerTable.tsx).
+// TanStack Table's built-in column sizing is px-based, so the table renders a
+// <colgroup> from these percentages and drives resize via manual drag handles.
 
 import { useCallback, useState } from 'react'
 
@@ -23,7 +18,7 @@ type Widths = Record<string, number>
 
 /** Normalize a width map to exactly the given columns, scaled to sum 100. */
 function normalize(order: string[], raw: Partial<Widths>, defaults: Widths): Widths {
-  // Use stored value when present and finite, else the default for that column.
+  // Prefer stored value when finite and positive, else fall back to the column default.
   const picked: Widths = {}
   for (const id of order) {
     const v = raw[id]
@@ -31,7 +26,7 @@ function normalize(order: string[], raw: Partial<Widths>, defaults: Widths): Wid
   }
   const sum = order.reduce((acc, id) => acc + (picked[id] ?? 0), 0)
   if (sum <= 0) return { ...defaults }
-  // Scale to 100 so rounding drift / a changed column set can't desync the row.
+  // Scale to 100 so rounding drift or a changed column set can't desync the row.
   const scaled: Widths = {}
   for (const id of order) scaled[id] = ((picked[id] ?? 0) / sum) * 100
   return scaled
@@ -42,8 +37,8 @@ function load(order: string[], defaults: Widths): Widths {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return { ...defaults }
     const parsed = JSON.parse(stored) as Partial<Widths>
-    // If the stored shape is missing any current column, normalize fills it
-    // from defaults — handles a column being added/removed across versions.
+    // If any current column is missing from storage, normalize fills it from
+    // defaults — handles columns being added/removed across versions.
     const hasAll = order.every((id) => typeof parsed?.[id] === 'number')
     if (!hasAll) return { ...defaults }
     return normalize(order, parsed, defaults)

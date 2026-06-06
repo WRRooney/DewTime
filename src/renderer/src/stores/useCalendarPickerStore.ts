@@ -1,15 +1,3 @@
-// src/renderer/src/stores/useCalendarPickerStore.ts
-// Zustand v5 store for the calendar picker dialog open/close state (D-13).
-//
-// Mirrors useConfirmDeleteStore's open/close shape — boolean flag only.
-// Opens the shared <CalendarPickerDialog /> via open(); dialog closes itself
-// by calling close() after the user selects a date or clicks Close.
-//
-// NO middleware (no devtools, no persist) per D-13.
-//
-// Refs:
-//   - 06-CONTEXT.md D-13
-//   - 06-02-PLAN.md Task 1
 
 import { create } from 'zustand'
 

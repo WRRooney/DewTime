@@ -1,11 +1,5 @@
-// src/shared/contracts/timeEntries.ts
-// Zod schemas for the `timeEntries.*` IPC namespace. Handlers land in Phase 2
-// (the TimerService FSM enforces the single-active-timer invariant when these
-// schemas pass).
-//
-// Refs:
-//   - CONTEXT.md D-15
-//   - src/shared/ipc.ts TimeEntriesApi
+// Zod schemas for the `timeEntries.*` IPC namespace.
+// The TimerService FSM enforces the single-active-timer invariant when these schemas pass.
 import { z } from 'zod'
 
 /** `timeEntries.start(timerId)`. */
@@ -36,33 +30,28 @@ export type GetRunningArgs = z.infer<typeof GetRunningArgsSchema>
 
 /**
  * `timeEntries.checkResume()` — no arguments. Returns the boot-time cached
- * `ResumeResultDto` (or `null`). The schema mirrors `StopActiveArgsSchema` /
- * `GetRunningArgsSchema` — no payload, the `.optional()` wrapper lets the
- * preload pass `undefined` and still parse cleanly. Plan 02-05 wires the
- * matching handler in `src/main/ipc/timeEntries.ts` to
- * `timerService.getCachedResumeResult()` (02-CONTEXT.md D-15, D-16).
+ * `ResumeResultDto` (or `null`). The `.optional()` wrapper lets the preload
+ * pass `undefined` and still parse cleanly.
  */
 export const CheckResumeArgsSchema = z.object({}).optional()
 export type CheckResumeArgs = z.infer<typeof CheckResumeArgsSchema>
 
 /**
- * `timeEntries.setStart(entryId, ts)` — D-09.
- * The `start < end` ordering guard and running-entry guard live in the repo
- * (setStart has no running-entry restriction per D-08/Open-Question-2).
- * Zod gate is structural-only: positive integers enforce DATA-04 (no negative
- * or zero timestamps), but cannot know the stored start value.
+ * `timeEntries.setStart(entryId, ts)`.
+ * The `start < end` ordering guard lives in the repo; setStart has no
+ * running-entry restriction. Zod gate is structural-only: positive integers
+ * reject negative or zero timestamps, but cannot know the stored start value.
  */
 export const SetStartArgsSchema = z.object({
   entryId: z.number().int().positive(),
-  ts: z.number().int().positive(), // EpochSeconds; positive enforces DATA-04
+  ts: z.number().int().positive(), // EpochSeconds; positive rejects zero/negative timestamps
 })
 export type SetStartArgs = z.infer<typeof SetStartArgsSchema>
 
 /**
- * `timeEntries.setEnd(entryId, ts)` — D-09.
- * Repo-level guard (start < end) enforced in setEnd(); Zod gate is structural
- * only. The running-entry guard (D-08) is also enforced in the repo (setEnd
- * rejects when current end_timestamp IS NULL). T-5-01/T-5-06 mitigations.
+ * `timeEntries.setEnd(entryId, ts)`.
+ * Repo enforces `start < end` and rejects when the entry is still running
+ * (end_timestamp IS NULL). Zod gate is structural only.
  */
 export const SetEndArgsSchema = z.object({
   entryId: z.number().int().positive(),

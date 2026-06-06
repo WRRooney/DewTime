@@ -1,24 +1,12 @@
-// src/renderer/src/components/DateNavToolbar.tsx
 // Date-navigation toolbar row (prev/Today/next buttons, selected-date label,
 // calendar-open button, and Day:/Week: live total readouts).
 //
 // Wire-up summary:
 //   - useSelectedDateStore → prev/next/today actions + selected date for label
 //   - useCalendarPickerStore → open (calendar-open button)
-//   - useSettings() → weekStart for weekRangeOf() (no date library — A-20)
+//   - useSettings() → weekStart for weekRangeOf() (no date library)
 //   - dayRangeOf / weekRangeOf → epoch boundaries passed to DailyTotal / WeeklyTotal
-//   - isToday computed at render via new Date() — never cached (D-13)
-//
-// All SVG icons are inline (A-02: no icon library; D-02: icon libraries forbidden).
-// Arrow geometry from 06-PATTERNS.md § SVG geometry for Phase 6 buttons.
-//
-// A-20: Native Intl.DateTimeFormat for the date label — no date-fns/dayjs/luxon.
-// A-01: All colors in DateNavToolbar.module.css are var(--*) only — no hex/HSL literals.
-//
-// Refs:
-//   - 06-04-PLAN.md Task 3
-//   - 06-PATTERNS.md § DateNavToolbar.tsx
-//   - 06-UI-SPEC.md § Date-navigation toolbar row
+//   - isToday computed at render via new Date() — never cached
 
 import styles from './DateNavToolbar.module.css'
 import { useSelectedDateStore } from '@/stores/useSelectedDateStore'
@@ -29,7 +17,6 @@ import { DailyTotal } from './DailyTotal'
 import { WeeklyTotal } from './WeeklyTotal'
 import type { WeekStart } from '@/contexts/SettingsContext'
 
-// A-20: Native Intl.DateTimeFormat — no date library required.
 // Fixed-width layout: 3-char weekday + zero-padded MM/DD/YYYY so the label
 // never changes width between days (e.g. "Mon - 06/05/2026"). Monospace +
 // 2-digit fields keep every date the same pixel width.
@@ -53,12 +40,12 @@ export function DateNavToolbar(): JSX.Element {
   const dayRange  = dayRangeOf(selectedDate)
   const weekRange = weekRangeOf(selectedDate, weekStart as WeekStart)
 
-  // D-13 / A-22: Computed at render time — NEVER cached; reflects the live current date.
+  // Computed at render time — NEVER cached; reflects the live current date.
   const isToday = selectedDate.toDateString() === new Date().toDateString()
 
   return (
     <div className={styles.dateNavToolbar}>
-      {/* Title row: "Timers" screen heading + the week-total accent chip (Ignition header). */}
+      {/* Title row: "Timers" screen heading + the week-total accent chip */}
       <div className={styles.titleRow}>
         <h1 className={styles.title}>Timers</h1>
         <span className={styles.weekTotalLabel}>Week total</span>
@@ -133,7 +120,7 @@ export function DateNavToolbar(): JSX.Element {
           </svg>
         </button>
 
-        {/* Jump to Today — only shown when the selected date is NOT today (D-13). */}
+        {/* Jump to Today — only shown when the selected date is NOT today. */}
         {!isToday && (
           <button
             type="button"
@@ -147,7 +134,7 @@ export function DateNavToolbar(): JSX.Element {
         {/* Spacer pushes the day-total readout to the right edge. */}
         <span className={styles.spacer} />
 
-        {/* Day total — right-aligned readout on the nav row (Ignition "Date total:"). */}
+        {/* Day total — right-aligned readout on the nav row */}
         <span className={styles.dayTotalLabel}>Date total</span>
         <DailyTotal
           fromEpoch={dayRange.fromEpoch}

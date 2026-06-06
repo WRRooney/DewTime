@@ -1,18 +1,7 @@
-// src/renderer/src/hooks/useStartTimer.ts
-// TanStack Query v5 mutation for starting a timer (D-12 / D-26).
-//
-// Delegates to window.api.timeEntries.start(timerId) — the TimerService FSM
-// in main stops any currently-running timer before starting the new one
-// (Phase 2 D-19 / TIME-03 invariant). The renderer just invalidates and
-// lets the refetch reflect the new state.
-//
-// No optimistic update (D-26 explicitly defers this — local SQLite round-trip
-// is < 5 ms so optimistic UI adds complexity without user-perceivable benefit).
-//
-// Refs:
-//   - 04-CONTEXT.md D-12 (mutation invalidation pattern)
-//   - 04-CONTEXT.md D-26 (start/stop button; no optimistic update)
-//   - 04-RESEARCH.md § Pattern 2 (canonical useMutation template)
+// The TimerService FSM in main stops any currently-running timer before
+// starting a new one, so the renderer just invalidates and re-fetches.
+// No optimistic update — local SQLite round-trip is < 5 ms, so the
+// added complexity yields no user-perceivable benefit.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TimeEntry } from '@shared/ipc'

@@ -1,16 +1,3 @@
-// src/renderer/src/stores/useConfirmDeleteStore.ts
-// Zustand v5 store for the delete-confirmation modal state (D-13 / D-24).
-//
-// Opens the shared <ConfirmDialog /> by calling open(id, label) from DeleteCell.
-// The dialog closes itself by calling close() after the mutation settles (either
-// cancel or confirm path).
-//
-// NO middleware (no devtools, no persist) per D-13.
-//
-// Refs:
-//   - 04-CONTEXT.md D-13 (Zustand for transient UI state; no middleware)
-//   - 04-CONTEXT.md D-24 (ConfirmDialog pattern — opens via Zustand slice)
-//   - 04-RESEARCH.md § Pattern 9 (useConfirmDeleteStore template)
 
 import { create } from 'zustand'
 

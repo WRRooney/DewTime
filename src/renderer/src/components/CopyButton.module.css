@@ -1,12 +1,9 @@
 /*
- * src/renderer/src/components/CopyButton.module.css
  * Ghost copy-to-clipboard icon button (project #, description, duration cells).
  *
  * Reveal-on-row-hover is handled by TimerTable.module.css via the
  * [data-copy-btn] attribute selector — at rest the button is fully transparent
  * so the row stays clean; it fades in on row hover or keyboard focus.
- *
- * A-01: only var(--*) tokens. A-02: no !important.
  */
 
 .copyBtn {

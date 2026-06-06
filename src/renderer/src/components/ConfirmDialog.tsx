@@ -1,5 +1,4 @@
-// src/renderer/src/components/ConfirmDialog.tsx
-// Native <dialog> confirmation modal for destructive timer deletion (D-24).
+// Native <dialog> confirmation modal for destructive timer deletion.
 //
 // Open/close is driven reactively by useConfirmDeleteStore (Zustand slice) —
 // NOT via a parent-supplied ref like SettingsDialog. When `pendingDelete`
@@ -9,16 +8,8 @@
 //
 // Cancel → useConfirmDeleteStore.close() → no IPC call.
 // Delete → useDeleteTimer.mutateAsync(pendingDelete.id) → close on settled
-//          (success or error). No toast in Phase 4 — errors surface in devtools
-//          + electron-log only (D-24).
+//          (success or error). Errors surface in devtools + electron-log only.
 // ESC    → native `cancel` event fires → onCancel handler runs close().
-//
-// Refs:
-//   - 04-CONTEXT.md D-24 (ConfirmDialog store-driven pattern)
-//   - 04-UI-SPEC.md § ConfirmDialog (copy + footer + button order)
-//   - 04-RESEARCH.md § Pattern 9 (ConfirmDialog template)
-//   - 04-PATTERNS.md § ConfirmDialog (analog: SettingsDialog.tsx)
-//   - D-27: plain React + CSS Modules only; no Radix/shadcn/Tailwind
 
 import { useEffect, useRef } from 'react'
 import styles from './ConfirmDialog.module.css'
@@ -32,7 +23,7 @@ export function ConfirmDialog(): JSX.Element {
   const close = useConfirmDeleteStore((s) => s.close)
   const deleteTimer = useDeleteTimer()
 
-  // Reactive open/close in response to store state (D-24).
+  // Reactive open/close in response to store state.
   useEffect(() => {
     const d = dialogRef.current
     if (!d) return
@@ -66,7 +57,7 @@ export function ConfirmDialog(): JSX.Element {
         </p>
       </div>
       <footer className={styles.footer}>
-        {/* Cancel is left (first focusable) so Enter on focused Cancel cancels — D-24 focus management */}
+        {/* Cancel is left (first focusable) so Enter on focused Cancel cancels */}
         <button type="button" className={styles.btn} onClick={handleCancel}>Cancel</button>
         <button
           type="button"

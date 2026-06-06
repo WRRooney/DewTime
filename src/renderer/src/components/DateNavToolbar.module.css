@@ -1,17 +1,8 @@
 /*
- * src/renderer/src/components/DateNavToolbar.module.css
  * Styles for the date-navigation toolbar row and its live total readouts.
  *
  * DailyTotal and WeeklyTotal import this module (they share the toolbar's
  * class namespace rather than having a separate CSS file per component).
- *
- * A-01: ALL colors via var(--*) — zero hex/HSL/rgb literals.
- * A-02: No !important.
- * A-03: No inline style={{ color|background }} in components — use classes here.
- *
- * Refs:
- *   - 06-PATTERNS.md § DateNavToolbar.module.css
- *   - 06-UI-SPEC.md § Date-navigation toolbar row
  */
 
 /* ──────────────────────────────────────────

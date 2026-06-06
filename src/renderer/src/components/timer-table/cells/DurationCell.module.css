@@ -1,21 +1,3 @@
-/*
- * src/renderer/src/components/timer-table/cells/DurationCell.module.css
- *
- * A-01: NO hex/HSL/RGB literals — only var(--*) tokens.
- * A-02: forced-value overrides are forbidden in Phase 4/5 CSS modules.
- *
- * font-variant-numeric: tabular-nums prevents digit-width jitter during
- * per-second updates (UI-SPEC § DurationCell).
- *
- * Phase 5 D-06: Duration cell is now a popup trigger — cursor:pointer
- * + hover background using a token (A-01).
- *
- * Refs:
- *   - 04-UI-SPEC.md § DurationCell (font / align / tabular-nums)
- *   - 04-CONTEXT.md D-29 (--font-stack-mono token)
- *   - 05-CONTEXT.md D-06 (click affordance)
- */
-
 /* Flex wrapper: centered duration + copy button to its right. */
 .cellWrap {
   display: flex;

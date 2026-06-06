@@ -1,16 +1,13 @@
-// src/renderer/src/stores/useThemeStore.ts
 // Light/dark theme toggle, persisted to localStorage and applied as
 // `data-theme="light|dark"` on <html>. tokens.css defines the dark palette on
 // :root (the default) and a `:root[data-theme="light"]` override block.
 //
-// localStorage (not the SQLite settings.dark_mode key) keeps the toggle
-// instant and renderer-local — same rationale as useColumnWidths: this is
-// applied view-state, and wiring it through the settings IPC contract +
-// SettingsContext would add ceremony for no functional gain here.
+// localStorage (not the SQLite settings key) keeps the toggle instant and
+// renderer-local — wiring it through IPC + SettingsContext would add ceremony
+// for no functional gain.
 //
-// The module APPLIES the persisted theme at import time (before React mounts,
-// since main.tsx imports it right after globals.css) so there's no flash of
-// the wrong theme on load.
+// Theme is applied at module eval time (main.tsx imports this right after
+// globals.css) so there's no flash of the wrong theme on first paint.
 
 import { create } from 'zustand'
 
@@ -36,8 +33,6 @@ function applyTheme(theme: Theme): void {
   }
 }
 
-// Resolve + apply once at module eval so the correct palette is live before
-// the first paint.
 const initialTheme = loadTheme()
 applyTheme(initialTheme)
 

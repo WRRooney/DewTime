@@ -1,16 +1,7 @@
 /*
- * src/renderer/src/components/TitleBar.module.css
  * 32 px frameless title bar — `-webkit-app-region: drag` on the header
  * background so the OS receives drag events; `app-region: no-drag` on the
- * two icon buttons so click events reach the React handlers
- * (RESEARCH § Pitfall 1).
- *
- * Refs:
- *   - 03-UI-SPEC.md § Title bar (exact tokens + layout)
- *   - 03-CONTEXT.md D-05 (32 px), D-06 (right-aligned cluster)
- *   - UI-SPEC anti-patterns enforced in this file: A-01 (no color literals
- *     outside tokens.css), A-02 (no cascade-escape directives),
- *     A-10 (zero animation in Phase 3)
+ * icon buttons so click events reach the React handlers.
  */
 
 .titleBar {
@@ -74,11 +65,7 @@
   outline-offset: 2px;
 }
 
-/*
- * Close button gets the red-hover affordance (UI-SPEC § Title bar § Icon
- * buttons). Same `app-region: no-drag` etc. inherited from .iconBtn via
- * `className={`${styles.iconBtn} ${styles.closeBtn}`}` in TitleBar.tsx.
- */
+/* Close button gets the red-hover affordance, inherited from .iconBtn. */
 .closeBtn:hover {
   background: var(--color-danger);
   color: var(--color-danger-fg);

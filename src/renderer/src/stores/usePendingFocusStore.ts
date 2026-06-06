@@ -1,24 +1,10 @@
-// src/renderer/src/stores/usePendingFocusStore.ts
-// Zustand v5 store for the auto-focus marker used to focus the description
-// input on a newly-created timer row (D-23).
-//
-// Flow:
+// Auto-focus flow for newly created timer rows:
 //   1. useCreateTimer.onSuccess sets pendingFocusId = newTimer.id
 //   2. DescriptionCell mount effect reads pendingFocusId; if it matches
 //      the cell's timer.id it calls setIsEditing(true) + input.focus()
-//   3. After focus(), the cell's mount effect calls clear() — NOT onSuccess —
-//      so React commits the new DOM before the focus call fires.
-//
-// IMPORTANT: clear() must be called INSIDE the cell's mount effect, not in
-// useCreateTimer.onSuccess. If cleared too early the new row's DescriptionCell
-// may not have mounted yet, silently swallowing the focus marker.
-//
-// NO middleware (no devtools, no persist) per D-13.
-//
-// Refs:
-//   - 04-CONTEXT.md D-23 (auto-focus via pendingFocusId Zustand slice)
-//   - 04-CONTEXT.md D-13 (Zustand for transient UI state; no middleware)
-//   - 04-RESEARCH.md § Pitfall 8 (pending-focus cleared in cell mount, not onSuccess)
+//   3. clear() is called INSIDE the cell's mount effect — not in onSuccess —
+//      so React commits the new DOM before the focus call fires. Clearing
+//      too early silently swallows the focus marker if the row hasn't mounted yet.
 
 import { create } from 'zustand'
 
