@@ -29,21 +29,21 @@ const queryClient = new QueryClient({
 const editorMatch = window.location.hash.match(/^#editor=(\d+)/)
 const editorTimerId = editorMatch ? Number(editorMatch[1]) : null
 
-if (editorTimerId !== null) {
-  // Each window is its own renderer process with its own TanStack cache.
-  // After any mutation, notify main to broadcast so the main window refetches.
-  queryClient.getMutationCache().subscribe((event) => {
-    if (event.type === 'updated' && event.mutation?.state.status === 'success') {
-      window.api.editor.notifyChanged()
-    }
-  })
-} else {
-  // Main window: refetch timers + entry lists when an editor window reports a change.
-  window.api.editor.onDataChanged(() => {
-    void queryClient.invalidateQueries({ queryKey: ['timers'] })
-    void queryClient.invalidateQueries({ queryKey: ['timeEntries', 'byTimer'] })
-  })
-}
+// Cross-window sync (each window is its own renderer with its own TanStack
+// cache). Both directions are symmetric so a change in either window reaches the
+// other: after any successful local mutation, notify main to broadcast; on a
+// broadcast, refetch timers + entry lists. This keeps the editor's entry list
+// live when the main window starts/stops a timer (and vice-versa). Refetching
+// is not a mutation, so the broadcast cannot loop.
+queryClient.getMutationCache().subscribe((event) => {
+  if (event.type === 'updated' && event.mutation?.state.status === 'success') {
+    window.api.editor.notifyChanged()
+  }
+})
+window.api.editor.onDataChanged(() => {
+  void queryClient.invalidateQueries({ queryKey: ['timers'] })
+  void queryClient.invalidateQueries({ queryKey: ['timeEntries', 'byTimer'] })
+})
 
 const container = document.getElementById('root')!
 createRoot(container).render(
