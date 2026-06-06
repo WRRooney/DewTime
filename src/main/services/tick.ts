@@ -47,13 +47,17 @@ let intervalHandle: NodeJS.Timeout | null = null
 export function emit(): void {
   const entry = getRunning()
   if (!entry) return // defensive — stop() should have cleared the interval
-  const win = BrowserWindow.getAllWindows()[0]
-  if (!win || win.isDestroyed()) return // guard: send on a destroyed window throws
   const payload = {
     timerId: entry.timer_id,
     elapsedSeconds: Math.max(0, nowSeconds() - entry.start_timestamp),
   }
-  win.webContents.send('tick:update', payload)
+  // Broadcast to every window, not just getAllWindows()[0]: once the timestamp
+  // editor opens as a second window, [0] may be the editor (which has no tick
+  // subscriber), freezing the main window's live counters until it closed.
+  // Editor windows have no tick:update listener, so the extra send is harmless.
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('tick:update', payload)
+  }
 }
 
 /**

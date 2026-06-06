@@ -196,4 +196,24 @@ describe('TickService — 1-second push-tick cadence', () => {
     expect(destroyedSend).toHaveBeenCalledTimes(0)
     tickService.stop()
   })
+
+  // Test 5 — emit() broadcasts to EVERY live window, not just [0]. Regression
+  // guard: when the editor opens as a second window, the main window must keep
+  // receiving ticks (it froze when only getAllWindows()[0] was targeted).
+  it('emit() broadcasts to all non-destroyed windows', () => {
+    const timer = createTimer({ projectId: null, description: 'multi-win-test' })
+    startEntry(timer.id)
+
+    const mainSend = vi.fn()
+    const editorSend = vi.fn()
+    ;(BrowserWindow.getAllWindows as ReturnType<typeof vi.fn>).mockReturnValue([
+      { isDestroyed: () => false, webContents: { send: editorSend } }, // [0] = editor
+      { isDestroyed: () => false, webContents: { send: mainSend } }, // [1] = main
+    ])
+
+    tickService.start() // fires one immediate emit
+    expect(editorSend).toHaveBeenCalledTimes(1)
+    expect(mainSend).toHaveBeenCalledTimes(1) // main still ticks even though it's not [0]
+    tickService.stop()
+  })
 })
