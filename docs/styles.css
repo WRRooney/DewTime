@@ -18,7 +18,6 @@
   --dawn: #ffc79c; /* warm dawn highlight, used sparingly */
 
   --glow-dew: rgba(111, 230, 208, 0.16);
-  --glow-dawn: rgba(255, 199, 156, 0.12);
 
   --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
   --font-body: 'Hanken Grotesk', system-ui, sans-serif;
@@ -50,27 +49,6 @@ body {
 }
 
 /* ── atmosphere ───────────────────────────────────────────── */
-.glow {
-  position: fixed;
-  z-index: 0;
-  border-radius: 50%;
-  filter: blur(90px);
-  pointer-events: none;
-}
-.glow--dawn {
-  top: -260px;
-  right: -160px;
-  width: 620px;
-  height: 620px;
-  background: radial-gradient(circle, var(--glow-dawn), transparent 70%);
-}
-.glow--dew {
-  top: 220px;
-  left: -220px;
-  width: 680px;
-  height: 680px;
-  background: radial-gradient(circle, var(--glow-dew), transparent 70%);
-}
 .grain {
   position: fixed;
   inset: 0;
