@@ -31,6 +31,7 @@ import { startHeartbeat, stopHeartbeat } from '@main/services/heartbeat'
 import * as windowGeometry from '@main/services/window-geometry'
 // initUpdater no-ops on unpackaged dev runs; safe to call unconditionally.
 import { initUpdater } from '@main/services/updater'
+import * as settingsRepo from '@main/db/repositories/settings'
 // tickService.emitNow() fires an immediate tick:update after sleep/wake so
 // the renderer doesn't wait for the next 1 s interval.
 import * as tickService from '@main/services/tick'
@@ -85,6 +86,18 @@ export function createWindow(
 ): BrowserWindow {
   const b = opts.bounds ?? {}
   const icon = resolveWindowIcon()
+
+  // Read the persisted always_on_top preference at boot time.
+  // Mirrors the window-geometry pattern: try/catch returning false on
+  // NotFoundError (safe before migration 003 seed, defensive at boot).
+  let alwaysOnTop = false
+  try {
+    alwaysOnTop = settingsRepo.get('settings.always_on_top')
+  } catch {
+    // NotFoundError before migration 003 seed runs — default to windowed.
+    alwaysOnTop = false
+  }
+
   const win = new BrowserWindow({
     width: b.width ?? 800,
     height: b.height ?? 600,
@@ -96,7 +109,7 @@ export function createWindow(
     useContentSize: false,
     frame: false,
     transparent: false,
-    alwaysOnTop: true,
+    alwaysOnTop,
     autoHideMenuBar: true,
     // Set the running-window icon (Linux window/taskbar + dev). Spread only when
     // resolved so a missing file leaves Electron's default untouched.
@@ -120,7 +133,8 @@ export function createWindow(
   // always-on-top windows and above fullscreen apps. The 'floating' argument
   // is darwin-only — calling it on linux/win32 throws; `alwaysOnTop: true`
   // in the constructor already covers the cross-platform case.
-  if (process.platform === 'darwin') {
+  // Only fire when the setting is enabled — no-op when windowed (default).
+  if (process.platform === 'darwin' && alwaysOnTop) {
     win.setAlwaysOnTop(true, 'floating')
   }
 

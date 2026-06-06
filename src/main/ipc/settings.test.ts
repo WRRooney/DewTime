@@ -35,33 +35,44 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // (matches the Phase 2 `timeEntries.test.ts` pattern).
 // BrowserWindow is also mocked so the always_on_top live-apply side effect
 // can be tested without a real Electron environment.
-const mockSetAlwaysOnTop = vi.fn()
-const mockIsDestroyed = vi.fn().mockReturnValue(false)
+// NOTE: vi.mock factories are hoisted — do NOT close over module-scope
+// variables (they are not yet initialized at hoist time). Instead, use
+// vi.importMock or access the mocks via the imported module after vi.mock.
 vi.mock('electron', () => ({
   app: { getPath: () => '/tmp/never-used-with-:memory:' },
   powerMonitor: { on: vi.fn() },
   ipcMain: { handle: vi.fn() },
   BrowserWindow: {
-    getAllWindows: vi.fn().mockReturnValue([
-      {
-        setAlwaysOnTop: mockSetAlwaysOnTop,
-        isDestroyed: mockIsDestroyed,
-      },
-    ]),
+    getAllWindows: vi.fn(),
   },
 }))
 
+import { BrowserWindow } from 'electron'
 import { initDb, closeDb } from '@main/db/database'
 import { runMigrations } from '@main/db/migrate'
 import { resetStmtCache as resetSettings } from '@main/db/repositories/settings'
 import { ValidationError } from '@shared/errors'
 import { handleGet, handleSet, handleList } from './settings'
 
+// Per-test mock window spies. Re-assigned in beforeEach after vi.clearAllMocks()
+// so the fresh instances are available for each test body.
+let mockSetAlwaysOnTop: ReturnType<typeof vi.fn>
+let mockIsDestroyed: ReturnType<typeof vi.fn>
+
 describe('settings IPC handlers — boundary behavior', () => {
   beforeEach(() => {
     closeDb()
     resetSettings()
     vi.clearAllMocks()
+
+    // Recreate fresh spy instances for each test so clearAllMocks does not
+    // leave the getAllWindows mock returning undefined.
+    mockSetAlwaysOnTop = vi.fn()
+    mockIsDestroyed = vi.fn().mockReturnValue(false)
+    vi.mocked(BrowserWindow.getAllWindows).mockReturnValue([
+      { setAlwaysOnTop: mockSetAlwaysOnTop, isDestroyed: mockIsDestroyed } as unknown as Electron.BrowserWindow,
+    ])
+
     initDb(':memory:')
     runMigrations()
   })
