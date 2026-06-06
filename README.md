@@ -7,6 +7,8 @@
 A lightweight, always-on-top desktop **time-tracking widget** for Windows and Linux.
 Local-first: all data lives in a local SQLite database — no account, no cloud.
 
+### [⬇ Download DewTime →](https://dewtime.dewnet.app)
+
 </div>
 
 ## Features
