@@ -105,8 +105,11 @@ test('crash-recovery: seeded stale heartbeat + running entry → timer shows as 
   // Enable WAL mode + foreign keys (mirrors production database.ts)
   db.exec('PRAGMA journal_mode = WAL')
   db.exec('PRAGMA foreign_keys = ON')
-  // Apply inline schema
+  // Apply inline schema, then stamp the schema version to the latest migration
+  // (2). Without this the app boots at user_version=0 and re-runs 001_initial's
+  // bare `CREATE TABLE` against tables that already exist → aborts on launch.
   db.exec(SCHEMA_SQL)
+  db.exec('PRAGMA user_version = 2')
 
   // Seed: timer row
   const nowEpoch = Math.floor(Date.now() / 1000)

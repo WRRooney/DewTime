@@ -31,11 +31,14 @@ import { test, expect } from './fixtures'
 // GAP-03: description in-place edit — click, type, Enter commits
 // ---------------------------------------------------------------------------
 test('description in-place edit — click, type, Enter commits', async ({ window }) => {
-  // Add a timer row (DB starts empty)
+  // Add a timer row (DB starts empty). The new row auto-focuses its description
+  // into edit mode, so dismiss that first to exercise click-to-edit from rest.
   await window.getByRole('button', { name: /add timer/i }).click()
-  await expect(window.getByTestId('description-cell')).toBeVisible()
+  await expect(window.getByTestId('description-input')).toBeVisible()
+  await window.getByTestId('description-input').press('Escape')
 
-  // Click the description cell to enter edit mode
+  // Now in rest state — click the description cell to enter edit mode
+  await expect(window.getByTestId('description-cell')).toBeVisible()
   await window.getByTestId('description-cell').click()
 
   // The input should appear
