@@ -16,7 +16,7 @@
   color: var(--color-fg);
 }
 
-/* Popup heading — the Ignition popup-header band ("<timer description>"). */
+/* Popup heading band ("<timer description>"). */
 .heading {
   flex-shrink: 0;
   margin: 0 0 var(--space-3) 0;
@@ -37,7 +37,7 @@
   overflow-y: auto;
 }
 
-/* Ignition entry row: numbered badge on the left, fields to the right. */
+/* Entry row: numbered badge on the left, fields to the right. */
 .entryRow {
   display: flex;
   flex-direction: row;
@@ -147,7 +147,7 @@
   margin-bottom: var(--space-1);
 }
 
-/* Ignition inline offset row: "Offset  [ 0 ]  min" */
+/* Inline offset row: "Offset  [ 0 ]  min" */
 .offsetRow {
   display: flex;
   align-items: center;

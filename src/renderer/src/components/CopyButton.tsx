@@ -1,6 +1,5 @@
 // Small ghost copy-to-clipboard button used in timer-table cells (project #,
-// description, decimal-hours duration). Echoes the Ignition v0 per-field copy
-// icons.
+// description, decimal-hours duration) — one copy icon per field.
 //
 // Copy routes through window.api.system.copyToClipboard (Electron main-process
 // clipboard) — NOT navigator.clipboard, which is unavailable in the packaged

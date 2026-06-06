@@ -47,7 +47,7 @@ export function openTimestampEditorWindow(timerId: number): void {
   }
 
   editorWin = new BrowserWindow({
-    // Ignition-parity: wider, shorter popup so each entry's Start/End sit side by side.
+    // Wider, shorter popup so each entry's Start/End sit side by side.
     width: 520,
     height: 440,
     minWidth: 420,

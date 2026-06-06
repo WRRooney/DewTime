@@ -16,8 +16,8 @@
   white-space: nowrap;
   cursor: text;
   color: var(--color-fg);
-  line-height: 44px; /* vertically center within the taller Ignition-parity row */
-  text-align: right; /* Ignition right-aligns the description toward the duration column */
+  line-height: 44px; /* vertically center within the taller row */
+  text-align: right; /* right-aligned toward the duration column */
 }
 
 /* Muted placeholder when timer.description === "" */
@@ -39,5 +39,5 @@
   padding: 0 var(--space-2);
   outline: none;
   font: inherit;
-  text-align: right; /* match the right-aligned rest state (Ignition) */
+  text-align: right; /* match the right-aligned rest state */
 }

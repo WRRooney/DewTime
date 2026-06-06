@@ -20,7 +20,7 @@
   background: var(--color-row-hover);
 }
 
-/* Running timer — bold + accent (Ignition psc-Hover running state, var(--indicator)). */
+/* Running timer — bold + accent. */
 .running {
   color: var(--color-accent);
   font-weight: var(--font-weight-semibold);

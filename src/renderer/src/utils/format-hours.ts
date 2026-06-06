@@ -1,5 +1,5 @@
 // Billing-style quarter-hour rounding + decimal-hours formatting for the
-// duration copy-button (Ignition v0 copied a floating-point hours total like
+// duration copy-button (copies a floating-point hours total like
 // "22.75" / "0.00").
 //
 // Rounding rule (per product spec): round to the nearest quarter hour, but
@@ -11,7 +11,7 @@
 //   1:05 (5m past :00)  → round up   → 1.25
 //   1:18 (3m past :15)  → round down → 1.25
 //   1:20 (5m past :15)  → round up   → 1.50
-//  22:48 (3m past :45)  → round down → 22.75   (matches Ignition's "22.75")
+//  22:48 (3m past :45)  → round down → 22.75
 //
 // Dependency-free, pure. Negative/zero clamp to 0 (display never bills negative
 // time — mirrors formatDuration's clamp).

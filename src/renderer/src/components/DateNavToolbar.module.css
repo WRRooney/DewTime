@@ -19,7 +19,7 @@
    Rows
    ────────────────────────────────────────── */
 
-/* Title row: "Timers" heading + week-total chip (Ignition header band). */
+/* Title row: "Timers" heading + week-total chip. */
 .titleRow {
   display: flex;
   align-items: center;
@@ -51,7 +51,7 @@
   color: var(--color-fg-muted);
 }
 
-/* The accent chip wrapping the live weekly total (Ignition --callToActionHighlight pill). */
+/* The accent chip wrapping the live weekly total. */
 .weekPill {
   display: inline-flex;
   align-items: center;
@@ -114,7 +114,7 @@
   color: var(--color-fg);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  font-family: var(--font-stack-mono); /* Ignition rendered the date in monospace */
+  font-family: var(--font-stack-mono); /* monospace for the date readout */
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-normal);
   text-align: center;

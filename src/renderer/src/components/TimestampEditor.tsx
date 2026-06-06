@@ -65,7 +65,7 @@ function EntryRow({ entry, idx, onCommitStart, onCommitEnd }: EntryRowProps): JS
 
   return (
     <div className={styles.entryRow}>
-      {/* Ignition entry index badge ("1.", "2." …) */}
+      {/* Entry index badge ("1.", "2." …) */}
       <span className={styles.entryIndex}>{idx + 1}</span>
       <div className={styles.entryBody}>
         <span className={styles.entryLabel}>
@@ -140,7 +140,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
 
   return (
     <div className={styles.body}>
-      {/* Header — echoes the Ignition popup title ("<description>"). */}
+      {/* Header — the popup title ("<description>"). */}
       <h1 className={styles.heading}>
         {timer?.description?.trim() || 'Untitled timer'}
       </h1>
