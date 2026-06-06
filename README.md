@@ -71,6 +71,6 @@ npm run smoke:packaged # spawn the packaged binary and verify it boots
 
 ## License
 
-[MIT](LICENSE) © 2026 Will Rooney
+[MIT](LICENSE) © 2026 DewDev LLC
 
 [electron-vite]: https://electron-vite.org

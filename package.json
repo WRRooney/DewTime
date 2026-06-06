@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0-beta.1",
   "description": "DewTime — Electron + TypeScript desktop time tracking widget",
-  "author": "Will Rooney <37600716+WRRooney@users.noreply.github.com>",
+  "author": "DewDev LLC",
   "license": "MIT",
   "type": "module",
   "main": "out/main/index.mjs",
