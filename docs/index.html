@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DewTime — desktop time tracking widget</title>
+    <meta
+      name="description"
+      content="DewTime is a lightweight, always-on-top desktop time-tracking widget for Windows and Linux. Local-first: your data lives in a local SQLite database — no account, no cloud."
+    />
+    <meta name="theme-color" content="#0d1014" />
+    <link rel="icon" href="dewtime.svg" type="image/svg+xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="DewTime" />
+    <meta
+      property="og:description"
+      content="A lightweight, always-on-top desktop time-tracking widget. Local-first. Windows & Linux."
+    />
+    <meta property="og:type" content="website" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- atmospheric layers -->
+    <div class="grain" aria-hidden="true"></div>
+    <div class="glow glow--dawn" aria-hidden="true"></div>
+    <div class="glow glow--dew" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="DewTime home">
+        <svg class="brand__mark" viewBox="0 0 37.027561 33.15612" aria-hidden="true">
+          <g transform="translate(-109.85841,-123.49065)">
+            <path d="m 126.52226,124.22753 a 15.841228,15.841228 0 0 0 -15.84093,15.84093 15.841228,15.841228 0 0 0 15.84093,15.84143 15.841228,15.841228 0 0 0 2.46503,-0.19308 15.841228,15.841228 0 0 1 -13.37739,-15.64835 15.841228,15.841228 0 0 1 13.37739,-15.64835 15.841228,15.841228 0 0 0 -2.46503,-0.19258 z" />
+            <path d="m 146.05786,129.58823 c -0.13204,-0.13348 -9.0313,2.19998 -9.08088,2.38108 -0.0184,0.0673 0.86267,1.01203 1.98703,2.17071 l -8.80386,8.80387 -4.81153,-4.81894 -2.28825,2.58897 7.09978,7.10027 11.22543,-11.22543 c 1.16659,1.15776 2.1251,2.07209 2.19344,2.05418 0.18162,-0.0476 2.61089,-8.92123 2.47884,-9.05471 z" />
+            <rect width="3.5793073" height="1.701638" x="117.76934" y="138.98599" ry="0.85081899" />
+            <rect width="3.5793073" height="1.701638" x="169.69678" y="54.428406" ry="0.85081899" transform="rotate(29.803567)" />
+            <rect width="3.5793073" height="1.701638" x="171.45546" y="-49.520306" ry="0.85081899" transform="rotate(61.172821)" />
+            <rect width="3.5793073" height="1.701638" x="-70.232353" y="183.90828" ry="0.85081899" transform="rotate(-60.157091)" />
+            <rect width="3.5793073" height="1.701638" x="26.427578" y="187.21246" ry="0.85081899" transform="rotate(-31.097209)" />
+          </g>
+        </svg>
+        <span class="brand__name">DewTime</span>
+      </a>
+      <nav class="topnav">
+        <a href="https://github.com/WRRooney/DewTime" target="_blank" rel="noopener">Source</a>
+        <a href="https://github.com/WRRooney/DewTime/releases" target="_blank" rel="noopener"
+          >Releases</a
+        >
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero__dial" aria-hidden="true">
+          <!-- rotating tick ring -->
+          <svg class="dial__ring" viewBox="0 0 200 200">
+            <g id="ticks"></g>
+          </svg>
+          <svg class="dial__logo" viewBox="0 0 37.027561 33.15612" aria-hidden="true">
+            <g transform="translate(-109.85841,-123.49065)">
+              <path d="m 126.52226,124.22753 a 15.841228,15.841228 0 0 0 -15.84093,15.84093 15.841228,15.841228 0 0 0 15.84093,15.84143 15.841228,15.841228 0 0 0 2.46503,-0.19308 15.841228,15.841228 0 0 1 -13.37739,-15.64835 15.841228,15.841228 0 0 1 13.37739,-15.64835 15.841228,15.841228 0 0 0 -2.46503,-0.19258 z" />
+              <path d="m 146.05786,129.58823 c -0.13204,-0.13348 -9.0313,2.19998 -9.08088,2.38108 -0.0184,0.0673 0.86267,1.01203 1.98703,2.17071 l -8.80386,8.80387 -4.81153,-4.81894 -2.28825,2.58897 7.09978,7.10027 11.22543,-11.22543 c 1.16659,1.15776 2.1251,2.07209 2.19344,2.05418 0.18162,-0.0476 2.61089,-8.92123 2.47884,-9.05471 z" />
+            </g>
+          </svg>
+        </div>
+
+        <p class="hero__eyebrow">
+          <span class="dot"></span> Local-first desktop time tracking
+        </p>
+        <h1 class="hero__title">
+          Track time<br /><span class="grad">where it happens.</span>
+        </h1>
+        <p class="hero__lede">
+          A frameless, always-on-top widget that sits in the corner of your screen.
+          One running timer, in-place editing, day &amp; week totals — all backed by a
+          local SQLite database. No account. No cloud.
+        </p>
+
+        <!-- primary download (OS-detected) -->
+        <div class="cta" id="primary-cta" data-state="loading">
+          <a class="btn btn--primary" id="primary-link" href="#downloads">
+            <span class="btn__os" id="primary-os">Download</span>
+            <span class="btn__sub" id="primary-sub">detecting your platform…</span>
+          </a>
+          <a class="btn btn--ghost" href="#downloads">All downloads</a>
+        </div>
+        <p class="hero__meta">
+          <span id="rel-version" class="tag">— · —</span>
+          <span id="rel-date" class="muted"></span>
+        </p>
+      </section>
+
+      <!-- DOWNLOADS -->
+      <section class="downloads" id="downloads">
+        <div class="section-head">
+          <h2>Get DewTime</h2>
+          <p class="muted">
+            Builds are produced on every release tag.
+            <span id="updater-note"
+              >The installer and AppImage update themselves in the background.</span
+            >
+          </p>
+        </div>
+
+        <div class="grid" id="dl-grid">
+          <!-- Windows installer -->
+          <article class="card" data-asset="win-installer">
+            <div class="card__top">
+              <span class="card__os" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="osico"><path d="M3 5.1 10.5 4v7.3H3V5.1Zm0 13.8L10.5 20v-7.2H3v6.1Zm8.6 1.2L21 21.4V12.8h-9.4v7.3Zm0-16.3v7.3H21V2.6L11.6 3.8Z"/></svg>
+              </span>
+              <div class="card__rec" data-rec>Recommended</div>
+            </div>
+            <h3>Windows</h3>
+            <p class="card__desc">Installer (.exe) — sets up Start-menu shortcut &amp; auto-update.</p>
+            <a class="btn btn--card" data-dl-link href="#" aria-disabled="true">
+              <span data-dl-label>Windows installer</span>
+            </a>
+            <p class="card__file"><span data-dl-meta>checking latest release…</span></p>
+          </article>
+
+          <!-- Linux AppImage -->
+          <article class="card" data-asset="linux">
+            <div class="card__top">
+              <span class="card__os" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="osico"><path d="M12 2c-2 0-3.2 1.7-3.2 3.8 0 1.3.4 2 .4 3 0 1.2-1.3 2-2.4 4.1-1 1.9-2.2 3.6-2.2 5.3 0 1.6 1.2 2.3 2.7 2.6.5 1 1.6 1.4 2.9 1.4h3.6c1.3 0 2.4-.4 2.9-1.4 1.5-.3 2.7-1 2.7-2.6 0-1.7-1.2-3.4-2.2-5.3-1.1-2.1-2.4-2.9-2.4-4.1 0-1 .4-1.7.4-3C15.2 3.7 14 2 12 2Z"/></svg>
+              </span>
+              <div class="card__rec" data-rec>Recommended</div>
+            </div>
+            <h3>Linux</h3>
+            <p class="card__desc">AppImage — portable, runs anywhere, auto-updates.</p>
+            <a class="btn btn--card" data-dl-link href="#" aria-disabled="true">
+              <span data-dl-label>Linux AppImage</span>
+            </a>
+            <p class="card__file"><span data-dl-meta>checking latest release…</span></p>
+          </article>
+
+          <!-- Windows portable -->
+          <article class="card card--alt" data-asset="win-portable">
+            <div class="card__top">
+              <span class="card__os" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="osico"><path d="M3 5.1 10.5 4v7.3H3V5.1Zm0 13.8L10.5 20v-7.2H3v6.1Zm8.6 1.2L21 21.4V12.8h-9.4v7.3Zm0-16.3v7.3H21V2.6L11.6 3.8Z"/></svg>
+              </span>
+            </div>
+            <h3>Windows portable</h3>
+            <p class="card__desc">Single .exe, no install. (Portable builds don't self-update.)</p>
+            <a class="btn btn--card" data-dl-link href="#" aria-disabled="true">
+              <span data-dl-label>Portable .exe</span>
+            </a>
+            <p class="card__file"><span data-dl-meta>checking latest release…</span></p>
+          </article>
+        </div>
+
+        <!-- status banner for empty / error states -->
+        <div class="banner" id="dl-banner" hidden></div>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="features">
+        <div class="feat">
+          <span class="feat__no">01</span>
+          <h4>One timer, no chaos</h4>
+          <p>Starting a timer auto-stops the rest. Project #, name, description, and notes per entry.</p>
+        </div>
+        <div class="feat">
+          <span class="feat__no">02</span>
+          <h4>Edit the past</h4>
+          <p>Every field edits in place. Adjust any start/end timestamp, or nudge totals with a signed offset.</p>
+        </div>
+        <div class="feat">
+          <span class="feat__no">03</span>
+          <h4>Day &amp; week at a glance</h4>
+          <p>A date control with running totals for the selected day and the whole week.</p>
+        </div>
+        <div class="feat">
+          <span class="feat__no">04</span>
+          <h4>Yours, locally</h4>
+          <p>Everything lives in a local SQLite file. No account, no telemetry, no cloud.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__brand">
+        <svg class="brand__mark" viewBox="0 0 37.027561 33.15612" aria-hidden="true">
+          <g transform="translate(-109.85841,-123.49065)">
+            <path d="m 126.52226,124.22753 a 15.841228,15.841228 0 0 0 -15.84093,15.84093 15.841228,15.841228 0 0 0 15.84093,15.84143 15.841228,15.841228 0 0 0 2.46503,-0.19308 15.841228,15.841228 0 0 1 -13.37739,-15.64835 15.841228,15.841228 0 0 1 13.37739,-15.64835 15.841228,15.841228 0 0 0 -2.46503,-0.19258 z" />
+            <path d="m 146.05786,129.58823 c -0.13204,-0.13348 -9.0313,2.19998 -9.08088,2.38108 -0.0184,0.0673 0.86267,1.01203 1.98703,2.17071 l -8.80386,8.80387 -4.81153,-4.81894 -2.28825,2.58897 7.09978,7.10027 11.22543,-11.22543 c 1.16659,1.15776 2.1251,2.07209 2.19344,2.05418 0.18162,-0.0476 2.61089,-8.92123 2.47884,-9.05471 z" />
+          </g>
+        </svg>
+        <span>DewTime</span>
+      </div>
+      <nav class="footer__links">
+        <a href="https://github.com/WRRooney/DewTime" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/WRRooney/DewTime/releases" target="_blank" rel="noopener">All releases</a>
+        <a href="https://github.com/WRRooney/DewTime/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </nav>
+      <p class="footer__fine">© <span id="year"></span> Will Rooney · Built with Electron &amp; TypeScript</p>
+    </footer>
+
+    <script src="download.js" defer></script>
+  </body>
+</html>
