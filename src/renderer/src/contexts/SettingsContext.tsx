@@ -14,6 +14,9 @@ export interface SettingsContextValue {
   weekStart: WeekStart
   /** Optimistic cache rehydrate — caller has already persisted via IPC. */
   setWeekStart: (value: WeekStart) => Promise<void>
+  alwaysOnTop: boolean
+  /** Optimistic cache rehydrate — caller has already persisted via IPC. */
+  setAlwaysOnTop: (value: boolean) => Promise<void>
   /** Re-fetch from `window.api.settings.list()`. Called automatically on mount. */
   refresh: () => Promise<void>
 }
@@ -31,11 +34,13 @@ export function SettingsProvider({
   children: ReactNode
 }): JSX.Element {
   const [weekStart, setWeekStartState] = useState<WeekStart>(0)
+  const [alwaysOnTop, setAlwaysOnTopState] = useState<boolean>(false)
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
       const all = await window.api.settings.list()
       setWeekStartState(narrowWeekStart(all['settings.week_start']))
+      setAlwaysOnTopState(all['settings.always_on_top'] === true)
     } catch (err) {
       // Mount-time failure means settings IPC is broken; keep the seeded default and log.
       // eslint-disable-next-line no-console
@@ -47,12 +52,16 @@ export function SettingsProvider({
     setWeekStartState(value)
   }, [])
 
+  const setAlwaysOnTop = useCallback(async (value: boolean): Promise<void> => {
+    setAlwaysOnTopState(value)
+  }, [])
+
   useEffect(() => {
     void refresh()
   }, [refresh])
 
   return (
-    <Ctx.Provider value={{ weekStart, setWeekStart, refresh }}>
+    <Ctx.Provider value={{ weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop, refresh }}>
       {children}
     </Ctx.Provider>
   )

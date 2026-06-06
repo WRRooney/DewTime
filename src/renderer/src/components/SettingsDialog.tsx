@@ -16,8 +16,9 @@ import { useSettings, type WeekStart } from '../contexts/SettingsContext'
 
 export const SettingsDialog = forwardRef<HTMLDialogElement>(
   function SettingsDialog(_, ref): JSX.Element {
-    const { weekStart, setWeekStart } = useSettings()
+    const { weekStart, setWeekStart, alwaysOnTop, setAlwaysOnTop } = useSettings()
     const [draft, setDraft] = useState<WeekStart>(weekStart)
+    const [draftAlwaysOnTop, setDraftAlwaysOnTop] = useState<boolean>(alwaysOnTop)
     const [error, setError] = useState<string | null>(null)
 
     // Defensive sync: if the context's weekStart changes from another source
@@ -28,6 +29,11 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
     useEffect(() => {
       setDraft(weekStart)
     }, [weekStart])
+
+    // Defensive sync for alwaysOnTop — mirrors the weekStart pattern above.
+    useEffect(() => {
+      setDraftAlwaysOnTop(alwaysOnTop)
+    }, [alwaysOnTop])
 
     const close = (): void => {
       if (typeof ref === 'object' && ref !== null && ref.current !== null) {
@@ -42,6 +48,8 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
       try {
         await window.api.settings.set('settings.week_start', draft)
         await setWeekStart(draft)
+        await window.api.settings.set('settings.always_on_top', draftAlwaysOnTop)
+        await setAlwaysOnTop(draftAlwaysOnTop)
         setError(null)
         return true
       } catch (err) {
@@ -54,6 +62,7 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
 
     const handleCancel = (): void => {
       setDraft(weekStart)
+      setDraftAlwaysOnTop(alwaysOnTop)
       setError(null)
       close()
     }
@@ -104,6 +113,17 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
                 onChange={() => setDraft(6)}
               />
               Sunday
+            </label>
+          </fieldset>
+          <fieldset className={`${styles.fieldset} ${styles.fieldsetSpaced}`}>
+            <legend className={styles.legend}>Window</legend>
+            <label className={styles.radioRow}>
+              <input
+                type="checkbox"
+                checked={draftAlwaysOnTop}
+                onChange={(e) => setDraftAlwaysOnTop(e.target.checked)}
+              />
+              Always on top
             </label>
           </fieldset>
           {error !== null && (
