@@ -34,10 +34,11 @@ describe('migration runner', () => {
     )
     // user_version was bumped inside the same transaction. Plan 03-01
     // added migration 002 (settings.window_geometry seed); quick task
-    // 260606-0mc added migration 003 (always_on_top seed), so the head is
-    // now 3; the dedicated MIGR-003 test below asserts this exact value.
+    // 260606-0mc added migration 003 (always_on_top seed); quick task
+    // 260606-16w added migration 004 (auto_update seed), so the head is
+    // now 4; the dedicated MIGR-004 test below asserts this exact value.
     const version = db.pragma('user_version', { simple: true })
-    expect(version).toBe(3)
+    expect(version).toBe(4)
   })
 
   it('idempotent re-run: second runMigrations() does not duplicate seeded settings', () => {
@@ -109,14 +110,13 @@ describe('migration runner', () => {
     expect(row.value).toBe('{"x":120,"y":240,"width":1024,"height":768}')
   })
 
-  it('MIGR-002: PRAGMA user_version is 2 after migrations 001+002 (window_geometry)', () => {
-    // Apply only the first two migrations by temporarily checking the runner
-    // against migration 002 directly — instead, we verify the full run yields 3.
+  it('MIGR-002: PRAGMA user_version is 4 after all migrations (001+002+003+004)', () => {
+    // Verify the full run yields the current latest version (4 after 004_auto_update).
     runMigrations()
     const db = getDb()
     const version = db.pragma('user_version', { simple: true })
-    // After all migrations (001, 002, 003), version is 3.
-    expect(version).toBe(3)
+    // After all migrations (001, 002, 003, 004), version is 4.
+    expect(version).toBe(4)
   })
 
   // ---- Quick task 260606-0mc additions (MIGR-003) ----
@@ -158,5 +158,46 @@ describe('migration runner', () => {
       .get() as { value: string }
     // User's saved preference survives — INSERT OR IGNORE skipped on existing row.
     expect(row.value).toBe('true')
+  })
+
+  // ---- Quick task 260606-16w additions (MIGR-004) ----
+
+  it('MIGR-004: settings.auto_update seeded with true (updates-on by default)', () => {
+    runMigrations()
+    const db = getDb()
+    const row = db
+      .prepare(`SELECT value FROM settings WHERE key = 'settings.auto_update'`)
+      .get() as { value: string } | undefined
+    expect(row).toBeDefined()
+    // JSON-encoded boolean true — updates enabled by default to preserve current behavior.
+    expect(row?.value).toBe('true')
+  })
+
+  it('MIGR-004 idempotency: second runMigrations() leaves a single auto_update row', () => {
+    runMigrations()
+    expect(() => runMigrations()).not.toThrow()
+    const db = getDb()
+    const { c } = db
+      .prepare(
+        `SELECT COUNT(*) as c FROM settings WHERE key = 'settings.auto_update'`,
+      )
+      .get() as { c: number }
+    expect(c).toBe(1)
+  })
+
+  it('MIGR-004 idempotency: user preference survives re-run (INSERT OR IGNORE preserves user data)', () => {
+    runMigrations()
+    const db = getDb()
+    // Simulate the user disabling auto-update.
+    db.prepare(`UPDATE settings SET value = ? WHERE key = ?`).run(
+      'false',
+      'settings.auto_update',
+    )
+    expect(() => runMigrations()).not.toThrow()
+    const row = db
+      .prepare(`SELECT value FROM settings WHERE key = 'settings.auto_update'`)
+      .get() as { value: string }
+    // User's saved preference survives — INSERT OR IGNORE skipped on existing row.
+    expect(row.value).toBe('false')
   })
 })

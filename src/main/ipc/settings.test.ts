@@ -47,7 +47,16 @@ vi.mock('electron', () => ({
   },
 }))
 
+// Mock the updater service so auto_update live-apply side effects can be tested
+// without a real electron-updater or packaged app environment.
+// NOTE: hoisted alongside the electron mock — do NOT close over module-scope vars.
+vi.mock('@main/services/updater', () => ({
+  initUpdater: vi.fn(),
+  stopUpdater: vi.fn(),
+}))
+
 import { BrowserWindow } from 'electron'
+import { initUpdater, stopUpdater } from '@main/services/updater'
 import { initDb, closeDb } from '@main/db/database'
 import { runMigrations } from '@main/db/migrate'
 import { resetStmtCache as resetSettings } from '@main/db/repositories/settings'
@@ -127,10 +136,10 @@ describe('settings IPC handlers — boundary behavior', () => {
   })
 
   // SET-IPC-03 — `settings.list` returns every seeded key including the
-  // new composite window_geometry and always_on_top. JSON parsing happens in
-  // the repo's `getAll()` — this test verifies the round-trip from migration
-  // seed → repo → handler → renderer payload shape.
-  it('SET-IPC-03: settings.list returns all seeded keys plus window_geometry composite and always_on_top', async () => {
+  // new composite window_geometry, always_on_top, and auto_update. JSON parsing
+  // happens in the repo's `getAll()` — this test verifies the round-trip from
+  // migration seed → repo → handler → renderer payload shape.
+  it('SET-IPC-03: settings.list returns all seeded keys plus window_geometry composite, always_on_top, and auto_update', async () => {
     const all = await handleList(undefined)
     expect(all).toMatchObject({
       'settings.week_start': 0,
@@ -139,6 +148,7 @@ describe('settings IPC handlers — boundary behavior', () => {
       'settings.widget_mode': 'floating',
       'settings.auto_launch': false,
       'settings.always_on_top': false,
+      'settings.auto_update': true,
       'settings.window_geometry': {
         x: null,
         y: null,
@@ -211,5 +221,45 @@ describe('settings IPC handlers — boundary behavior', () => {
     mockIsDestroyed.mockReturnValueOnce(true)
     await handleSet({ key: 'settings.always_on_top', value: true })
     expect(mockSetAlwaysOnTop).not.toHaveBeenCalled()
+  })
+
+  // AUTO-UPDATE-01: handleSet('settings.auto_update', true) persists AND calls initUpdater once
+  it('AUTO-UPDATE-01: handleSet("settings.auto_update", true) persists and calls initUpdater with a non-destroyed window', async () => {
+    // Default seed from migration 004 is true; set to false first to test toggling on
+    await handleSet({ key: 'settings.auto_update', value: false })
+    vi.mocked(initUpdater).mockClear()
+    vi.mocked(stopUpdater).mockClear()
+
+    await handleSet({ key: 'settings.auto_update', value: true })
+
+    // Persisted in DB
+    await expect(
+      handleGet({ key: 'settings.auto_update' }),
+    ).resolves.toBe(true)
+
+    // Side effect: initUpdater called once with a BrowserWindow
+    expect(initUpdater).toHaveBeenCalledTimes(1)
+    expect(stopUpdater).not.toHaveBeenCalled()
+  })
+
+  // AUTO-UPDATE-02: handleSet('settings.auto_update', false) persists AND calls stopUpdater
+  it('AUTO-UPDATE-02: handleSet("settings.auto_update", false) persists and calls stopUpdater, not initUpdater', async () => {
+    await handleSet({ key: 'settings.auto_update', value: false })
+
+    // Persisted in DB
+    await expect(
+      handleGet({ key: 'settings.auto_update' }),
+    ).resolves.toBe(false)
+
+    // Side effect: stopUpdater called, initUpdater NOT called
+    expect(stopUpdater).toHaveBeenCalledTimes(1)
+    expect(initUpdater).not.toHaveBeenCalled()
+  })
+
+  // AUTO-UPDATE-03: other keys do NOT trigger initUpdater or stopUpdater
+  it('AUTO-UPDATE-03: handleSet for other keys does NOT call initUpdater or stopUpdater', async () => {
+    await handleSet({ key: 'settings.week_start', value: 6 })
+    expect(initUpdater).not.toHaveBeenCalled()
+    expect(stopUpdater).not.toHaveBeenCalled()
   })
 })

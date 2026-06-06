@@ -245,8 +245,19 @@ export async function runMain(): Promise<void> {
 
   windowGeometry.attachListeners(win)
 
-  // Start auto-update checks (no-ops in dev/unpackaged builds).
-  initUpdater(win)
+  // Start auto-update checks only when the setting is enabled (default true).
+  // initUpdater already no-ops in dev/unpackaged builds — this gate is an
+  // additional skip so the updater is not even wired when the user has disabled it.
+  let autoUpdate = true
+  try {
+    autoUpdate = settingsRepo.get('settings.auto_update')
+  } catch {
+    // NotFoundError before migration 004 seed runs — default to enabled (current behavior).
+    autoUpdate = true
+  }
+  if (autoUpdate) {
+    initUpdater(win)
+  }
 
   app.on('window-all-closed', () => {
     // macOS convention: apps stay alive when all windows close.

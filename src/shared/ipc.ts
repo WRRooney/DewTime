@@ -137,6 +137,7 @@ export type SettingKey =
   | 'settings.widget_mode'
   | 'settings.auto_launch'
   | 'settings.always_on_top'
+  | 'settings.auto_update'
   | 'settings.window_geometry' // composite JSON key; value type WindowGeometry above
 
 /**
@@ -150,6 +151,7 @@ export type SettingValue<K extends SettingKey> = K extends 'settings.week_start'
         | 'settings.auto_pause'
         | 'settings.auto_launch'
         | 'settings.always_on_top'
+        | 'settings.auto_update'
     ? boolean
     : K extends 'settings.widget_mode'
       ? 'floating' | 'windowed' | 'tray'

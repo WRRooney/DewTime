@@ -12,6 +12,7 @@
 
 import { ipcMain, BrowserWindow } from 'electron'
 import * as settingsRepo from '@main/db/repositories/settings'
+import { initUpdater, stopUpdater } from '@main/services/updater'
 import { handler } from './system'
 import {
   GetArgsSchema,
@@ -35,9 +36,12 @@ export const handleGet = handler(GetArgsSchema, async ({ key }) => {
  * The `as SettingValue<typeof args.key>` cast bridges the discriminated union's
  * `(key, value)` tuple to the per-K conditional type after Zod validation.
  *
- * Side effect: when key === 'settings.always_on_top', applies the value live
- * to all non-destroyed windows via setAlwaysOnTop so the change takes effect
- * without requiring an app restart.
+ * Side effects:
+ *   - when key === 'settings.always_on_top', applies the value live to all
+ *     non-destroyed windows via setAlwaysOnTop so the change takes effect
+ *     without requiring an app restart.
+ *   - when key === 'settings.auto_update', starts or stops the auto-updater
+ *     immediately via initUpdater/stopUpdater — no restart required.
  */
 export const handleSet = handler(SetArgsSchema, async (args) => {
   settingsRepo.set(
@@ -59,6 +63,22 @@ export const handleSet = handler(SetArgsSchema, async (args) => {
           win.setAlwaysOnTop(value)
         }
       }
+    }
+  }
+
+  // Live-apply auto_update — start or stop the updater immediately.
+  if (args.key === 'settings.auto_update') {
+    const value = args.value as boolean
+    if (value) {
+      // Find the live main window to pass to initUpdater (it needs a BrowserWindow
+      // for future renderer-facing progress UI). If no live window exists, skip —
+      // boot will wire the updater when the window opens.
+      const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed())
+      if (win) {
+        initUpdater(win)
+      }
+    } else {
+      stopUpdater()
     }
   }
 })
