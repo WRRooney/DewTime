@@ -88,9 +88,13 @@ jobs:
         if: runner.os == 'Linux'
         # scripts/smoke-packaged.ts prefixes xvfb-run --auto-servernum
         # internally when CI === 'true' AND platform is linux.
+        # APPIMAGE_EXTRACT_AND_RUN=1: ubuntu-latest (24.04) ships without
+        # libfuse2, so run the AppImage in extract-and-run mode instead of
+        # mounting it via FUSE.
         run: npx tsx scripts/smoke-packaged.ts
         env:
           CI: 'true'
+          APPIMAGE_EXTRACT_AND_RUN: '1'
 
       - name: Packaged-binary smoke test (Windows)
         if: runner.os == 'Windows'
