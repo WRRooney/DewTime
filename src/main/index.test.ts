@@ -206,10 +206,39 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
     expect(opts['autoHideMenuBar']).toBe(true)
   })
 
-  it("WIN-02: alwaysOnTop:true at construction; macOS-only setAlwaysOnTop(true, 'floating') branch fires on darwin, not on linux/win32 (AP-10)", async () => {
-    // --- darwin path: setAlwaysOnTop('floating') MUST be called once ----------
+  it("WIN-02: alwaysOnTop reflects persisted setting (false=default, true=opt-in); macOS-only setAlwaysOnTop(true, 'floating') branch fires only when setting is true (AP-10)", async () => {
+    // --- darwin path with alwaysOnTop=false (default): no setAlwaysOnTop call ---
     Object.defineProperty(process, 'platform', { value: 'darwin' })
     {
+      // Mock settingsRepo to return false (windowed default)
+      vi.doMock('@main/db/repositories/settings', () => ({
+        get: vi.fn().mockReturnValue(false),
+        set: vi.fn(),
+        getAll: vi.fn().mockReturnValue({}),
+        resetStmtCache: vi.fn(),
+      }))
+      const { BrowserWindow } = await import('electron')
+      const { createWindow } = await import('./index')
+      const win = createWindow()
+      const opts = vi.mocked(BrowserWindow).mock.calls[0]?.[0] as Record<
+        string,
+        unknown
+      >
+      expect(opts['alwaysOnTop']).toBe(false)
+      expect(win.setAlwaysOnTop).not.toHaveBeenCalled()
+    }
+
+    // --- darwin path with alwaysOnTop=true: setAlwaysOnTop('floating') fires ---
+    vi.resetModules()
+    vi.clearAllMocks()
+    Object.defineProperty(process, 'platform', { value: 'darwin' })
+    {
+      vi.doMock('@main/db/repositories/settings', () => ({
+        get: vi.fn().mockReturnValue(true),
+        set: vi.fn(),
+        getAll: vi.fn().mockReturnValue({}),
+        resetStmtCache: vi.fn(),
+      }))
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()
@@ -222,12 +251,17 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
       expect(win.setAlwaysOnTop).toHaveBeenCalledWith(true, 'floating')
     }
 
-    // --- linux path: NEVER call setAlwaysOnTop (Electron throws on non-darwin
-    //     'floating') -----------------------------------------------------------
+    // --- linux path with alwaysOnTop=false: no setAlwaysOnTop call ---------------
     vi.resetModules()
     vi.clearAllMocks()
     Object.defineProperty(process, 'platform', { value: 'linux' })
     {
+      vi.doMock('@main/db/repositories/settings', () => ({
+        get: vi.fn().mockReturnValue(false),
+        set: vi.fn(),
+        getAll: vi.fn().mockReturnValue({}),
+        resetStmtCache: vi.fn(),
+      }))
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()
@@ -235,15 +269,21 @@ describe('main entry — Phase 3 frameless chrome (WIN-01, WIN-02, WIN-05, WIN-0
         string,
         unknown
       >
-      expect(opts['alwaysOnTop']).toBe(true)
+      expect(opts['alwaysOnTop']).toBe(false)
       expect(win.setAlwaysOnTop).not.toHaveBeenCalled()
     }
 
-    // --- win32 path: same as linux — no post-construction call ----------------
+    // --- win32 path with alwaysOnTop=true: no 'floating' call (non-darwin) ------
     vi.resetModules()
     vi.clearAllMocks()
     Object.defineProperty(process, 'platform', { value: 'win32' })
     {
+      vi.doMock('@main/db/repositories/settings', () => ({
+        get: vi.fn().mockReturnValue(true),
+        set: vi.fn(),
+        getAll: vi.fn().mockReturnValue({}),
+        resetStmtCache: vi.fn(),
+      }))
       const { BrowserWindow } = await import('electron')
       const { createWindow } = await import('./index')
       const win = createWindow()

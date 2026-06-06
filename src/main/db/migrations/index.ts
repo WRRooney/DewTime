@@ -6,8 +6,10 @@
 
 import init001 from './001_initial.sql?raw'
 import init002 from './002_window_geometry.sql?raw'
+import init003 from './003_always_on_top.sql?raw'
 
 export const MIGRATIONS = [
   { version: 1, sql: init001 },
   { version: 2, sql: init002 },
+  { version: 3, sql: init003 },
 ] as const

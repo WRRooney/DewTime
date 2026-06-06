@@ -20,6 +20,7 @@ export const SettingKeySchema = z.enum([
   'settings.auto_pause',
   'settings.widget_mode',
   'settings.auto_launch',
+  'settings.always_on_top',
   // Composite window geometry; the legacy four-scalar window.x|y|width|height
   // keys were never seeded and do not appear in this enum.
   'settings.window_geometry',
@@ -90,6 +91,10 @@ export const SetArgsSchema = z.discriminatedUnion('key', [
   }),
   z.object({
     key: z.literal('settings.auto_launch'),
+    value: BooleanValueSchema,
+  }),
+  z.object({
+    key: z.literal('settings.always_on_top'),
     value: BooleanValueSchema,
   }),
   z.object({

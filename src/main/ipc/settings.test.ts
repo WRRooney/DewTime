@@ -33,10 +33,22 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // `settings.ts` imports `ipcMain` from 'electron' for the
 // `registerSettingsHandlers` export; mocking keeps the test in pure Node
 // (matches the Phase 2 `timeEntries.test.ts` pattern).
+// BrowserWindow is also mocked so the always_on_top live-apply side effect
+// can be tested without a real Electron environment.
+const mockSetAlwaysOnTop = vi.fn()
+const mockIsDestroyed = vi.fn().mockReturnValue(false)
 vi.mock('electron', () => ({
   app: { getPath: () => '/tmp/never-used-with-:memory:' },
   powerMonitor: { on: vi.fn() },
   ipcMain: { handle: vi.fn() },
+  BrowserWindow: {
+    getAllWindows: vi.fn().mockReturnValue([
+      {
+        setAlwaysOnTop: mockSetAlwaysOnTop,
+        isDestroyed: mockIsDestroyed,
+      },
+    ]),
+  },
 }))
 
 import { initDb, closeDb } from '@main/db/database'
@@ -49,6 +61,7 @@ describe('settings IPC handlers — boundary behavior', () => {
   beforeEach(() => {
     closeDb()
     resetSettings()
+    vi.clearAllMocks()
     initDb(':memory:')
     runMigrations()
   })
@@ -103,10 +116,10 @@ describe('settings IPC handlers — boundary behavior', () => {
   })
 
   // SET-IPC-03 — `settings.list` returns every seeded key including the
-  // new composite window_geometry. JSON parsing happens in the repo's
-  // `getAll()` — this test verifies the round-trip from migration seed →
-  // repo → handler → renderer payload shape.
-  it('SET-IPC-03: settings.list returns all seeded keys plus window_geometry composite', async () => {
+  // new composite window_geometry and always_on_top. JSON parsing happens in
+  // the repo's `getAll()` — this test verifies the round-trip from migration
+  // seed → repo → handler → renderer payload shape.
+  it('SET-IPC-03: settings.list returns all seeded keys plus window_geometry composite and always_on_top', async () => {
     const all = await handleList(undefined)
     expect(all).toMatchObject({
       'settings.week_start': 0,
@@ -114,6 +127,7 @@ describe('settings IPC handlers — boundary behavior', () => {
       'settings.auto_pause': false,
       'settings.widget_mode': 'floating',
       'settings.auto_launch': false,
+      'settings.always_on_top': false,
       'settings.window_geometry': {
         x: null,
         y: null,
@@ -145,5 +159,46 @@ describe('settings IPC handlers — boundary behavior', () => {
     await expect(
       handleGet({ key: 'settings.week_start' }),
     ).resolves.toBe(6)
+  })
+
+  // ALWAYS-ON-TOP-01: setting always_on_top=true calls setAlwaysOnTop on live windows
+  it('ALWAYS-ON-TOP-01: handleSet("settings.always_on_top", true) persists and calls setAlwaysOnTop(true) on live non-destroyed windows', async () => {
+    // Seed default is false
+    await expect(
+      handleGet({ key: 'settings.always_on_top' }),
+    ).resolves.toBe(false)
+
+    // Set to true — should call live window's setAlwaysOnTop
+    await handleSet({ key: 'settings.always_on_top', value: true })
+
+    // Persisted in DB
+    await expect(
+      handleGet({ key: 'settings.always_on_top' }),
+    ).resolves.toBe(true)
+
+    // Side effect: live window setAlwaysOnTop was called
+    expect(mockSetAlwaysOnTop).toHaveBeenCalledTimes(1)
+    // On non-darwin the second arg ('floating') is NOT passed; we just check true was set
+    expect(mockSetAlwaysOnTop).toHaveBeenCalledWith(true)
+  })
+
+  // ALWAYS-ON-TOP-02: setting always_on_top=false calls setAlwaysOnTop(false)
+  it('ALWAYS-ON-TOP-02: handleSet("settings.always_on_top", false) calls setAlwaysOnTop(false) on live windows', async () => {
+    await handleSet({ key: 'settings.always_on_top', value: false })
+    expect(mockSetAlwaysOnTop).toHaveBeenCalledTimes(1)
+    expect(mockSetAlwaysOnTop).toHaveBeenCalledWith(false)
+  })
+
+  // ALWAYS-ON-TOP-03: other keys do NOT trigger setAlwaysOnTop
+  it('ALWAYS-ON-TOP-03: handleSet for other keys does NOT call setAlwaysOnTop', async () => {
+    await handleSet({ key: 'settings.week_start', value: 6 })
+    expect(mockSetAlwaysOnTop).not.toHaveBeenCalled()
+  })
+
+  // ALWAYS-ON-TOP-04: destroyed windows are skipped
+  it('ALWAYS-ON-TOP-04: handleSet skips destroyed windows when applying always_on_top', async () => {
+    mockIsDestroyed.mockReturnValueOnce(true)
+    await handleSet({ key: 'settings.always_on_top', value: true })
+    expect(mockSetAlwaysOnTop).not.toHaveBeenCalled()
   })
 })
