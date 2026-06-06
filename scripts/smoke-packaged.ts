@@ -67,17 +67,35 @@ function findBinary(): string {
   }
 
   if (platform === 'linux') {
-    // Look for any .AppImage file in dist/
+    // Run the UNPACKED binary, not the .AppImage. The AppImage is still built
+    // above (so CI catches packaging breaks), but running it needs FUSE, which
+    // ubuntu-latest no longer ships — and extract-and-run is flaky. The unpacked
+    // binary in dist/linux-unpacked/ has the identical asar layout (same
+    // better-sqlite3 load path) and runs without any of that.
+    const unpackedDir = join(distDir, 'linux-unpacked')
+    const exclude = new Set(['chrome-sandbox', 'chrome_crashpad_handler'])
+    if (existsSync(unpackedDir)) {
+      const cand = readdirSync(unpackedDir).find((f) => {
+        if (exclude.has(f) || /\.(so|so\.\d+|pak|bin|dat|json|node)$/i.test(f)) return false
+        const p = join(unpackedDir, f)
+        try {
+          const st = statSync(p)
+          return st.isFile() && (st.mode & 0o111) !== 0 // any execute bit
+        } catch {
+          return false
+        }
+      })
+      if (cand) return join(unpackedDir, cand)
+    }
+    // Fallback: the .AppImage (older runners with FUSE).
     const entries = readdirSync(distDir)
     const appimage = entries.find((f) => /\.AppImage$/i.test(f))
     if (!appimage) {
-      console.error(`[smoke] FAIL: no .AppImage found in ${distDir}`)
+      console.error(`[smoke] FAIL: no linux-unpacked binary or .AppImage in ${distDir}`)
       console.error(`[smoke] dist contents: ${entries.join(', ')}`)
       process.exit(1)
     }
     const abs = join(distDir, appimage)
-    // Defensive: make sure it's executable. electron-builder usually sets this,
-    // but a previous failed build or non-default umask could leave it not-+x.
     try {
       chmodSync(abs, 0o755)
     } catch {
@@ -118,8 +136,12 @@ console.log(`[smoke] binary: ${binary}`)
 // connects to X. xvfb-run --auto-servernum provides a virtual framebuffer.
 // (RESEARCH.md §8 lines ~1198-1207.)
 const useXvfb = platform === 'linux' && process.env['CI'] === 'true'
+// On Linux the Chromium zygote aborts on CI because the SUID chrome-sandbox is
+// not root-owned. Pass --no-sandbox as an argv (env→appendSwitch isn't enough
+// to disable the SUID sandbox). webPreferences keep contextIsolation/sandbox.
+const appArgs = platform === 'linux' ? ['--no-sandbox'] : []
 const cmd = useXvfb ? 'xvfb-run' : binary
-const cmdArgs = useXvfb ? ['--auto-servernum', binary] : []
+const cmdArgs = useXvfb ? ['--auto-servernum', binary, ...appArgs] : appArgs
 
 console.log(`[smoke] spawn: ${cmd} ${cmdArgs.join(' ')} (TIMERZ_SMOKE=1, timeout=30s)`)
 const result = spawnSync(cmd, cmdArgs, {
