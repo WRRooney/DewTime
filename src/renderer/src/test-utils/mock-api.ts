@@ -13,9 +13,10 @@
 //   - Do NOT import from 'electron' here — the renderer never imports from electron
 //     and mocking it directly would break context isolation semantics (D-33).
 //
-// Namespaces mirrored (all 6 on ElectronApi):
+// Namespaces mirrored (all 7 on ElectronApi):
 //   timers (7 methods), projects (3 methods), timeEntries (8 methods — +setStart/setEnd Phase 5),
-//   settings (3 methods), system (3 methods), tick (1 method — subscribe returns unsubscribe fn)
+//   settings (3 methods), system (4 methods), tick (1 method — subscribe returns unsubscribe fn),
+//   updates (1 method — check returns UpdateCheckResult)
 //
 // Refs:
 //   - src/shared/ipc.ts (ElectronApi + per-namespace interfaces)
@@ -105,6 +106,9 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       // onDataChanged returns a no-op unsubscribe like tick.subscribe.
       onDataChanged: vi.fn(() => vi.fn()) as ElectronApi['editor']['onDataChanged'],
     },
+    updates: {
+      check: stub('updates.check') as ElectronApi['updates']['check'],
+    },
   }
 
   if (!overrides) return defaults
@@ -117,5 +121,6 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
     system: { ...defaults.system, ...overrides.system },
     tick: { ...defaults.tick, ...overrides.tick },
     editor: { ...defaults.editor, ...overrides.editor },
+    updates: { ...defaults.updates, ...overrides.updates },
   }
 }

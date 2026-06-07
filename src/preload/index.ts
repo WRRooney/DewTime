@@ -26,6 +26,7 @@ import type {
   ResumeResultDto,
   SettingKey,
   SettingValue,
+  UpdateCheckResult,
 } from '@shared/ipc'
 import { reviveError } from '@shared/errors'
 
@@ -171,6 +172,11 @@ const api: ElectronApi = {
         ipcRenderer.removeListener('timerz:data-changed', listener)
       }
     },
+  },
+  // Update action channel. Channel literal 'updates.check' MUST match the
+  // ipcMain.handle channel in src/main/ipc/updates.ts.
+  updates: {
+    check: () => invokeWrapped<UpdateCheckResult>('updates.check', {}),
   },
 }
 

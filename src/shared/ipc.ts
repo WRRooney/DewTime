@@ -2,6 +2,10 @@
 // schema column-for-column so better-sqlite3 plain objects deserialise directly.
 
 import type { EpochSeconds } from './time'
+import type { UpdateCheckResult } from './contracts/updates'
+
+// Re-export for renderer use (single source of truth in contracts/updates.ts).
+export type { UpdateCheckResult }
 
 // ---------------------------------------------------------------------------
 // Row types — column names match the SQLite schema exactly so better-sqlite3
@@ -235,6 +239,15 @@ export interface SystemApi {
   copyToClipboard(text: string): Promise<void>
 }
 
+/**
+ * `updates.*` IPC namespace — action/event channel, not a persisted setting.
+ * `check()` triggers an on-demand update check (works regardless of auto_update).
+ * The native approval dialog is driven entirely by main on the 'available' path.
+ */
+export interface UpdatesApi {
+  check(): Promise<UpdateCheckResult>
+}
+
 // ---------------------------------------------------------------------------
 // Aggregate — exposed on `window.api` via contextBridge (preload)
 // ---------------------------------------------------------------------------
@@ -250,4 +263,6 @@ export interface ElectronApi {
   tick: TickApi
   /** Timestamp-editor window controls. */
   editor: EditorApi
+  /** Update action channel — manual check + native approval dialog in main. */
+  updates: UpdatesApi
 }

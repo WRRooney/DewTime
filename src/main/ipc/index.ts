@@ -8,6 +8,7 @@ import { registerSettingsHandlers } from './settings'
 import { registerTimersHandlers } from './timers'
 import { registerProjectsHandlers } from './projects'
 import { registerEditorHandlers } from './editor'
+import { registerUpdatesHandlers } from './updates'
 
 /**
  * Register every IPC handler across every namespace. Called exactly once by
@@ -20,4 +21,5 @@ export function registerAllHandlers(): void {
   registerTimersHandlers()
   registerProjectsHandlers()
   registerEditorHandlers()
+  registerUpdatesHandlers()
 }
