@@ -21,6 +21,8 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
     const [draftAlwaysOnTop, setDraftAlwaysOnTop] = useState<boolean>(alwaysOnTop)
     const [draftAutoUpdate, setDraftAutoUpdate] = useState<boolean>(autoUpdate)
     const [error, setError] = useState<string | null>(null)
+    const [updateStatus, setUpdateStatus] = useState<string | null>(null)
+    const [checking, setChecking] = useState(false)
 
     // Defensive sync: if the context's weekStart changes from another source
     // (e.g., the Provider's mount-time refresh resolves AFTER the dialog has
@@ -40,6 +42,31 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
     useEffect(() => {
       setDraftAutoUpdate(autoUpdate)
     }, [autoUpdate])
+
+    const handleCheckUpdates = async (): Promise<void> => {
+      setChecking(true)
+      setUpdateStatus('Checking…')
+      try {
+        const r = await window.api.updates.check()
+        switch (r.status) {
+          case 'available':
+            setUpdateStatus('Update available' + (r.version ? ' v' + r.version : ''))
+            break
+          case 'up-to-date':
+            setUpdateStatus('Up to date')
+            break
+          case 'unsupported':
+            setUpdateStatus('Only available in the installed app')
+            break
+          default:
+            setUpdateStatus('Could not check for updates')
+        }
+      } catch {
+        setUpdateStatus('Could not check for updates')
+      } finally {
+        setChecking(false)
+      }
+    }
 
     const close = (): void => {
       if (typeof ref === 'object' && ref !== null && ref.current !== null) {
@@ -145,6 +172,21 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(
               />
               Automatic updates
             </label>
+            <div className={styles.updateRow}>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => void handleCheckUpdates()}
+                disabled={checking}
+              >
+                Check for updates
+              </button>
+              {updateStatus !== null && (
+                <span className={styles.updateStatus} role="status" aria-live="polite">
+                  {updateStatus}
+                </span>
+              )}
+            </div>
           </fieldset>
           {error !== null && (
             <p className={styles.error} role="status" aria-live="polite">

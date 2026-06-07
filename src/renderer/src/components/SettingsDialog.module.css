@@ -120,3 +120,15 @@
 .btnPrimary:hover {
   background: var(--color-accent-hover);
 }
+
+.updateRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.updateStatus {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted, var(--color-fg));
+}
