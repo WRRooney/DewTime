@@ -171,6 +171,9 @@ export interface ProjectsApi {
   list(): Promise<Project[]>
   create(name: string, number: string | null): Promise<Project>
   updateNumber(id: number, number: string | null): Promise<void>
+  updateName(id: number, name: string): Promise<void>
+  delete(id: number): Promise<void>
+  countTimerRefs(id: number): Promise<number>
 }
 
 export interface TimersApi {
