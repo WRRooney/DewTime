@@ -342,7 +342,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 08-03-PLAN.md — ProjectsDialog (native <dialog>: list/inline-edit/add/count-aware delete-confirm, SC-2/SC-3/SC-4) + App.tsx mount of footer + dialog (Wave 3, autonomous)
+- [x] 08-03-PLAN.md — ProjectsDialog (native <dialog>: list/inline-edit/add/count-aware delete-confirm, SC-2/SC-3/SC-4) + App.tsx mount of footer + dialog (Wave 3, autonomous)
 
 **UI hint**: yes
 
@@ -398,7 +398,7 @@ Delivered SettingsService persistence layer (typed QSettings wrapper), gear icon
 | 5. Project Combobox + Field Editors | v2.0 | 8/8 | Complete   | 2026-06-04 |
 | 6. Date Navigation + Calendar Picker | v2.0 | 8/8 | Complete   | 2026-06-04 |
 | 7. Packaging + E2E Hardening | v2.0 | 7/7 | Complete    | 2026-06-04 |
-| 8. Projects Management + App Footer | v2.0 | 2/3 | In Progress|  |
+| 8. Projects Management + App Footer | v2.0 | 3/3 | Complete   | 2026-06-08 |
 
 ---
 
