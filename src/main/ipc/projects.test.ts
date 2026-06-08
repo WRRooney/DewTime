@@ -46,7 +46,7 @@ import { initDb, closeDb } from '@main/db/database'
 import { runMigrations } from '@main/db/migrate'
 import { resetStmtCache } from '@main/db/repositories/projects'
 import { ValidationError, NotFoundError } from '@shared/errors'
-import { handleList, handleCreate, handleUpdateNumber } from './projects'
+import { handleList, handleCreate, handleUpdateNumber, handleUpdateName, handleDelete, handleCountTimerRefs } from './projects'
 
 describe('projects IPC handlers — boundary behavior', () => {
   beforeEach(() => {
@@ -107,5 +107,41 @@ describe('projects IPC handlers — boundary behavior', () => {
     await expect(
       handleUpdateNumber({ id: 999999, number: '1' }),
     ).rejects.toThrow(NotFoundError)
+  })
+
+  // Test 6 — handleUpdateName round-trip — rename persists; list reflects new name.
+  it('handleUpdateName renames a project; subsequent handleList shows the new name', async () => {
+    const created = await handleCreate({ name: 'Acme', number: null })
+    await expect(
+      handleUpdateName({ id: created.id, name: 'Acme Renamed' }),
+    ).resolves.toBeUndefined()
+    const list = await handleList({})
+    const updated = list.find((p) => p.id === created.id)
+    expect(updated?.project_name).toBe('Acme Renamed')
+  })
+
+  // Test 7 — handleUpdateName Zod validation — empty name rejects with ValidationError.
+  it('handleUpdateName rejects { id: 1, name: "" } with ValidationError', async () => {
+    await expect(handleUpdateName({ id: 1, name: '' })).rejects.toThrow(ValidationError)
+  })
+
+  // Test 8 — handleDelete removes a project; subsequent list excludes it.
+  it('handleDelete removes a project; subsequent handleList excludes it', async () => {
+    const created = await handleCreate({ name: 'ToDelete', number: null })
+    await expect(handleDelete({ id: created.id })).resolves.toBeUndefined()
+    const list = await handleList({})
+    expect(list.some((p) => p.id === created.id)).toBe(false)
+  })
+
+  // Test 9 — handleDelete Zod validation — negative id rejects with ValidationError.
+  it('handleDelete rejects { id: -1 } with ValidationError', async () => {
+    await expect(handleDelete({ id: -1 })).rejects.toThrow(ValidationError)
+  })
+
+  // Test 10 — handleCountTimerRefs returns expected count.
+  it('handleCountTimerRefs returns 0 for a project with no timers', async () => {
+    const created = await handleCreate({ name: 'EmptyProj', number: null })
+    const count = await handleCountTimerRefs({ id: created.id })
+    expect(count).toBe(0)
   })
 })

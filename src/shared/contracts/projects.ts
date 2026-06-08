@@ -23,3 +23,22 @@ export const UpdateNumberArgsSchema = z.object({
   number: z.string().max(255).nullable(),
 })
 export type UpdateNumberArgs = z.infer<typeof UpdateNumberArgsSchema>
+
+/** `projects.updateName(id, name)` — rename a project. Name must be 1–255 chars. */
+export const UpdateNameArgsSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1).max(255),
+})
+export type UpdateNameArgs = z.infer<typeof UpdateNameArgsSchema>
+
+/** `projects.delete(id)` — delete a project (referencing timers are unassigned). */
+export const DeleteProjectArgsSchema = z.object({
+  id: z.number().int().positive(),
+})
+export type DeleteProjectArgs = z.infer<typeof DeleteProjectArgsSchema>
+
+/** `projects.countTimerRefs(id)` — count how many timers reference a project. */
+export const CountTimerRefsArgsSchema = z.object({
+  id: z.number().int().positive(),
+})
+export type CountTimerRefsArgs = z.infer<typeof CountTimerRefsArgsSchema>
