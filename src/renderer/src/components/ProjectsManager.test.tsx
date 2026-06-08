@@ -110,4 +110,34 @@ describe('ProjectsManager', () => {
     })
     expect(window.api.projects.updateName).not.toHaveBeenCalled()
   })
+
+  // WR-02 — on a rename mutation error the field must STAY in edit mode showing
+  // the user's draft, not revert to the read-only old name.
+  it('keeps the name field in edit mode with the draft visible when updateName rejects', async () => {
+    const user = userEvent.setup()
+    window.api = makeMockApi({
+      projects: {
+        list: vi.fn().mockResolvedValue(SAMPLE_PROJECTS),
+        updateName: vi.fn().mockRejectedValue(new Error('duplicate')),
+        updateNumber: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+        countTimerRefs: vi.fn().mockResolvedValue(0),
+      },
+    })
+    renderWithProviders(<ProjectsManager />)
+
+    await waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument())
+
+    await user.click(screen.getByText('Alpha'))
+    const input = screen.getByDisplayValue('Alpha')
+    await user.clear(input)
+    await user.type(input, 'Beta')
+    await user.keyboard('{Enter}')
+
+    // Error surfaces AND the input (with the draft) is still present.
+    await waitFor(() => {
+      expect(screen.getByText('Could not save. Try again.')).toBeInTheDocument()
+    })
+    expect(screen.getByDisplayValue('Beta')).toBeInTheDocument()
+  })
 })

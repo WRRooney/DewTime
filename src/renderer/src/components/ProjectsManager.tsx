@@ -91,16 +91,25 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
       setIsEditingName(false)
       return
     }
-    if (trimmed !== project.project_name) {
-      updateName.mutate(
-        { id: project.id, name: trimmed },
-        {
-          onError: () => setNameError('Could not save. Try again.'),
-          onSuccess: () => setNameError(null),
-        },
-      )
+    // No-op rename (value unchanged): just exit edit mode.
+    if (trimmed === project.project_name) {
+      setIsEditingName(false)
+      return
     }
-    setIsEditingName(false)
+    // Stay in edit mode until the mutation resolves. On error we keep the
+    // user's draft visible (and the inline error) so they can correct it,
+    // rather than reverting the field to the stale old name; only exit edit
+    // mode on success.
+    updateName.mutate(
+      { id: project.id, name: trimmed },
+      {
+        onError: () => setNameError('Could not save. Try again.'),
+        onSuccess: () => {
+          setNameError(null)
+          setIsEditingName(false)
+        },
+      },
+    )
   }
 
   const cancelName = (): void => {
