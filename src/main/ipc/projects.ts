@@ -15,7 +15,9 @@ import {
   UpdateNameArgsSchema,
   DeleteProjectArgsSchema,
   CountTimerRefsArgsSchema,
+  OpenManagerArgsSchema,
 } from '@shared/contracts/projects'
+import { openProjectsManagerWindow } from '@main/windows/projectsManagerWindow'
 
 /** `projects.list()` — return all projects ordered by id ascending. */
 export const handleList = handler(ListArgsSchema, async (_args) =>
@@ -76,6 +78,14 @@ export const handleCountTimerRefs = handler(
 )
 
 /**
+ * `projects.openManager()` — open/focus the projects manager OS window. No DB
+ * work; delegates to the window module (mirrors `editor.open`).
+ */
+export const handleOpenManager = handler(OpenManagerArgsSchema, async () => {
+  openProjectsManagerWindow()
+})
+
+/**
  * Register the `projects.*` IPC channels with `ipcMain`.
  *
  * The `_evt` parameter is intentionally unused — handler bodies must not
@@ -92,4 +102,5 @@ export function registerProjectsHandlers(
   ipc.handle('projects.updateName', (_evt, args) => handleUpdateName(args))
   ipc.handle('projects.delete', (_evt, args) => handleDelete(args))
   ipc.handle('projects.countTimerRefs', (_evt, args) => handleCountTimerRefs(args))
+  ipc.handle('projects.openManager', (_evt, args) => handleOpenManager(args))
 }

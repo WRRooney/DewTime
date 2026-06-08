@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App } from './components/App'
 import { EditorWindow } from './components/EditorWindow'
+import { ProjectsManagerWindow } from './components/ProjectsManagerWindow'
 
 // Module-level singleton so cache state survives HMR reloads without the
 // provider re-mounting. refetchOnWindowFocus disabled — single-user local app,
@@ -29,6 +30,10 @@ const queryClient = new QueryClient({
 const editorMatch = window.location.hash.match(/^#editor=(\d+)/)
 const editorTimerId = editorMatch ? Number(editorMatch[1]) : null
 
+// The separate projects-manager window loads this same bundle with a
+// `#projects` hash. Branch on it to mount the projects manager root.
+const isProjectsWindow = window.location.hash.startsWith('#projects')
+
 // Cross-window sync (each window is its own renderer with its own TanStack
 // cache). Both directions are symmetric so a change in either window reaches the
 // other: after any successful local mutation, notify main to broadcast; on a
@@ -43,11 +48,20 @@ queryClient.getMutationCache().subscribe((event) => {
 window.api.editor.onDataChanged(() => {
   void queryClient.invalidateQueries({ queryKey: ['timers'] })
   void queryClient.invalidateQueries({ queryKey: ['timeEntries', 'byTimer'] })
+  // Projects mutations happen in the separate projects window; the main window's
+  // project combobox must refetch when that window creates/renames/deletes one.
+  void queryClient.invalidateQueries({ queryKey: ['projects'] })
 })
 
 const container = document.getElementById('root')!
 createRoot(container).render(
   <QueryClientProvider client={queryClient}>
-    {editorTimerId !== null ? <EditorWindow timerId={editorTimerId} /> : <App />}
+    {editorTimerId !== null ? (
+      <EditorWindow timerId={editorTimerId} />
+    ) : isProjectsWindow ? (
+      <ProjectsManagerWindow />
+    ) : (
+      <App />
+    )}
   </QueryClientProvider>,
 )

@@ -1,19 +1,18 @@
-// Native <dialog> Projects manager — inline-editable project list (name + number),
-// "+ Add project" row, and count-aware delete-with-confirm flow.
+// Projects manager UI — rendered full-window inside the separate projects
+// BrowserWindow (see ProjectsManagerWindow / src/main/windows/projectsManagerWindow.ts).
 //
-// Open/close:  Opened imperatively by App via projectsDialogRef.current?.showModal()
-//              (same pattern as SettingsDialog). ESC fires native `cancel` → close().
+// Layout: a non-scrolling flex column — the header and the pinned "Add project"
+// bar stay fixed while only the project list scrolls, so the add control never
+// scrolls out of view as the list grows.
 //
-// Inline edit: DescriptionCell semantics — click to edit, Enter/blur to commit (IPC
-//              only when value changed), Escape to revert without IPC call.
+// Inline edit: DescriptionCell semantics — click to edit, Enter/blur to commit
+//              (IPC only when value changed), Escape to revert without IPC call.
 //
-// Delete flow: Click trash → fresh countTimerRefs IPC (A-07 gate, never the cache) →
-//              open useConfirmDeleteProjectStore → count-aware confirm copy → delete.
-//
-// Renders entirely in the renderer process — no secondary OS window opened (gate A-06).
+// Delete flow: trash → fresh countTimerRefs IPC (A-07 gate, never the cache) →
+//              open useConfirmDeleteProjectStore → count-aware confirm → delete.
 
-import { forwardRef, useEffect, useRef, useState } from 'react'
-import styles from './ProjectsDialog.module.css'
+import { useEffect, useRef, useState } from 'react'
+import styles from './ProjectsManager.module.css'
 import type { Project } from '@shared/ipc'
 import { useProjects } from '@/hooks/useProjects'
 import { useCreateProject } from '@/hooks/useCreateProject'
@@ -77,8 +76,8 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
         setIsEditingName(true)
       })
     }
-  // Only fire once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only fire once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const commitName = (): void => {
@@ -127,9 +126,15 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
   }
 
   const handleDeleteClick = async (): Promise<void> => {
-    // A-07: always fetch a FRESH count — never the TanStack Query cache
-    const count = await window.api.projects.countTimerRefs(project.id)
-    useConfirmDeleteProjectStore.getState().open(project.id, project.project_name, count)
+    // A-07: always fetch a FRESH count — never the TanStack Query cache.
+    // Guarded so an IPC rejection surfaces an error instead of a dead button.
+    try {
+      const count = await window.api.projects.countTimerRefs(project.id)
+      useConfirmDeleteProjectStore.getState().open(project.id, project.project_name, count)
+    } catch {
+      // Fall back to a confirm without a count rather than swallowing the click.
+      useConfirmDeleteProjectStore.getState().open(project.id, project.project_name, 0)
+    }
   }
 
   return (
@@ -151,10 +156,7 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
             className={styles.input}
           />
         ) : (
-          <span
-            className={styles.nameText}
-            onClick={() => setIsEditingName(true)}
-          >
+          <span className={styles.nameText} onClick={() => setIsEditingName(true)}>
             {project.project_name}
           </span>
         )}
@@ -201,7 +203,9 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
         type="button"
         className={styles.deleteBtn}
         aria-label={`Delete project "${project.project_name}"`}
-        onClick={() => { void handleDeleteClick() }}
+        onClick={() => {
+          void handleDeleteClick()
+        }}
       >
         <svg
           width="16"
@@ -223,7 +227,7 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
-// DeleteConfirmDialog — nested project-delete confirm driven by store
+// ProjectDeleteConfirmDialog — nested project-delete confirm driven by store
 // ---------------------------------------------------------------------------
 
 function ProjectDeleteConfirmDialog(): JSX.Element {
@@ -239,6 +243,11 @@ function ProjectDeleteConfirmDialog(): JSX.Element {
     if (!d) return
     if (pendingDelete && !d.open) d.showModal()
     if (!pendingDelete && d.open) d.close()
+  }, [pendingDelete])
+
+  // Clear any stale error each time a fresh confirm opens.
+  useEffect(() => {
+    if (pendingDelete) setDeleteError(null)
   }, [pendingDelete])
 
   const handleCancel = (): void => {
@@ -269,14 +278,14 @@ function ProjectDeleteConfirmDialog(): JSX.Element {
   return (
     <dialog
       ref={confirmDialogRef}
-      className={styles.dialog}
+      className={styles.confirmDialog}
       onCancel={handleCancel}
       onClose={handleCancel}
     >
-      <header className={styles.header}>
-        <h2 className={styles.title}>Delete project?</h2>
+      <header className={styles.confirmHeader}>
+        <h2 className={styles.confirmTitle}>Delete project?</h2>
       </header>
-      <div className={styles.body}>
+      <div className={styles.confirmBody}>
         <p className={styles.copy}>{getBodyCopy()}</p>
         {deleteError !== null && (
           <p className={styles.error} role="status" aria-live="polite">
@@ -284,14 +293,16 @@ function ProjectDeleteConfirmDialog(): JSX.Element {
           </p>
         )}
       </div>
-      <footer className={styles.footer}>
+      <footer className={styles.confirmFooter}>
         <button type="button" className={styles.btn} onClick={handleCancel}>
           Keep project
         </button>
         <button
           type="button"
           className={`${styles.btn} ${styles.btnDanger}`}
-          onClick={() => { void handleConfirm() }}
+          onClick={() => {
+            void handleConfirm()
+          }}
         >
           Delete
         </button>
@@ -301,97 +312,72 @@ function ProjectDeleteConfirmDialog(): JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
-// ProjectsDialog — main export
+// ProjectsManager — full-window manager surface
 // ---------------------------------------------------------------------------
 
-export const ProjectsDialog = forwardRef<HTMLDialogElement>(
-  function ProjectsDialog(_, ref): JSX.Element {
-    const { data: projects = [] } = useProjects()
-    const createProject = useCreateProject()
+export function ProjectsManager(): JSX.Element {
+  const { data: projects = [] } = useProjects()
+  const createProject = useCreateProject()
 
-    // Track the id of the newly created project so its name field auto-focuses
-    const [newProjectId, setNewProjectId] = useState<number | null>(null)
+  // Track the id of the newly created project so its name field auto-focuses
+  const [newProjectId, setNewProjectId] = useState<number | null>(null)
 
-    const close = (): void => {
-      if (typeof ref === 'object' && ref !== null && ref.current !== null) {
-        ref.current.close()
-      }
-    }
-
-    const handleAddProject = (): void => {
-      createProject.mutate(
-        { name: 'New project', number: null },
-        {
-          onSuccess: (created) => {
-            setNewProjectId(created.id)
-          },
+  const handleAddProject = (): void => {
+    createProject.mutate(
+      { name: 'New project', number: null },
+      {
+        onSuccess: (created) => {
+          setNewProjectId(created.id)
         },
-      )
-    }
-
-    return (
-      <dialog ref={ref} className={styles.dialog} onCancel={close}>
-        <header className={styles.header}>
-          <h2 className={styles.title}>Projects</h2>
-        </header>
-
-        <div className={styles.body}>
-          {projects.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p className={styles.emptyHeading}>No projects yet</p>
-              <p className={styles.emptyBody}>Add a project to assign it to your timers.</p>
-            </div>
-          ) : (
-            <div className={styles.list}>
-              {projects.map((project) => (
-                <ProjectRow
-                  key={project.id}
-                  project={project}
-                  autoFocusField={project.id === newProjectId ? 'name' : null}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Add-new row */}
-          <button
-            type="button"
-            className={styles.addRow}
-            onClick={handleAddProject}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            + Add project
-          </button>
-        </div>
-
-        <footer className={styles.footer}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={close}
-          >
-            Close
-          </button>
-        </footer>
-
-        {/* Nested project-delete confirm dialog, driven by useConfirmDeleteProjectStore */}
-        <ProjectDeleteConfirmDialog />
-      </dialog>
+      },
     )
-  },
-)
+  }
 
-ProjectsDialog.displayName = 'ProjectsDialog'
+  return (
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Projects</h1>
+      </header>
+
+      <div className={styles.list}>
+        {projects.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyHeading}>No projects yet</p>
+            <p className={styles.emptyBody}>Add a project to assign it to your timers.</p>
+          </div>
+        ) : (
+          projects.map((project) => (
+            <ProjectRow
+              key={project.id}
+              project={project}
+              autoFocusField={project.id === newProjectId ? 'name' : null}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Pinned add bar — stays visible regardless of list scroll position */}
+      <div className={styles.addBar}>
+        <button type="button" className={styles.addBtn} onClick={handleAddProject}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add project
+        </button>
+      </div>
+
+      <ProjectDeleteConfirmDialog />
+    </div>
+  )
+}

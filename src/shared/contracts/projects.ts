@@ -42,3 +42,7 @@ export const CountTimerRefsArgsSchema = z.object({
   id: z.number().int().positive(),
 })
 export type CountTimerRefsArgs = z.infer<typeof CountTimerRefsArgsSchema>
+
+/** `projects.openManager()` — open the projects manager window. No arguments. */
+export const OpenManagerArgsSchema = z.object({}).optional()
+export type OpenManagerArgs = z.infer<typeof OpenManagerArgsSchema>

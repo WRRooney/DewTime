@@ -1,32 +1,25 @@
 // @vitest-environment jsdom
-// src/renderer/src/components/ProjectsDialog.test.tsx
-// Render tests for ProjectsDialog (projects list, empty state, inline edit, Escape revert).
+// Render tests for ProjectsManager (full-window projects manager).
 //
 // Contract under test:
 //   1. Renders one row per project in the mocked projects list
 //   2. Renders empty state ("No projects yet") when the list is empty
-//   3. Clicking a name cell shows an input; Escape reverts to the original text
-//      without calling window.api.projects.updateName
+//   3. Clicking a name cell shows an input with the current value
+//   4. Escape reverts to the original text without calling updateName
 //
-// Refs:
-//   - 08-03-PLAN.md Task 1 behavior + acceptance_criteria
-//   - 08-UI-SPEC.md (Copywriting Contract)
+// The manager renders inline (no <dialog> wrapper) since it now lives in its
+// own BrowserWindow; tests mount it directly.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test-utils/render-with-providers'
 import { makeMockApi } from '@/test-utils/mock-api'
-import { ProjectsDialog } from './ProjectsDialog'
+import { ProjectsManager } from './ProjectsManager'
 import { useConfirmDeleteProjectStore } from '@/stores/useConfirmDeleteProjectStore'
 import type { Project } from '@shared/ipc'
-import React from 'react'
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** HTMLDialogElement.showModal / close polyfill for jsdom */
+// HTMLDialogElement.showModal / close polyfill for jsdom (nested confirm dialog)
 function polyfillDialog(): void {
   if (!HTMLDialogElement.prototype.showModal) {
     HTMLDialogElement.prototype.showModal = function () {
@@ -45,8 +38,7 @@ const SAMPLE_PROJECTS: Project[] = [
   { id: 2, project_name: 'Beta', project_number: null },
 ]
 
-/** Renders ProjectsDialog as an open modal (showModal polyfilled via ref). */
-function renderOpenDialog(projects: Project[] = SAMPLE_PROJECTS) {
+function renderManager(projects: Project[] = SAMPLE_PROJECTS) {
   window.api = makeMockApi({
     projects: {
       list: vi.fn().mockResolvedValue(projects),
@@ -55,28 +47,12 @@ function renderOpenDialog(projects: Project[] = SAMPLE_PROJECTS) {
       delete: vi.fn().mockResolvedValue(undefined),
       countTimerRefs: vi.fn().mockResolvedValue(0),
     },
-    system: {
-      getVersion: vi.fn().mockResolvedValue('1.0.0'),
-    },
   })
 
-  const ref = React.createRef<HTMLDialogElement>()
-
-  const result = renderWithProviders(<ProjectsDialog ref={ref} />)
-
-  // Open the dialog imperatively (mirrors App.tsx showModal usage)
-  if (ref.current) {
-    ref.current.setAttribute('open', '')
-  }
-
-  return result
+  return renderWithProviders(<ProjectsManager />)
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-describe('ProjectsDialog', () => {
+describe('ProjectsManager', () => {
   beforeEach(() => {
     polyfillDialog()
     useConfirmDeleteProjectStore.setState({ pendingDelete: null })
@@ -87,7 +63,7 @@ describe('ProjectsDialog', () => {
   })
 
   it('renders one row per project from the mocked projects list', async () => {
-    renderOpenDialog(SAMPLE_PROJECTS)
+    renderManager(SAMPLE_PROJECTS)
 
     await waitFor(() => {
       expect(screen.getByText('Alpha')).toBeInTheDocument()
@@ -96,7 +72,7 @@ describe('ProjectsDialog', () => {
   })
 
   it('renders the empty state when the projects list is empty', async () => {
-    renderOpenDialog([])
+    renderManager([])
 
     await waitFor(() => {
       expect(screen.getByText('No projects yet')).toBeInTheDocument()
@@ -105,13 +81,12 @@ describe('ProjectsDialog', () => {
 
   it('clicking a name cell shows an input with the current value', async () => {
     const user = userEvent.setup()
-    renderOpenDialog(SAMPLE_PROJECTS)
+    renderManager(SAMPLE_PROJECTS)
 
     await waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument())
 
     await user.click(screen.getByText('Alpha'))
 
-    // An input with the project name should now be present
     const input = screen.getByDisplayValue('Alpha')
     expect(input).toBeInTheDocument()
     expect(input.tagName).toBe('INPUT')
@@ -119,20 +94,17 @@ describe('ProjectsDialog', () => {
 
   it('Escape reverts to the original text without calling updateName', async () => {
     const user = userEvent.setup()
-    renderOpenDialog(SAMPLE_PROJECTS)
+    renderManager(SAMPLE_PROJECTS)
 
     await waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument())
 
-    // Enter edit mode
     await user.click(screen.getByText('Alpha'))
     const input = screen.getByDisplayValue('Alpha')
 
-    // Type something then press Escape
     await user.clear(input)
     await user.type(input, 'Modified')
     await user.keyboard('{Escape}')
 
-    // Original text restored, no IPC call made
     await waitFor(() => {
       expect(screen.getByText('Alpha')).toBeInTheDocument()
     })

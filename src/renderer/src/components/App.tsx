@@ -14,18 +14,21 @@ import { TimerTable } from './timer-table'
 import { DateNavToolbar } from './DateNavToolbar'
 import { CalendarPickerDialog } from './CalendarPickerDialog'
 import { AppFooter } from './AppFooter'
-import { ProjectsDialog } from './ProjectsDialog'
 
 export function App(): JSX.Element {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const projectsDialogRef = useRef<HTMLDialogElement>(null)
 
   const handleOpenSettings = (): void => {
     dialogRef.current?.showModal()
   }
 
   const handleOpenProjects = (): void => {
-    projectsDialogRef.current?.showModal()
+    // Projects manager opens in its own OS window (resizable/movable),
+    // not an in-renderer dialog. Fire-and-forget IPC.
+    void window.api.projects.openManager().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('projects.openManager IPC failed:', err)
+    })
   }
 
   return (
@@ -43,7 +46,6 @@ export function App(): JSX.Element {
       </main>
       <AppFooter onOpenProjects={handleOpenProjects} />
       <SettingsDialog ref={dialogRef} />
-      <ProjectsDialog ref={projectsDialogRef} />
       <ConfirmDialog />
       <CalendarPickerDialog />
     </SettingsProvider>

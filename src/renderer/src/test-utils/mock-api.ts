@@ -77,6 +77,7 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       updateName: stub('projects.updateName') as ElectronApi['projects']['updateName'],
       delete: stub('projects.delete') as ElectronApi['projects']['delete'],
       countTimerRefs: stub('projects.countTimerRefs') as ElectronApi['projects']['countTimerRefs'],
+      openManager: stub('projects.openManager') as ElectronApi['projects']['openManager'],
     },
     timeEntries: {
       start: stub('timeEntries.start') as ElectronApi['timeEntries']['start'],

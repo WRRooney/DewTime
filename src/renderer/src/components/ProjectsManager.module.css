@@ -1,43 +1,30 @@
 /*
- * ProjectsDialog — native <dialog> surface for the projects manager.
- * All values use var(--*) tokens. No hex, rgb, hsl, or px spacing literals
+ * ProjectsManager — full-window projects manager (separate BrowserWindow).
+ * The window frame provides move/resize/close chrome.
+ *
+ * All values use var(--*) tokens. No hex/rgb/hsl or px spacing literals
  * (gate A-01 / A-02). 1px borders and 2px focus outlines are permitted exceptions.
  *
- * Analogues: SettingsDialog.module.css (dialog/header/title/body/footer/btn/btnPrimary)
- *            ConfirmDialog.module.css   (btnDanger)
+ * Layout: non-scrolling flex column — only .list scrolls; .header and .addBar
+ * stay pinned so the Add control never scrolls out of view.
  */
 
-/* ---- Dialog surface ---- */
-
-.dialog {
-  width: min(400px, 100% - 32px);
-  max-height: min(80vh, 520px);
-  background: var(--color-bg-elevated);
-  color: var(--color-fg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0;
+.container {
+  box-sizing: border-box;
+  height: 100vh;
   overflow: hidden;
-  flex-direction: column;
-}
-
-/* A closed native <dialog> must keep the UA `display: none`. Only lay out as a
-   flex column when actually open (showModal sets [open]); otherwise the dialog
-   and its nested confirm dialog render inline at app launch. */
-.dialog[open] {
   display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-fg);
 }
 
-.dialog::backdrop {
-  background: var(--color-overlay);
-}
-
-/* ---- Header ---- */
+/* ---- Header (pinned) ---- */
 
 .header {
+  flex-shrink: 0;
   padding: var(--space-4) var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
 }
 
 .title {
@@ -48,12 +35,13 @@
   margin: 0;
 }
 
-/* ---- Body ---- */
+/* ---- Project list (scrolls) ---- */
 
-.body {
-  padding: var(--space-4);
+.list {
+  flex: 1 1 auto;
+  min-height: 0; /* allow the flex child to shrink so overflow-y actually scrolls */
   overflow-y: auto;
-  flex: 1;
+  padding: var(--space-2) var(--space-4);
 }
 
 /* ---- Empty state ---- */
@@ -73,12 +61,6 @@
   font-size: var(--font-size-sm);
   color: var(--color-fg-muted);
   margin: 0;
-}
-
-/* ---- Project list ---- */
-
-.list {
-  margin-bottom: var(--space-2);
 }
 
 /* ---- Project row ---- */
@@ -177,39 +159,89 @@
   outline-offset: 2px;
 }
 
-/* ---- Add-new row ---- */
+/* ---- Add bar (pinned) ---- */
 
-.addRow {
+.addBar {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.addBtn {
   color: var(--color-accent);
   cursor: default;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   font-size: var(--font-size-sm);
-  padding: var(--space-2) 0;
   background: transparent;
   border: none;
+  padding: var(--space-1) 0;
   font-family: inherit;
 }
 
-.addRow:hover {
+.addBtn:hover {
   opacity: 0.8;
 }
 
-.addRow:focus-visible {
+.addBtn:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* ---- Footer ---- */
+/* ---- Confirm dialog (nested modal) ---- */
 
-.footer {
+.confirmDialog {
+  width: min(360px, 100% - 32px);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+/* Closed native <dialog> must keep UA `display: none`; only flex when open. */
+.confirmDialog[open] {
+  display: flex;
+}
+
+.confirmDialog::backdrop {
+  background: var(--color-overlay);
+}
+
+.confirmHeader {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.confirmTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+.confirmBody {
+  padding: var(--space-4);
+}
+
+.confirmFooter {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border);
-  flex-shrink: 0;
+}
+
+.copy {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-body);
+  color: var(--color-fg);
+  margin: 0;
 }
 
 /* ---- Buttons ---- */
@@ -236,17 +268,6 @@
   outline-offset: 2px;
 }
 
-.btnPrimary {
-  background: var(--color-accent);
-  color: var(--color-accent-fg);
-  border-color: var(--color-accent);
-  font-weight: var(--font-weight-semibold);
-}
-
-.btnPrimary:hover {
-  background: var(--color-accent-hover);
-}
-
 .btnDanger {
   background: var(--color-danger);
   color: var(--color-danger-fg);
@@ -264,14 +285,4 @@
   color: var(--color-danger);
   font-size: var(--font-size-sm);
   margin: var(--space-1) 0 0 0;
-}
-
-/* ---- Copy text in confirm dialog ---- */
-
-.copy {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-body);
-  color: var(--color-fg);
-  margin: 0;
 }

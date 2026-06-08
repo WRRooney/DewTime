@@ -107,6 +107,7 @@ const api: ElectronApi = {
       invokeWrapped<void>('projects.delete', { id }),
     countTimerRefs: (id: number) =>
       invokeWrapped<number>('projects.countTimerRefs', { id }),
+    openManager: () => invokeWrapped<void>('projects.openManager', {}),
   },
   timeEntries: {
     start: (timerId: number) =>

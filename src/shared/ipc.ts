@@ -174,6 +174,8 @@ export interface ProjectsApi {
   updateName(id: number, name: string): Promise<void>
   delete(id: number): Promise<void>
   countTimerRefs(id: number): Promise<number>
+  /** Open the projects manager OS window. */
+  openManager(): Promise<void>
 }
 
 export interface TimersApi {
