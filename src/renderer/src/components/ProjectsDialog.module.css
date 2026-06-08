@@ -18,8 +18,14 @@
   border-radius: var(--radius-md);
   padding: 0;
   overflow: hidden;
-  display: flex;
   flex-direction: column;
+}
+
+/* A closed native <dialog> must keep the UA `display: none`. Only lay out as a
+   flex column when actually open (showModal sets [open]); otherwise the dialog
+   and its nested confirm dialog render inline at app launch. */
+.dialog[open] {
+  display: flex;
 }
 
 .dialog::backdrop {
