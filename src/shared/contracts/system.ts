@@ -38,3 +38,11 @@ export const CopyToClipboardArgsSchema = z.object({
   text: z.string().max(10_000),
 })
 export type CopyToClipboardArgs = z.infer<typeof CopyToClipboardArgsSchema>
+
+/** `system.getVersion()` — no arguments. Returns the running app version string. */
+export const GetVersionArgsSchema = z.object({}).optional()
+export type GetVersionArgs = z.infer<typeof GetVersionArgsSchema>
+
+/** `system.openReleases()` — no arguments. URL is hardcoded in the handler. */
+export const OpenReleasesArgsSchema = z.object({}).optional()
+export type OpenReleasesArgs = z.infer<typeof OpenReleasesArgsSchema>

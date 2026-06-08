@@ -38,6 +38,12 @@ vi.mock('electron', () => {
       handle: vi.fn(),
     },
     BrowserWindow: browserWindowSpy,
+    app: {
+      getPath: () => '/tmp/never-used-with-:memory:',
+      getVersion: vi.fn().mockReturnValue('1.0.0-beta.3'),
+    },
+    shell: { openExternal: vi.fn().mockResolvedValue(undefined) },
+    clipboard: { writeText: vi.fn() },
   }
 })
 
@@ -45,7 +51,7 @@ import { initDb, closeDb } from '@main/db/database'
 import { runMigrations } from '@main/db/migrate'
 import { resetStmtCache as resetProjectsStmts } from '@main/db/repositories/projects'
 import { ValidationError } from '@shared/errors'
-import { handleEcho, handleDbSmoke, handleCloseWindow } from './system'
+import { handleEcho, handleDbSmoke, handleCloseWindow, handleGetVersion, handleOpenReleases } from './system'
 
 describe('system.echo handler', () => {
   it('returns the same string for valid input', async () => {
@@ -134,5 +140,40 @@ describe('system.closeWindow handler (WIN-04, D-07)', () => {
         getFocusedWindow: ReturnType<typeof vi.fn>
       }).getFocusedWindow,
     ).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('system.getVersion handler (D-07)', () => {
+  it('handleGetVersion resolves to a non-empty string', async () => {
+    const version = await handleGetVersion({})
+    expect(typeof version).toBe('string')
+    expect(version.length).toBeGreaterThan(0)
+  })
+})
+
+describe('system.openReleases handler (D-08 — hardcoded URL, no renderer-supplied URL)', () => {
+  beforeEach(async () => {
+    const electron = await import('electron')
+    ;(electron.shell as unknown as { openExternal: ReturnType<typeof vi.fn> }).openExternal.mockClear()
+  })
+
+  it('handleOpenReleases calls shell.openExternal exactly once with the hardcoded releases URL', async () => {
+    const electron = await import('electron')
+    await handleOpenReleases({})
+    const openExternal = (electron.shell as unknown as { openExternal: ReturnType<typeof vi.fn> }).openExternal
+    expect(openExternal).toHaveBeenCalledTimes(1)
+    expect(openExternal).toHaveBeenCalledWith('https://github.com/WRRooney/DewTime/releases')
+  })
+
+  it('handleOpenReleases is invoked with no url argument (gate A-03 — no open-redirect)', async () => {
+    // The handler takes no url arg from the renderer. Calling with an empty
+    // object (the no-arg pattern) should still call the hardcoded URL only.
+    const electron = await import('electron')
+    await handleOpenReleases({})
+    const openExternal = (electron.shell as unknown as { openExternal: ReturnType<typeof vi.fn> }).openExternal
+    // The ONLY argument ever passed to openExternal must be the hardcoded constant.
+    const callArgs = openExternal.mock.calls[0] as unknown[]
+    expect(callArgs).toHaveLength(1)
+    expect(callArgs[0]).toBe('https://github.com/WRRooney/DewTime/releases')
   })
 })
