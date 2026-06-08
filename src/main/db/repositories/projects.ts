@@ -3,7 +3,7 @@
 
 import type Database from 'better-sqlite3'
 import { getDb } from '../database'
-import { NotFoundError } from '@shared/errors'
+import { NotFoundError, ValidationError } from '@shared/errors'
 import type { Project } from '@shared/ipc'
 
 // Lazy prepared-statement cache. Tests call `resetStmtCache()` between cases
@@ -13,6 +13,10 @@ let stmts: {
   byId: Database.Statement<unknown[]>
   list: Database.Statement<unknown[]>
   updateNumber: Database.Statement<unknown[]>
+  updateName: Database.Statement<unknown[]>
+  nameExists: Database.Statement<unknown[]>
+  delete: Database.Statement<unknown[]>
+  countTimerRefs: Database.Statement<unknown[]>
 } | null = null
 
 function getStmts() {
@@ -26,6 +30,16 @@ function getStmts() {
     list: db.prepare(`SELECT * FROM projects ORDER BY id ASC`),
     updateNumber: db.prepare(
       `UPDATE projects SET project_number = ? WHERE id = ?`,
+    ),
+    updateName: db.prepare(
+      `UPDATE projects SET project_name = ? WHERE id = ?`,
+    ),
+    nameExists: db.prepare(
+      `SELECT id FROM projects WHERE project_name = ? AND id != ?`,
+    ),
+    delete: db.prepare(`DELETE FROM projects WHERE id = ?`),
+    countTimerRefs: db.prepare(
+      `SELECT COUNT(*) AS n FROM timers WHERE project_id = ?`,
     ),
   }
   return stmts
@@ -77,4 +91,46 @@ export function updateNumber(id: number, number: string | null): void {
   if (info.changes === 0) {
     throw new NotFoundError(`project ${id} not found`)
   }
+}
+
+/**
+ * Update only the project_name column. Enforces uniqueness: throws
+ * ValidationError if another project (id != target) already has that exact
+ * project_name. Throws NotFoundError if no row was updated.
+ */
+export function updateName(id: number, name: string): void {
+  const existing = getStmts().nameExists.get(name, id)
+  if (existing) {
+    throw new ValidationError(`project name "${name}" already exists`)
+  }
+  const info = getStmts().updateName.run(name, id)
+  if (info.changes === 0) {
+    throw new NotFoundError(`project ${id} not found`)
+  }
+}
+
+/**
+ * Delete a project by id. Referencing timers have their project_id set to
+ * NULL via FK ON DELETE SET NULL (timers survive; only the project reference
+ * is cleared). PRAGMA foreign_keys = ON is set at DB open in database.ts so
+ * the cascade fires automatically on a plain DELETE.
+ *
+ * Throws NotFoundError when no row was deleted.
+ */
+export function remove(id: number): void {
+  // FK ON DELETE SET NULL on timers.project_id handles timer unassignment
+  // automatically (PRAGMA foreign_keys = ON is set at DB open in database.ts).
+  const info = getStmts().delete.run(id)
+  if (info.changes === 0) {
+    throw new NotFoundError(`project ${id} not found`)
+  }
+}
+
+/**
+ * Return the count of timers that reference a project by id.
+ * Returns 0 for an unreferenced or unknown id.
+ */
+export function countTimerRefs(id: number): number {
+  const row = getStmts().countTimerRefs.get(id) as { n: number }
+  return row.n
 }
