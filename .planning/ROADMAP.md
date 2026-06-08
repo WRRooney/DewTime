@@ -338,7 +338,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 08-02-PLAN.md — Renderer building blocks: useAppVersion/useUpdateProjectName/useDeleteProject hooks + useConfirmDeleteProjectStore + AppFooter component (Projects link + version→releases, SC-1/SC-5) (Wave 2, autonomous)
+- [x] 08-02-PLAN.md — Renderer building blocks: useAppVersion/useUpdateProjectName/useDeleteProject hooks + useConfirmDeleteProjectStore + AppFooter component (Projects link + version→releases, SC-1/SC-5) (Wave 2, autonomous)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -398,7 +398,7 @@ Delivered SettingsService persistence layer (typed QSettings wrapper), gear icon
 | 5. Project Combobox + Field Editors | v2.0 | 8/8 | Complete   | 2026-06-04 |
 | 6. Date Navigation + Calendar Picker | v2.0 | 8/8 | Complete   | 2026-06-04 |
 | 7. Packaging + E2E Hardening | v2.0 | 7/7 | Complete    | 2026-06-04 |
-| 8. Projects Management + App Footer | v2.0 | 1/3 | In Progress|  |
+| 8. Projects Management + App Footer | v2.0 | 2/3 | In Progress|  |
 
 ---
 
