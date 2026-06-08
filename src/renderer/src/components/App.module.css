@@ -1,4 +1,6 @@
 /* <main> below the title bar — toolbar + table-wrapper flex layout. No color literals. */
+/* Footer styling lives in AppFooter.module.css. The <footer> element rendered by
+   AppFooter has flex-shrink:0 so it stays compact and never collapses. */
 .main {
   flex: 1;
   background: var(--color-bg);

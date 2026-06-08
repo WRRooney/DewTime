@@ -13,12 +13,19 @@ import { AddTimerButton } from './AddTimerButton'
 import { TimerTable } from './timer-table'
 import { DateNavToolbar } from './DateNavToolbar'
 import { CalendarPickerDialog } from './CalendarPickerDialog'
+import { AppFooter } from './AppFooter'
+import { ProjectsDialog } from './ProjectsDialog'
 
 export function App(): JSX.Element {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const projectsDialogRef = useRef<HTMLDialogElement>(null)
 
   const handleOpenSettings = (): void => {
     dialogRef.current?.showModal()
+  }
+
+  const handleOpenProjects = (): void => {
+    projectsDialogRef.current?.showModal()
   }
 
   return (
@@ -34,7 +41,9 @@ export function App(): JSX.Element {
           <TimerTable />
         </div>
       </main>
+      <AppFooter onOpenProjects={handleOpenProjects} />
       <SettingsDialog ref={dialogRef} />
+      <ProjectsDialog ref={projectsDialogRef} />
       <ConfirmDialog />
       <CalendarPickerDialog />
     </SettingsProvider>
