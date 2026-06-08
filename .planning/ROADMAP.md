@@ -21,7 +21,7 @@
 - [ ] **Phase 5: Project Combobox + Field Editors** - cmdk type-ahead + new-project flow + TimestampEditorDialog + offset + notes
 - [ ] **Phase 6: Date Navigation + Calendar Picker** - prev/next/today + react-day-picker + daily/weekly totals + week-start
 - [ ] **Phase 7: Packaging + E2E Hardening** - electron-builder NSIS/AppImage + Playwright/xvfb E2E suite + cross-platform smoke
-- [ ] **Phase 8: Projects Management + App Footer** - projects CRUD popup + footer (bottom-left link to popup, bottom-right version → releases page)
+- [x] **Phase 8: Projects Management + App Footer** - projects CRUD popup + footer (bottom-left link to popup, bottom-right version → releases page)
 
 ---
 
