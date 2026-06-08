@@ -131,6 +131,10 @@ export function remove(id: number): void {
  * Returns 0 for an unreferenced or unknown id.
  */
 export function countTimerRefs(id: number): number {
-  const row = getStmts().countTimerRefs.get(id) as { n: number }
-  return row.n
+  // Guard the undefined case defensively, consistent with byId/create above.
+  // A COUNT(*) always returns a row today, but an unchecked cast + property
+  // access would crash with a TypeError if a future query change or a stubbed
+  // `get` ever returned undefined.
+  const row = getStmts().countTimerRefs.get(id) as { n: number } | undefined
+  return row?.n ?? 0
 }
