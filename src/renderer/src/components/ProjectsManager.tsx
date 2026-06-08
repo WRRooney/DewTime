@@ -69,16 +69,19 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
     }
   }, [isEditingNumber])
 
-  // Auto-focus the name field on newly created rows
+  // Auto-focus the name field on newly created rows. Keyed on autoFocusField
+  // (not mount) because the row often mounts BEFORE the parent's newProjectId
+  // state lands — a mount-only effect would see autoFocusField === null and
+  // never fire. The hasAutoFocused ref makes it fire exactly once per row.
+  const hasAutoFocused = useRef(false)
   useEffect(() => {
-    if (autoFocusField === 'name') {
+    if (autoFocusField === 'name' && !hasAutoFocused.current) {
+      hasAutoFocused.current = true
       queueMicrotask(() => {
         setIsEditingName(true)
       })
     }
-    // Only fire once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [autoFocusField])
 
   const commitName = (): void => {
     const trimmed = nameDraft.trim()
