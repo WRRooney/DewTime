@@ -13,10 +13,13 @@
 //   - Do NOT import from 'electron' here — the renderer never imports from electron
 //     and mocking it directly would break context isolation semantics (D-33).
 //
-// Namespaces mirrored (all 7 on ElectronApi):
-//   timers (7 methods), projects (3 methods), timeEntries (8 methods — +setStart/setEnd Phase 5),
-//   settings (3 methods), system (4 methods), tick (1 method — subscribe returns unsubscribe fn),
-//   updates (1 method — check returns UpdateCheckResult)
+// Namespaces mirrored (all 8 on ElectronApi):
+//   timers (7 methods), projects (6 methods — +updateName/delete/countTimerRefs Phase 8),
+//   timeEntries (8 methods — +setStart/setEnd Phase 5),
+//   settings (3 methods), system (6 methods — +getVersion/openReleases Phase 8),
+//   tick (1 method — subscribe returns unsubscribe fn),
+//   updates (1 method — check returns UpdateCheckResult),
+//   editor (3 methods)
 //
 // Refs:
 //   - src/shared/ipc.ts (ElectronApi + per-namespace interfaces)
@@ -71,6 +74,9 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       list: stub('projects.list') as ElectronApi['projects']['list'],
       create: stub('projects.create') as ElectronApi['projects']['create'],
       updateNumber: stub('projects.updateNumber') as ElectronApi['projects']['updateNumber'],
+      updateName: stub('projects.updateName') as ElectronApi['projects']['updateName'],
+      delete: stub('projects.delete') as ElectronApi['projects']['delete'],
+      countTimerRefs: stub('projects.countTimerRefs') as ElectronApi['projects']['countTimerRefs'],
     },
     timeEntries: {
       start: stub('timeEntries.start') as ElectronApi['timeEntries']['start'],
@@ -94,6 +100,8 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       closeWindow: stub('system.closeWindow') as ElectronApi['system']['closeWindow'],
       // Default to a resolving no-op so copy-button clicks in cell tests don't reject.
       copyToClipboard: vi.fn().mockResolvedValue(undefined) as ElectronApi['system']['copyToClipboard'],
+      getVersion: stub('system.getVersion') as ElectronApi['system']['getVersion'],
+      openReleases: stub('system.openReleases') as ElectronApi['system']['openReleases'],
     },
     tick: {
       // Default stub: subscribe returns a no-op unsubscribe so tests that don't
