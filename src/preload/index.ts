@@ -59,6 +59,19 @@ function notImpl(method: string): (...args: unknown[]) => Promise<never> {
 // Explicit method enumeration. Every method on the ElectronApi interface must
 // appear here. Channel strings MUST match the literal channel passed to
 // `ipcMain.handle(...)` — a mismatch throws "No handler registered for X".
+//
+// WHOLE-API EXPOSURE TO SECONDARY WINDOWS (accepted risk — review WR-05):
+// All windows (main widget, timestamp editor, projects manager) load this
+// SAME preload bundle, so every window's renderer receives the full `window.api`
+// surface — including the window-spawning channels (`projects.openManager`,
+// `editor.open`) and the `tick` subscription. This is intentional: the renderer
+// entry (main.tsx) branches on the URL hash to mount different roots from one
+// bundle, and per-window API scoping would require separate preload builds and
+// risks breaking the editor/projects windows. The exposure is low-risk because
+// the window-spawning handlers are idempotent (a single reused instance that is
+// focused, never stacked — see projectsManagerWindow.ts / timestampEditorWindow.ts)
+// and ignore the calling renderer (`_evt`), so a secondary window invoking them
+// is an acceptable no-op rather than a DoS or privilege-escalation vector.
 const api: ElectronApi = {
   system: {
     echo: (message: string) => invokeWrapped('system.echo', { message }),
