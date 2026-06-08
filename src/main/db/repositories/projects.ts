@@ -62,6 +62,15 @@ export function list(): Project[] {
  * @param number the project_number (nullable)
  */
 export function create(name: string, number: string | null): Project {
+  // Enforce name uniqueness symmetrically with updateName. Passing id = -1
+  // (no real row) so nameExists matches against every existing project. This
+  // keeps the invariant consistent across call paths: a name that already
+  // exists is rejected on both create and rename, rather than create silently
+  // producing duplicate "New project" rows that updateName then forbids.
+  const existing = getStmts().nameExists.get(name, -1)
+  if (existing) {
+    throw new ValidationError(`project name "${name}" already exists`)
+  }
   // Coerce to `null` defensively: better-sqlite3 throws on `undefined`.
   const info = getStmts().insert.run(name, number ?? null)
   const id = info.lastInsertRowid as number

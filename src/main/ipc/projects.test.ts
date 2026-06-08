@@ -125,6 +125,14 @@ describe('projects IPC handlers — boundary behavior', () => {
     await expect(handleUpdateName({ id: 1, name: '' })).rejects.toThrow(ValidationError)
   })
 
+  // Test 7b — handleCreate duplicate-name rejection (WR-01) — creating a second
+  // project with an existing name rejects with ValidationError, symmetrically
+  // with handleUpdateName.
+  it('handleCreate rejects a duplicate name with ValidationError (symmetric with updateName)', async () => {
+    await handleCreate({ name: 'Dup', number: null })
+    await expect(handleCreate({ name: 'Dup', number: null })).rejects.toThrow(ValidationError)
+  })
+
   // Test 8 — handleDelete removes a project; subsequent list excludes it.
   it('handleDelete removes a project; subsequent handleList excludes it', async () => {
     const created = await handleCreate({ name: 'ToDelete', number: null })

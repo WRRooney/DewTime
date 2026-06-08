@@ -27,7 +27,8 @@ export const handleList = handler(ListArgsSchema, async (_args) =>
 /**
  * `projects.create({ name, number })` — insert a new project row and return the
  * freshly-inserted `Project`. Zod gate: name is min(1)/max(255), number is
- * max(255) or null.
+ * max(255) or null. Rejects duplicate names (ValidationError), symmetrically
+ * with updateName.
  */
 export const handleCreate = handler(
   CreateArgsSchema,

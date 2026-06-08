@@ -70,6 +70,11 @@ describe('projects repository — updateName', () => {
     create('Beta', null)
     expect(() => updateName(proj1.id, 'Beta')).toThrow(ValidationError)
   })
+
+  it('create throws ValidationError when the name already exists (symmetric with updateName)', () => {
+    create('Dup', null)
+    expect(() => create('Dup', null)).toThrow(ValidationError)
+  })
 })
 
 describe('projects repository — remove', () => {
