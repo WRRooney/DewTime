@@ -1,0 +1,271 @@
+/*
+ * ProjectsDialog — native <dialog> surface for the projects manager.
+ * All values use var(--*) tokens. No hex, rgb, hsl, or px spacing literals
+ * (gate A-01 / A-02). 1px borders and 2px focus outlines are permitted exceptions.
+ *
+ * Analogues: SettingsDialog.module.css (dialog/header/title/body/footer/btn/btnPrimary)
+ *            ConfirmDialog.module.css   (btnDanger)
+ */
+
+/* ---- Dialog surface ---- */
+
+.dialog {
+  width: min(400px, 100% - 32px);
+  max-height: min(80vh, 520px);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+}
+
+/* ---- Header ---- */
+
+.header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-fg);
+  margin: 0;
+}
+
+/* ---- Body ---- */
+
+.body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ---- Empty state ---- */
+
+.emptyState {
+  padding: var(--space-4) 0;
+}
+
+.emptyHeading {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.emptyBody {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  margin: 0;
+}
+
+/* ---- Project list ---- */
+
+.list {
+  margin-bottom: var(--space-2);
+}
+
+/* ---- Project row ---- */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-2) 0;
+}
+
+.nameCell {
+  flex: 1;
+  min-width: 0;
+}
+
+.numberCell {
+  flex: 0 0 96px;
+  min-width: 0;
+}
+
+.nameText {
+  display: block;
+  font-size: var(--font-size-base);
+  color: var(--color-fg);
+  cursor: default;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nameText:hover {
+  background: var(--color-bg-hover);
+}
+
+.numberText {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg);
+  cursor: default;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.numberText:hover {
+  background: var(--color-bg-hover);
+}
+
+.numberEmpty {
+  color: var(--color-fg-muted);
+}
+
+/* ---- Inline-edit input ---- */
+
+.input {
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-base);
+  color: var(--color-fg);
+  width: 100%;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Delete button ---- */
+
+.deleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-fg-muted);
+  cursor: default;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deleteBtn:hover {
+  color: var(--color-danger);
+  background: transparent;
+}
+
+.deleteBtn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Add-new row ---- */
+
+.addRow {
+  color: var(--color-accent);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.addRow:hover {
+  opacity: 0.8;
+}
+
+.addRow:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---- Footer ---- */
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ---- Buttons ---- */
+
+.btn {
+  background: transparent;
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  min-width: 64px;
+  cursor: default;
+  font-family: inherit;
+}
+
+.btn:hover {
+  background: var(--color-bg-hover);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btnPrimary {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.btnPrimary:hover {
+  background: var(--color-accent-hover);
+}
+
+.btnDanger {
+  background: var(--color-danger);
+  color: var(--color-danger-fg);
+  border: 1px solid var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.btnDanger:hover {
+  background: var(--color-danger-hover);
+}
+
+/* ---- Error inline ---- */
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  margin: var(--space-1) 0 0 0;
+}
+
+/* ---- Copy text in confirm dialog ---- */
+
+.copy {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-body);
+  color: var(--color-fg);
+  margin: 0;
+}
