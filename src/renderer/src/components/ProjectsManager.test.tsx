@@ -140,4 +140,33 @@ describe('ProjectsManager', () => {
     })
     expect(screen.getByDisplayValue('Beta')).toBeInTheDocument()
   })
+
+  // WR-03 — on a number mutation error the field must STAY in edit mode showing
+  // the user's draft, mirroring the name field.
+  it('keeps the number field in edit mode with the draft visible when updateNumber rejects', async () => {
+    const user = userEvent.setup()
+    window.api = makeMockApi({
+      projects: {
+        list: vi.fn().mockResolvedValue(SAMPLE_PROJECTS),
+        updateName: vi.fn().mockResolvedValue(undefined),
+        updateNumber: vi.fn().mockRejectedValue(new Error('boom')),
+        delete: vi.fn().mockResolvedValue(undefined),
+        countTimerRefs: vi.fn().mockResolvedValue(0),
+      },
+    })
+    renderWithProviders(<ProjectsManager />)
+
+    await waitFor(() => expect(screen.getByText('A-001')).toBeInTheDocument())
+
+    await user.click(screen.getByText('A-001'))
+    const input = screen.getByDisplayValue('A-001')
+    await user.clear(input)
+    await user.type(input, 'A-999')
+    await user.keyboard('{Enter}')
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not save. Try again.')).toBeInTheDocument()
+    })
+    expect(screen.getByDisplayValue('A-999')).toBeInTheDocument()
+  })
 })

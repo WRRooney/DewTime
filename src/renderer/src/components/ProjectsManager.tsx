@@ -120,16 +120,25 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
   const commitNumber = (): void => {
     const trimmed = numberDraft.trim()
     const newValue = trimmed === '' ? null : trimmed
-    if (newValue !== project.project_number) {
-      updateNumber.mutate(
-        { id: project.id, number: newValue },
-        {
-          onError: () => setNumberError('Could not save. Try again.'),
-          onSuccess: () => setNumberError(null),
-        },
-      )
+    // No-op change (value unchanged): just exit edit mode.
+    if (newValue === project.project_number) {
+      setIsEditingNumber(false)
+      return
     }
-    setIsEditingNumber(false)
+    // Mirror commitName: stay in edit mode until the mutation resolves so a
+    // transient IPC failure keeps the user's draft visible alongside the
+    // inline error instead of reverting to the stale old number. Only exit
+    // edit mode on success.
+    updateNumber.mutate(
+      { id: project.id, number: newValue },
+      {
+        onError: () => setNumberError('Could not save. Try again.'),
+        onSuccess: () => {
+          setNumberError(null)
+          setIsEditingNumber(false)
+        },
+      },
+    )
   }
 
   const cancelNumber = (): void => {
