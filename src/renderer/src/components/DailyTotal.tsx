@@ -1,16 +1,19 @@
 // Live daily total readout — subscribes to useDayTimers + useTickStore.
 //
 // Renders the total elapsed seconds for all timers on the selected day as
-// HH:MM:SS using the non-running-base formula:
+// HH:MM:SS:
 //
-//   base        = sum of non-running timers' totalSeconds
-//   liveContrib = tick.elapsedSeconds when tick.timerId === runningTimer.id
-//                 runningTimer.totalSeconds (at-fetch fallback) when no matching tick
+//   base        = sum of EVERY timer's totalSeconds
+//   liveContrib = tick.elapsedSeconds when tick.timerId === runningTimer.id, else 0
 //   total       = base + liveContrib
 //
-// This formula avoids double-counting the running timer: adding both
-// running.totalSeconds AND tick.elapsedSeconds would count its pre-fetch
-// elapsed time twice.
+// Why base sums ALL timers (including the running one): `Timer.totalSeconds`
+// comes from the SQL `SUM(CASE WHEN end_timestamp IS NOT NULL ...)`, which
+// EXCLUDES the open (running) entry — that entry contributes 0. So totalSeconds
+// is purely the timer's COMPLETED time in range. The running entry's live
+// elapsed is disjoint from that and is added once via the tick. Excluding the
+// running timer from base (the previous behavior) silently dropped its earlier
+// completed entries from the total whenever it was running.
 //
 // Imports CSS from DateNavToolbar.module.css (shared namespace — no separate file).
 
@@ -45,17 +48,18 @@ export function DailyTotal({ fromEpoch, toEpoch, className }: DailyTotalProps): 
     )
   }
 
-  // Non-running base — avoids double-counting the running timer
-  const nonRunning = timers.filter((t: Timer) => !t.running)
-  const base = nonRunning.reduce((sum: number, t: Timer) => sum + t.totalSeconds, 0)
+  // Base = every timer's COMPLETED seconds (totalSeconds excludes the open
+  // running entry — see header). The running entry's live time is added on top.
+  const base = timers.reduce((sum: number, t: Timer) => sum + t.totalSeconds, 0)
 
   const runningTimer = timers.find((t: Timer) => t.running)
-  // Use tick.elapsedSeconds if tick is for the running timer;
-  // fall back to the at-fetch totalSeconds if no matching tick yet.
+  // Add the running entry's live elapsed (disjoint from base). Until the first
+  // matching tick arrives (≤1s), it contributes 0 — never the stale fallback,
+  // which would now double-count against base.
   const liveContrib =
     tick !== null && runningTimer !== undefined && tick.timerId === runningTimer.id
       ? tick.elapsedSeconds
-      : (runningTimer?.totalSeconds ?? 0)
+      : 0
 
   const total = base + liveContrib
 

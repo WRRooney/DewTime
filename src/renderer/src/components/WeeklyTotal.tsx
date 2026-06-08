@@ -29,17 +29,20 @@ export function WeeklyTotal({ fromEpoch, toEpoch, className }: WeeklyTotalProps)
     )
   }
 
-  // Non-running base — avoids double-counting the running timer.
-  const nonRunning = timers.filter((t: Timer) => !t.running)
-  const base = nonRunning.reduce((sum: number, t: Timer) => sum + t.totalSeconds, 0)
+  // Base = every timer's COMPLETED seconds. Timer.totalSeconds comes from the
+  // SQL SUM(CASE WHEN end_timestamp IS NOT NULL ...), which EXCLUDES the open
+  // running entry (contributes 0), so it is purely completed time. The running
+  // entry's live elapsed is disjoint and added once via the tick. Excluding the
+  // running timer from base dropped its earlier completed entries while running.
+  const base = timers.reduce((sum: number, t: Timer) => sum + t.totalSeconds, 0)
 
   const runningTimer = timers.find((t: Timer) => t.running)
-  // Use tick.elapsedSeconds if it matches the running timer;
-  // fall back to the at-fetch totalSeconds if no matching tick yet.
+  // Add the running entry's live elapsed (disjoint from base). 0 until the first
+  // matching tick (≤1s); never the stale fallback, which would double-count.
   const liveContrib =
     tick !== null && runningTimer !== undefined && tick.timerId === runningTimer.id
       ? tick.elapsedSeconds
-      : (runningTimer?.totalSeconds ?? 0)
+      : 0
 
   const total = base + liveContrib
 

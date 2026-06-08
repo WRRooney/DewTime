@@ -1,13 +1,20 @@
 // @vitest-environment jsdom
 // src/renderer/src/components/DailyTotal.test.tsx
-// Computation test for DailyTotal's non-running-base + live-tick total formula.
+// Computation test for DailyTotal's all-timers base + live-tick total formula.
 //
-// Tests the critical invariants (RESEARCH Pitfall 3 / T-6-08):
-//   1. Running + tick: total = sum(nonRunning.totalSeconds) + tick.elapsedSeconds
-//      (the running timer's at-fetch totalSeconds is NOT added again — no double-count)
-//   2. Running but no matching tick: total = sum(nonRunning.totalSeconds) + running.totalSeconds
-//   3. Zero timers: renders "00:00:00"
-//   4. isLoading: renders "—:—:—" muted placeholder
+// totalSeconds is COMPLETED-only (SQL excludes the open running entry), so base
+// sums EVERY timer and the running entry's live time is added once via the tick.
+//
+// Tests the critical invariants:
+//   1. Running + tick: total = sum(ALL timers' totalSeconds) + tick.elapsedSeconds
+//      (the running timer's completed totalSeconds IS in base; the live tick is
+//      disjoint from it — no double-count)
+//   2. Running but no matching tick: total = sum(ALL timers' totalSeconds)
+//      (open entry contributes 0 until its first tick)
+//   3. Running timer with prior completed entries: those completed seconds stay
+//      in the total while running (regression — previously dropped)
+//   4. Zero timers: renders "00:00:00"
+//   5. isLoading: renders "—:—:—" muted placeholder
 //
 // Refs:
 //   - 06-04-PLAN.md Task 2 <behavior>
@@ -84,11 +91,11 @@ describe('DailyTotal — total computation', () => {
     resetTickStore()
   })
 
-  it('running timer WITH matching tick: total = nonRunning base + tick.elapsedSeconds (no double-count, Pitfall 3)', async () => {
-    const nonRunning1 = nonRunningTimer(1, 3600)  // 1 hour
-    const nonRunning2 = nonRunningTimer(2, 1800)  // 30 min
-    const running = runningTimer(3, 500)           // at-fetch value — must NOT be added
-    const tickElapsed = 750                        // live contribution
+  it('running timer WITH matching tick: total = ALL timers base + tick.elapsedSeconds (completed time kept, live disjoint)', async () => {
+    const nonRunning1 = nonRunningTimer(1, 3600)  // 1 hour completed
+    const nonRunning2 = nonRunningTimer(2, 1800)  // 30 min completed
+    const running = runningTimer(3, 500)           // 500s of COMPLETED entries today, now running again
+    const tickElapsed = 750                        // live elapsed of the open entry
 
     window.api = makeMockApi({
       timers: {
@@ -97,8 +104,11 @@ describe('DailyTotal — total computation', () => {
     })
     useTickStore.setState({ tick: { timerId: running.id, elapsedSeconds: tickElapsed } })
 
-    const expectedTotal = nonRunning1.totalSeconds + nonRunning2.totalSeconds + tickElapsed
-    // Must NOT be: ...+ running.totalSeconds + tickElapsed (double-count!)
+    // base includes running.totalSeconds (its completed time); tick adds the
+    // disjoint open-entry elapsed. No double-count because totalSeconds excludes
+    // the open entry.
+    const expectedTotal =
+      nonRunning1.totalSeconds + nonRunning2.totalSeconds + running.totalSeconds + tickElapsed
 
     renderWithProviders(
       <DailyTotal fromEpoch={FROM_EPOCH} toEpoch={TO_EPOCH} />,
@@ -109,7 +119,7 @@ describe('DailyTotal — total computation', () => {
     })
   })
 
-  it('running timer with NO matching tick: total = nonRunning base + running.totalSeconds (at-fetch fallback)', async () => {
+  it('running timer with NO matching tick: total = sum(ALL timers totalSeconds), open entry contributes 0', async () => {
     const nonRunning = nonRunningTimer(1, 1000)
     const running = runningTimer(2, 200)
 
@@ -118,7 +128,7 @@ describe('DailyTotal — total computation', () => {
         list: vi.fn().mockResolvedValue([nonRunning, running]),
       },
     })
-    // tick is null — no live contribution available
+    // tick is null — open entry's live time not yet available
     useTickStore.setState({ tick: null })
 
     const expectedTotal = nonRunning.totalSeconds + running.totalSeconds
@@ -132,7 +142,7 @@ describe('DailyTotal — total computation', () => {
     })
   })
 
-  it('running timer with tick for a DIFFERENT timer: total = nonRunning base + running.totalSeconds (no tick contribution)', async () => {
+  it('running timer with tick for a DIFFERENT timer: total = sum(ALL timers totalSeconds), no live contribution', async () => {
     const nonRunning = nonRunningTimer(1, 500)
     const running = runningTimer(2, 300)
 
@@ -145,6 +155,30 @@ describe('DailyTotal — total computation', () => {
     useTickStore.setState({ tick: { timerId: 99, elapsedSeconds: 9999 } })
 
     const expectedTotal = nonRunning.totalSeconds + running.totalSeconds
+
+    renderWithProviders(
+      <DailyTotal fromEpoch={FROM_EPOCH} toEpoch={TO_EPOCH} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(formatDuration(expectedTotal))).toBeInTheDocument()
+    })
+  })
+
+  it('regression: a running timer keeps its prior completed time in the total', async () => {
+    // Single timer: 600s completed earlier today, now running again. Before the
+    // fix this rendered just the live tick (completed 600 dropped).
+    const running = runningTimer(1, 600)
+    const tickElapsed = 30
+
+    window.api = makeMockApi({
+      timers: {
+        list: vi.fn().mockResolvedValue([running]),
+      },
+    })
+    useTickStore.setState({ tick: { timerId: running.id, elapsedSeconds: tickElapsed } })
+
+    const expectedTotal = running.totalSeconds + tickElapsed // 630, not 30
 
     renderWithProviders(
       <DailyTotal fromEpoch={FROM_EPOCH} toEpoch={TO_EPOCH} />,
