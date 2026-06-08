@@ -240,6 +240,10 @@ export interface SystemApi {
   closeWindow(): Promise<void>
   // renderer navigator.clipboard is unavailable in the packaged file:// context
   copyToClipboard(text: string): Promise<void>
+  // Returns the running app version string (sources from app.getVersion() in main).
+  getVersion(): Promise<string>
+  // Opens the GitHub releases page in the default browser. URL is hardcoded in main.
+  openReleases(): Promise<void>
 }
 
 /**

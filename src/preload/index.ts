@@ -69,6 +69,10 @@ const api: ElectronApi = {
     // the packaged file:// context.
     copyToClipboard: (text: string) =>
       invokeWrapped<void>('system.copyToClipboard', { text }),
+    // Returns the running app version string. Handler sources from app.getVersion().
+    getVersion: () => invokeWrapped<string>('system.getVersion', {}),
+    // Opens the GitHub releases page in the default browser. URL is hardcoded in main.
+    openReleases: () => invokeWrapped<void>('system.openReleases', {}),
   },
   // NOTE: `delete(id: number)` takes a BARE number per the TimersApi interface,
   // but the IPC boundary requires an object envelope for Zod validation.
@@ -97,6 +101,12 @@ const api: ElectronApi = {
       invokeWrapped<Project>('projects.create', { name, number }),
     updateNumber: (id: number, number: string | null) =>
       invokeWrapped<void>('projects.updateNumber', { id, number }),
+    updateName: (id: number, name: string) =>
+      invokeWrapped<void>('projects.updateName', { id, name }),
+    delete: (id: number) =>
+      invokeWrapped<void>('projects.delete', { id }),
+    countTimerRefs: (id: number) =>
+      invokeWrapped<number>('projects.countTimerRefs', { id }),
   },
   timeEntries: {
     start: (timerId: number) =>
