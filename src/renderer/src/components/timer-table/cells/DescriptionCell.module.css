@@ -11,12 +11,12 @@
   flex: 1 1 auto;
   display: block;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: text;
   color: var(--color-fg);
-  line-height: 44px; /* vertically center within the taller row */
+  line-height: var(--line-height-body);
+  padding: var(--space-1) 0;
   text-align: right; /* right-aligned toward the duration column */
 }
 
