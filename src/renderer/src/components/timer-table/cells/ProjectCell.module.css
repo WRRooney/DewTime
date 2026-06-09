@@ -82,6 +82,7 @@
 /* Command.Input — the search/filter input at the top of the dropdown */
 .input {
   width: 100%;
+  box-sizing: border-box;
   background: transparent;
   color: var(--color-fg);
   border: none;
