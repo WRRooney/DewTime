@@ -280,6 +280,39 @@ export function deleteTimer(id: number): void {
 }
 
 /**
+ * FSM-safe deletion of a single time entry. Mirrors the `deleteTimer` pattern:
+ * reads getRunning() first to detect whether the deleted entry is the active
+ * one; runs the repo delete inside a synchronous `db.transaction`; AFTER the
+ * transaction commits, stops heartbeat + tick only when the deleted entry was
+ * the running one (so no orphaned timer_entry_id remains in the heartbeat row).
+ *
+ * Bubbles NotFoundError from the repository when the entry does not exist.
+ *
+ * CRITICAL — the transaction callback is SYNCHRONOUS. NEVER pass an async
+ * function to db.transaction (better-sqlite3 commits before the await resolves).
+ */
+export function deleteEntry(entryId: number): void {
+  const db = getDb()
+  const running = timeEntriesRepo.getRunning()
+  const willStopTimer = running?.id === entryId
+
+  // CRITICAL — sync callback. NEVER `async` (better-sqlite3 commits before await resolves).
+  const txn = db.transaction((eid: number) => {
+    timeEntriesRepo.deleteEntry(eid) // throws NotFoundError if id does not exist
+  })
+  txn(entryId) // execute; bubbles NotFoundError if thrown
+
+  // Post-transaction cleanup — outside db.transaction (must stay sync).
+  if (willStopTimer) {
+    tickService.stop()
+    stopHeartbeat()
+    log.info(`timer.deleteEntry: id=${entryId} (was running)`)
+  } else {
+    log.info(`timer.deleteEntry: id=${entryId}`)
+  }
+}
+
+/**
  * Test-only: wipe module-scoped state so vitest's beforeEach starts clean.
  * Called from `beforeEach` and `afterEach` in `timer.test.ts`.
  */

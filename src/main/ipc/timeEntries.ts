@@ -1,11 +1,12 @@
-// IPC handlers for the `timeEntries.*` namespace. Six handlers delegate
-// state-changing work to `@main/services/timer.ts` so the single-active-timer
-// invariant and FSM transactions stay canonical. Two are service-bypass
-// exceptions:
+// IPC handlers for the `timeEntries.*` namespace. All state-changing write
+// handlers delegate to `@main/services/timer.ts` for FSM safety. Service-bypass
+// exceptions (pure reads or pure timestamp writes):
 //   1. `listByTimer` — pure read, no FSM semantics.
 //   2. `setStart` / `setEnd` — pure timestamp writes, no FSM transition. The
 //      running-entry invariant is protected by setEnd's null-end guard in the
 //      repository.
+// `deleteEntry` now delegates to timerService.deleteEntry (FSM-safe: stops
+// heartbeat/tick when the running entry is deleted).
 //
 // `handleCheckResume` delegates to `getCachedResumeResult()`, NOT `checkResume()`.
 // The cache is populated at boot; the defensive re-run path only fires on
@@ -20,7 +21,6 @@ import {
   listByTimer as listByTimerRepo,
   setStart as setStartRepo,
   setEnd as setEndRepo,
-  deleteEntry as deleteEntryRepo,
 } from '@main/db/repositories/timeEntries'
 import { handler } from './system'
 import type { EpochSeconds } from '@shared/time'
@@ -116,12 +116,13 @@ export const handleSetEnd = handler(
 )
 
 /**
- * `timeEntries.deleteEntry(entryId)` — delete a stopped entry. The repo rejects
- * deleting the running entry (ValidationError) and missing ids (NotFoundError).
+ * `timeEntries.deleteEntry(entryId)` — delete a time entry. When the deleted
+ * entry was the running entry, the timer's heartbeat and tick are stopped
+ * (FSM-safe via timerService.deleteEntry). Missing ids throw NotFoundError.
  */
 export const handleDeleteEntry = handler(
   DeleteEntryArgsSchema,
-  async ({ entryId }) => deleteEntryRepo(entryId),
+  async ({ entryId }) => timerService.deleteEntry(entryId),
 )
 
 /**

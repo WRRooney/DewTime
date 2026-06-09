@@ -154,11 +154,12 @@ describe('timeEntries repository — deleteEntry', () => {
     expect(listByTimer(timer.id)).toHaveLength(0)
   })
 
-  it('refuses to delete the running entry (ValidationError)', () => {
+  it('deletes the running entry (no longer a ValidationError)', () => {
     const timer = createTimer({ projectId: null, description: 'task' })
     const entry = start(timer.id) // still running (end_timestamp IS NULL)
-    expect(() => deleteEntry(entry.id)).toThrow(ValidationError)
-    expect(listByTimer(timer.id)).toHaveLength(1)
+    expect(() => deleteEntry(entry.id)).not.toThrow()
+    expect(listByTimer(timer.id)).toHaveLength(0)
+    expect(getRunning()).toBeNull()
   })
 
   it('throws NotFoundError for a missing entry', () => {

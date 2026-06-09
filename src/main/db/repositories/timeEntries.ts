@@ -177,16 +177,14 @@ export function setEnd(entryId: number, endTs: EpochSeconds): void {
 }
 
 /**
- * Delete a completed (stopped) time entry. Refuses to delete the running entry
- * (end_timestamp IS NULL) — that would orphan the heartbeat's timer_entry_id and
- * silently end tracking; stop the timer first. Throws NotFoundError if missing.
+ * Delete a time entry by id. Throws NotFoundError if the entry does not exist.
+ * Running entries (end_timestamp IS NULL) are deleted without restriction —
+ * callers are responsible for stopping heartbeat/tick when the deleted entry
+ * was running (use timerService.deleteEntry for FSM-safe deletion).
  */
 export function deleteEntry(entryId: number): void {
   const entry = getStmts().byId.get(entryId) as TimeEntry | undefined
   if (!entry) throw new NotFoundError(`time_entries ${entryId} not found`)
-  if (entry.end_timestamp === null) {
-    throw new ValidationError('cannot delete a running entry')
-  }
   const info = getStmts().del.run([entryId])
   if (info.changes === 0) throw new NotFoundError(`time_entries ${entryId} not found`)
 }
