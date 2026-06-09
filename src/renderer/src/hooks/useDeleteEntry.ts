@@ -3,9 +3,9 @@ import { timersQueryKey } from './useTimers'
 import { entriesNamespaceKey } from './useEntriesForTimer'
 
 /**
- * Mutation to delete a stopped time entry. Refreshes the timers cache (so the
- * duration total updates) and the dialog's entry list on success. The main side
- * rejects deleting a running entry.
+ * Mutation to delete a time entry. Refreshes the timers cache (so the
+ * duration total updates) and the dialog's entry list on success. Deleting
+ * the running entry also stops the timer (heartbeat + tick stopped server-side).
  */
 export function useDeleteEntry() {
   const qc = useQueryClient()
