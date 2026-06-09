@@ -5,6 +5,7 @@ import { useTimers } from '@/hooks/useTimers'
 import { useEntriesForTimer } from '@/hooks/useEntriesForTimer'
 import { useSetEntryStart, useSetEntryEnd } from '@/hooks/useSetEntryTimestamps'
 import { useDeleteEntry } from '@/hooks/useDeleteEntry'
+import { useStopTimer } from '@/hooks/useStopTimer'
 import { useSetOffset } from '@/hooks/useSetOffset'
 import { useSetNotes } from '@/hooks/useSetNotes'
 import { epochToDatetimeLocal, datetimeLocalToEpoch } from '@/utils/epoch-datetime'
@@ -14,17 +15,19 @@ import type { EpochSeconds } from '@shared/time'
 interface EntryRowProps {
   entry: TimeEntry
   idx: number
+  timerId: number
   onCommitStart: (entryId: number, ts: EpochSeconds) => void
   onCommitEnd: (entryId: number, ts: EpochSeconds) => void
   onDelete: (entryId: number) => void
+  onStop: (timerId: number) => void
 }
 
 /**
- * One editable time-entry row. Each datetime-local input is driven by LOCAL draft
- * state so the user can type or pick a date; draft resyncs from the persisted
- * entry after a save (refetch) or external change.
+ * One editable time-entry row rendered as a `<tr>`. Each datetime-local input
+ * is driven by LOCAL draft state so the user can type or pick a date; draft
+ * resyncs from the persisted entry after a save (refetch) or external change.
  */
-function EntryRow({ entry, idx, onCommitStart, onCommitEnd, onDelete }: EntryRowProps): JSX.Element {
+function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, onStop }: EntryRowProps): JSX.Element {
   const isRunning = entry.end_timestamp === null
   const [startStr, setStartStr] = useState(() => epochToDatetimeLocal(entry.start_timestamp))
   const [endStr, setEndStr] = useState(() =>
@@ -66,50 +69,55 @@ function EntryRow({ entry, idx, onCommitStart, onCommitEnd, onDelete }: EntryRow
   }
 
   return (
-    <div className={styles.entryRow}>
-      {/* Entry index badge ("1.", "2." …) */}
-      <span className={styles.entryIndex}>{idx + 1}</span>
-      <div className={styles.entryBody}>
-        <span className={styles.entryLabel}>
-          Entry {idx + 1}{isRunning ? ' (running)' : ''}
-        </span>
-        <div className={styles.entryFields}>
-        <div className={styles.field}>
-          <label className={styles.fieldLabel}>Start</label>
+    <tr className={`${styles.entryRow}${isRunning ? ` ${styles.runningRow}` : ''}`}>
+      {/* # — 1-based monospace index */}
+      <td className={styles.cellIndex}>{idx + 1}</td>
+
+      {/* Start cell */}
+      <td className={styles.cellStart}>
+        <input
+          type="datetime-local"
+          step="1"
+          className={styles.datetimeInput}
+          value={startStr}
+          onChange={(e) => handleStartChange(e.target.value)}
+          onBlur={() => {
+            if (datetimeLocalToEpoch(startStr) === null) {
+              setStartStr(epochToDatetimeLocal(entry.start_timestamp))
+            }
+          }}
+        />
+      </td>
+
+      {/* End cell — Stop button for running entry, editable input for stopped */}
+      <td className={styles.cellEnd}>
+        {isRunning ? (
+          <button
+            type="button"
+            className={styles.stopBtn}
+            aria-label="Stop timer"
+            onClick={() => onStop(timerId)}
+          >
+            Stop
+          </button>
+        ) : (
           <input
             type="datetime-local"
             step="1"
             className={styles.datetimeInput}
-            value={startStr}
-            onChange={(e) => handleStartChange(e.target.value)}
-            // Revert to the persisted value if the field was emptied/left invalid.
-            onBlur={() => {
-              if (datetimeLocalToEpoch(startStr) === null) {
-                setStartStr(epochToDatetimeLocal(entry.start_timestamp))
-              }
-            }}
-          />
-        </div>
-        <div className={styles.field}>
-          <label className={styles.fieldLabel}>End</label>
-          <input
-            type="datetime-local"
-            step="1"
-            className={`${styles.datetimeInput}${isRunning ? ` ${styles.disabled}` : ''}`}
             value={endStr}
-            disabled={isRunning}
             onChange={(e) => handleEndChange(e.target.value)}
             onBlur={() => {
-              if (!isRunning && datetimeLocalToEpoch(endStr) === null) {
+              if (datetimeLocalToEpoch(endStr) === null) {
                 setEndStr(entry.end_timestamp !== null ? epochToDatetimeLocal(entry.end_timestamp) : '')
               }
             }}
           />
-        </div>
-        </div>
-      </div>
-      {/* Delete this entry pair — hidden for the running entry (no end to pair). */}
-      {!isRunning && (
+        )}
+      </td>
+
+      {/* Delete cell — available for ALL rows including running */}
+      <td className={styles.cellDelete}>
         <button
           type="button"
           className={styles.entryDelete}
@@ -132,8 +140,8 @@ function EntryRow({ entry, idx, onCommitStart, onCommitEnd, onDelete }: EntryRow
             <path d="M2.5 4h11M6.5 4V2.8c0-.4.3-.8.8-.8h1.4c.5 0 .8.4.8.8V4M4 4l.6 9c0 .5.4.9.9.9h5c.5 0 .9-.4.9-.9L12 4M6.5 7v4M9.5 7v4" />
           </svg>
         </button>
-      )}
-    </div>
+      </td>
+    </tr>
   )
 }
 
@@ -151,6 +159,7 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
   const setStart = useSetEntryStart()
   const setEnd = useSetEntryEnd()
   const deleteEntry = useDeleteEntry()
+  const stopTimer = useStopTimer()
   const setOffset = useSetOffset()
   const setNotes = useSetNotes()
 
@@ -173,21 +182,37 @@ export function TimestampEditor({ timerId }: TimestampEditorProps): JSX.Element 
         {timer?.description?.trim() || 'Untitled timer'}
       </h1>
 
-      {/* Entries list */}
+      {/* Entries table */}
       <div className={styles.entriesList}>
         {entries && entries.length === 0 && (
           <p className={styles.noEntries}>No time entries recorded yet.</p>
         )}
-        {entries?.map((entry, idx) => (
-          <EntryRow
-            key={entry.id}
-            entry={entry}
-            idx={idx}
-            onCommitStart={(entryId, ts) => setStart.mutate({ entryId, ts })}
-            onCommitEnd={(entryId, ts) => setEnd.mutate({ entryId, ts })}
-            onDelete={(entryId) => deleteEntry.mutate({ entryId })}
-          />
-        ))}
+        {entries && entries.length > 0 && (
+          <table className={styles.entriesTable}>
+            <thead>
+              <tr>
+                <th className={`${styles.thCell} ${styles.thIndex}`}>#</th>
+                <th className={`${styles.thCell} ${styles.thStart}`}>Start</th>
+                <th className={`${styles.thCell} ${styles.thEnd}`}>End</th>
+                <th className={`${styles.thCell} ${styles.thDelete}`}>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, idx) => (
+                <EntryRow
+                  key={entry.id}
+                  entry={entry}
+                  idx={idx}
+                  timerId={timerId}
+                  onCommitStart={(entryId, ts) => setStart.mutate({ entryId, ts })}
+                  onCommitEnd={(entryId, ts) => setEnd.mutate({ entryId, ts })}
+                  onDelete={(entryId) => deleteEntry.mutate({ entryId })}
+                  onStop={(tid) => stopTimer.mutate(tid)}
+                />
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Offset section */}

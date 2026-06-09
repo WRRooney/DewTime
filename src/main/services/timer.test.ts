@@ -238,4 +238,63 @@ describe('TimerService — FSM behavior', () => {
     // tickService.stop must NOT be called — transaction rolled back / NotFoundError thrown.
     expect(tickService.stop).not.toHaveBeenCalled()
   })
+
+  // =========================================================================
+  // quick-260609-o1c: deleteEntry FSM-safe behavior
+  // =========================================================================
+
+  // Test 11 — deleteEntry removes the running entry and stops heartbeat+tick
+  it('deleteEntry: deleting the running entry stops heartbeat + tick and leaves no running entry', () => {
+    const timer = createTimer({ projectId: null, description: 'running-entry' })
+    timerService.start(timer.id)
+
+    // Clear call counts from start().
+    vi.mocked(tickService.stop).mockClear()
+
+    const runningEntry = timerService.getRunningEntry()!
+    expect(runningEntry).not.toBeNull()
+
+    timerService.deleteEntry(runningEntry.id)
+
+    // (a) No running entry remains.
+    expect(timerService.getRunningEntry()).toBeNull()
+
+    // (b) tickService.stop was called (interval halted because was-running).
+    expect(tickService.stop).toHaveBeenCalledTimes(1)
+  })
+
+  // Test 12 — deleteEntry on stopped entry does NOT stop heartbeat+tick when sibling is running
+  it('deleteEntry: deleting a stopped entry does not stop heartbeat + tick when another timer is running', () => {
+    const timerA = createTimer({ projectId: null, description: 'running-A' })
+    const timerB = createTimer({ projectId: null, description: 'stopped-B' })
+
+    // Start B, stop it, start A so A is the running one.
+    timerService.start(timerB.id)
+    timerService.stopActive()
+    timerService.start(timerA.id)
+
+    // Clear call counts from start().
+    vi.mocked(tickService.stop).mockClear()
+
+    // Get the stopped entry for timerB.
+    const db = getDb()
+    const stoppedEntry = db
+      .prepare('SELECT * FROM time_entries WHERE timer_id = ? AND end_timestamp IS NOT NULL')
+      .get(timerB.id) as { id: number } | undefined
+    expect(stoppedEntry).toBeDefined()
+
+    timerService.deleteEntry(stoppedEntry!.id)
+
+    // (a) Timer A is still running.
+    expect(timerService.getRunningEntry()?.timer_id).toBe(timerA.id)
+
+    // (b) tickService.stop was NOT called (A is still running).
+    expect(tickService.stop).not.toHaveBeenCalled()
+  })
+
+  // Test 13 — deleteEntry throws NotFoundError for missing id
+  it('deleteEntry: throws NotFoundError when entry id does not exist', () => {
+    expect(() => timerService.deleteEntry(99999)).toThrow(NotFoundError)
+    expect(tickService.stop).not.toHaveBeenCalled()
+  })
 })

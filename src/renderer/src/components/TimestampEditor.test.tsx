@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 // src/renderer/src/components/TimestampEditor.test.tsx
-// Tests for the windowless TimestampEditor form (FIELD-04/05/06, D-08).
-// The editor now renders directly with a `timerId` prop (separate editor window)
+// Tests for the windowless TimestampEditor form (FIELD-04/05/06, table-view).
+// The editor renders directly with a `timerId` prop (separate editor window)
 // — no <dialog>, no open/close store.
 //
 // Behaviors under test:
-//   1. Lists each entry with "Entry {n}" and "(running)" on the open entry.
-//   2. The running entry's End input is disabled (D-08).
-//   3. Editing + blurring a stopped entry's Start input calls timeEntries.setStart (FIELD-04).
-//   4. Editing + blurring the offset input calls timers.setOffset with Math.round(min*60) (FIELD-05).
-//   5. Changing + blurring notes calls timers.setNotes (FIELD-06); an unchanged blur does NOT.
+//   1. Table renders with #/Start/End/Delete column headers and one row per entry.
+//   2. The running entry's End cell shows a Stop control (not a disabled input).
+//      Clicking Stop calls window.api.timeEntries.stop with the timer id.
+//   3. The running entry's Delete button calls window.api.timeEntries.deleteEntry.
+//   4. Editing + blurring a stopped entry's Start input calls timeEntries.setStart (FIELD-04).
+//   5. Editing + blurring the offset input calls timers.setOffset with Math.round(min*60) (FIELD-05).
+//   6. Changing + blurring notes calls timers.setNotes (FIELD-06); an unchanged blur does NOT.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
@@ -35,6 +37,8 @@ describe('TimestampEditor', () => {
         ]),
         setStart: vi.fn().mockResolvedValue(undefined),
         setEnd: vi.fn().mockResolvedValue(undefined),
+        stop: vi.fn().mockResolvedValue(null),
+        deleteEntry: vi.fn().mockResolvedValue(undefined),
       },
       timers: {
         list: vi.fn().mockResolvedValue([
@@ -59,32 +63,51 @@ describe('TimestampEditor', () => {
     cleanup()
   })
 
-  it('lists entries with correct labels', async () => {
+  it('renders a table with #, Start, End, Delete column headers and one row per entry', async () => {
     renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
-      expect(screen.getByText('Entry 1')).toBeTruthy()
-      expect(screen.getByText(/Entry 2.*running/)).toBeTruthy()
+      // Column headers
+      expect(screen.getByRole('columnheader', { name: '#' })).toBeTruthy()
+      expect(screen.getByRole('columnheader', { name: /start/i })).toBeTruthy()
+      expect(screen.getByRole('columnheader', { name: /end/i })).toBeTruthy()
+      expect(screen.getByRole('columnheader', { name: /delete/i })).toBeTruthy()
+      // Two body rows
+      expect(screen.getAllByRole('row')).toHaveLength(3) // 1 header + 2 body rows
     })
   })
 
-  it('renders the running entry End input as disabled (D-08)', async () => {
-    const { container } = renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
+  it('running entry End cell shows a Stop control; clicking it calls timeEntries.stop with timerId', async () => {
+    renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
-      expect(screen.getByText(/Entry 2.*running/)).toBeTruthy()
+      // The Stop button should be present (running entry's End cell)
+      expect(screen.getByRole('button', { name: /stop timer/i })).toBeTruthy()
     })
-    const endInputs = container.querySelectorAll<HTMLInputElement>(
-      'input[type="datetime-local"]',
-    )
-    // 2 entries × (Start, End) = 4 inputs; entry 2 (running) End is the last, disabled.
-    expect(endInputs[3]!.disabled).toBe(true)
-    // entry 1 (stopped) End is editable
-    expect(endInputs[1]!.disabled).toBe(false)
+    const stopBtn = screen.getByRole('button', { name: /stop timer/i })
+    fireEvent.click(stopBtn)
+    await waitFor(() => {
+      expect(window.api.timeEntries.stop).toHaveBeenCalledWith(TIMER_ID)
+    })
+  })
+
+  it('running entry Delete button calls timeEntries.deleteEntry with the running entry id', async () => {
+    renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
+    await waitFor(() => {
+      // Two delete buttons — one per row (both rows are now deletable)
+      expect(screen.getAllByRole('button', { name: /delete entry/i })).toHaveLength(2)
+    })
+    // The running entry is entry id=2 (index 1 = "Delete entry 2")
+    const deleteButtons = screen.getAllByRole('button', { name: /delete entry/i })
+    fireEvent.click(deleteButtons[1]!) // second row = running entry
+    await waitFor(() => {
+      expect(window.api.timeEntries.deleteEntry).toHaveBeenCalledWith(2)
+    })
   })
 
   it('a calendar pick (change, no blur) on a stopped Start commits immediately (FIELD-04)', async () => {
     const { container } = renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
-      expect(screen.getByText('Entry 1')).toBeTruthy()
+      // Wait for table to render
+      expect(screen.getByRole('columnheader', { name: '#' })).toBeTruthy()
     })
     const startInput = container.querySelectorAll<HTMLInputElement>(
       'input[type="datetime-local"]',
@@ -103,7 +126,7 @@ describe('TimestampEditor', () => {
   it('editing + blurring the offset input calls timers.setOffset with minutes*60 (FIELD-05)', async () => {
     const { container } = renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
-      expect(screen.getByText('Entry 1')).toBeTruthy()
+      expect(screen.getByRole('columnheader', { name: '#' })).toBeTruthy()
     })
     const offsetInput = container.querySelector<HTMLInputElement>('input[type="number"]')!
     fireEvent.change(offsetInput, { target: { value: '5' } })
@@ -116,7 +139,7 @@ describe('TimestampEditor', () => {
   it('changing + blurring notes calls setNotes; unchanged blur does not (FIELD-06)', async () => {
     const { container } = renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
-      expect(screen.getByText('Entry 1')).toBeTruthy()
+      expect(screen.getByRole('columnheader', { name: '#' })).toBeTruthy()
     })
     const textarea = container.querySelector<HTMLTextAreaElement>('textarea')!
     // Unchanged blur — must NOT call setNotes (value still "old notes")
