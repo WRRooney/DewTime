@@ -75,7 +75,7 @@ function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, o
           inputMode="text"
           className={styles.datetimeInput}
           aria-label={`Start time, entry ${idx + 1}`}
-          placeholder="m/d/yy h:mm:ss am"
+          placeholder="m/d/yy h:mm:ss AM"
           value={startStr}
           onChange={(e) => setStartStr(e.target.value)}
           onBlur={commitStart}
@@ -102,7 +102,7 @@ function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, o
             inputMode="text"
             className={styles.datetimeInput}
             aria-label={`End time, entry ${idx + 1}`}
-            placeholder="m/d/yy h:mm:ss am"
+            placeholder="m/d/yy h:mm:ss AM"
             value={endStr}
             onChange={(e) => setEndStr(e.target.value)}
             onBlur={commitEnd}

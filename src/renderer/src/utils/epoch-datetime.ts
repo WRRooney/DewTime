@@ -48,8 +48,8 @@ export function datetimeLocalToEpoch(value: string): EpochSeconds | null {
 //   h   — 12-hour clock, no leading zero (1–12)
 //   mm  — minutes, 2 digits
 //   ss  — seconds, 2 digits
-//   a   — lowercase meridiem (am/pm)
-// Example: 2026-06-09 19:20:05 (local) → "6/9/26 7:20:05 pm"
+//   a   — meridiem (AM/PM)
+// Example: 2026-06-09 19:20:05 (local) → "6/9/26 7:20:05 PM"
 // Used by the timestamp-editor text inputs in place of <input type=datetime-local>,
 // which cannot render a custom format.
 // ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export function epochToDisplay(epochSeconds: EpochSeconds): string {
   const day = d.getDate()
   const yy = String(d.getFullYear() % 100).padStart(2, '0')
   const h24 = d.getHours()
-  const meridiem = h24 < 12 ? 'am' : 'pm'
+  const meridiem = h24 < 12 ? 'AM' : 'PM'
   const h12 = h24 % 12 === 0 ? 12 : h24 % 12
   const mi = String(d.getMinutes()).padStart(2, '0')
   const ss = String(d.getSeconds()).padStart(2, '0')

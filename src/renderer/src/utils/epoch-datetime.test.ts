@@ -109,12 +109,12 @@ describe('round-trip', () => {
 describe('epochToDisplay', () => {
   it('formats local wall-clock as "m/d/yy h:mm:ss a" with no leading zeros on m/d/h', () => {
     // 2026-06-09 19:20:05 local
-    expect(epochToDisplay(localEpoch(2026, 6, 9, 19, 20, 5))).toBe('6/9/26 7:20:05 pm')
+    expect(epochToDisplay(localEpoch(2026, 6, 9, 19, 20, 5))).toBe('6/9/26 7:20:05 PM')
   })
 
-  it('renders midnight as 12:mm:ss am and noon as 12:mm:ss pm', () => {
-    expect(epochToDisplay(localEpoch(2026, 1, 1, 0, 0, 0))).toBe('1/1/26 12:00:00 am')
-    expect(epochToDisplay(localEpoch(2026, 12, 31, 12, 30, 45))).toBe('12/31/26 12:30:45 pm')
+  it('renders midnight as 12:mm:ss AM and noon as 12:mm:ss PM', () => {
+    expect(epochToDisplay(localEpoch(2026, 1, 1, 0, 0, 0))).toBe('1/1/26 12:00:00 AM')
+    expect(epochToDisplay(localEpoch(2026, 12, 31, 12, 30, 45))).toBe('12/31/26 12:30:45 PM')
   })
 })
 
