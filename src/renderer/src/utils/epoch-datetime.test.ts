@@ -17,8 +17,25 @@
 //   - 05-03-PLAN.md Task 1 acceptance criteria
 
 import { describe, it, expect } from 'vitest'
-import { epochToDatetimeLocal, datetimeLocalToEpoch } from './epoch-datetime'
+import {
+  epochToDatetimeLocal,
+  datetimeLocalToEpoch,
+  epochToDisplay,
+  displayToEpoch,
+} from './epoch-datetime'
 import type { EpochSeconds } from '@shared/time'
+
+/** Build an EpochSeconds from local wall-clock components (no Date.now()). */
+function localEpoch(
+  y: number,
+  mo: number,
+  d: number,
+  h: number,
+  mi: number,
+  s: number,
+): EpochSeconds {
+  return Math.floor(new Date(y, mo - 1, d, h, mi, s).getTime() / 1000) as EpochSeconds
+}
 
 describe('epochToDatetimeLocal', () => {
   it('returns a 19-character YYYY-MM-DDTHH:mm:ss string', () => {
@@ -86,5 +103,51 @@ describe('round-trip', () => {
     const dtLocal = epochToDatetimeLocal(ts)
     const roundTripped = datetimeLocalToEpoch(dtLocal)
     expect(roundTripped).toBe(ts)
+  })
+})
+
+describe('epochToDisplay', () => {
+  it('formats local wall-clock as "m/d/yy h:mm:ss a" with no leading zeros on m/d/h', () => {
+    // 2026-06-09 19:20:05 local
+    expect(epochToDisplay(localEpoch(2026, 6, 9, 19, 20, 5))).toBe('6/9/26 7:20:05 pm')
+  })
+
+  it('renders midnight as 12:mm:ss am and noon as 12:mm:ss pm', () => {
+    expect(epochToDisplay(localEpoch(2026, 1, 1, 0, 0, 0))).toBe('1/1/26 12:00:00 am')
+    expect(epochToDisplay(localEpoch(2026, 12, 31, 12, 30, 45))).toBe('12/31/26 12:30:45 pm')
+  })
+})
+
+describe('displayToEpoch', () => {
+  it('returns null for empty / garbage input', () => {
+    expect(displayToEpoch('')).toBeNull()
+    expect(displayToEpoch('nonsense')).toBeNull()
+    expect(displayToEpoch('6/9/26 7:20:05')).toBeNull() // no meridiem
+  })
+
+  it('parses the canonical format', () => {
+    expect(displayToEpoch('6/9/26 7:20:05 pm')).toBe(localEpoch(2026, 6, 9, 19, 20, 5))
+  })
+
+  it('is tolerant: seconds optional, case-insensitive, optional dots, 4-digit year', () => {
+    expect(displayToEpoch('6/9/26 7:20 PM')).toBe(localEpoch(2026, 6, 9, 19, 20, 0))
+    expect(displayToEpoch('6/9/26 7:20:05 P.M.')).toBe(localEpoch(2026, 6, 9, 19, 20, 5))
+    expect(displayToEpoch('6/9/2026 7:20:05 pm')).toBe(localEpoch(2026, 6, 9, 19, 20, 5))
+  })
+
+  it('maps 12 am → 00h and 12 pm → 12h', () => {
+    expect(displayToEpoch('1/1/26 12:00:00 am')).toBe(localEpoch(2026, 1, 1, 0, 0, 0))
+    expect(displayToEpoch('1/1/26 12:00:00 pm')).toBe(localEpoch(2026, 1, 1, 12, 0, 0))
+  })
+
+  it('rejects out-of-range and calendar-overflow dates', () => {
+    expect(displayToEpoch('13/1/26 1:00:00 am')).toBeNull() // month 13
+    expect(displayToEpoch('2/31/26 1:00:00 am')).toBeNull() // Feb 31 overflow
+    expect(displayToEpoch('6/9/26 13:00:00 pm')).toBeNull() // hour 13 on a 12-h clock
+  })
+
+  it('round-trips epochToDisplay → displayToEpoch to the exact second', () => {
+    const ts = localEpoch(2026, 3, 7, 14, 8, 33)
+    expect(displayToEpoch(epochToDisplay(ts))).toBe(ts)
   })
 })

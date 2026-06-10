@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import styles from './TimestampEditor.module.css'
 import { useTimers } from '@/hooks/useTimers'
 import { useEntriesForTimer } from '@/hooks/useEntriesForTimer'
@@ -8,7 +8,7 @@ import { useDeleteEntry } from '@/hooks/useDeleteEntry'
 import { useStopTimer } from '@/hooks/useStopTimer'
 import { useSetOffset } from '@/hooks/useSetOffset'
 import { useSetNotes } from '@/hooks/useSetNotes'
-import { epochToDatetimeLocal, datetimeLocalToEpoch } from '@/utils/epoch-datetime'
+import { epochToDisplay, displayToEpoch } from '@/utils/epoch-datetime'
 import type { TimeEntry } from '@shared/ipc'
 import type { EpochSeconds } from '@shared/time'
 
@@ -23,48 +23,43 @@ interface EntryRowProps {
 }
 
 /**
- * One editable time-entry row rendered as a `<tr>`. Each datetime-local input
- * is driven by LOCAL draft state so the user can type or pick a date; draft
- * resyncs from the persisted entry after a save (refetch) or external change.
+ * One editable time-entry row rendered as a `<tr>`. Each timestamp is a free
+ * text input formatted as "m/d/yy h:mm:ss a", driven by LOCAL draft state so
+ * the user can type a value; the draft resyncs from the persisted entry after
+ * a save (refetch) or external change.
  */
 function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, onStop }: EntryRowProps): JSX.Element {
   const isRunning = entry.end_timestamp === null
-  const [startStr, setStartStr] = useState(() => epochToDatetimeLocal(entry.start_timestamp))
+  const [startStr, setStartStr] = useState(() => epochToDisplay(entry.start_timestamp))
   const [endStr, setEndStr] = useState(() =>
-    entry.end_timestamp !== null ? epochToDatetimeLocal(entry.end_timestamp) : '',
+    entry.end_timestamp !== null ? epochToDisplay(entry.end_timestamp) : '',
   )
-  // Last epoch we sent for each field — dedupes repeated change events so a
-  // single calendar pick fires at most one mutation (not one per change event).
-  const lastSentStart = useRef<EpochSeconds | null>(entry.start_timestamp)
-  const lastSentEnd = useRef<EpochSeconds | null>(entry.end_timestamp)
 
   useEffect(() => {
-    setStartStr(epochToDatetimeLocal(entry.start_timestamp))
-    lastSentStart.current = entry.start_timestamp
+    setStartStr(epochToDisplay(entry.start_timestamp))
   }, [entry.start_timestamp])
   useEffect(() => {
-    setEndStr(entry.end_timestamp !== null ? epochToDatetimeLocal(entry.end_timestamp) : '')
-    lastSentEnd.current = entry.end_timestamp
+    setEndStr(entry.end_timestamp !== null ? epochToDisplay(entry.end_timestamp) : '')
   }, [entry.end_timestamp])
 
-  // Commit on CHANGE: the datetime-local value is atomic (empty until every
-  // field is filled), so this fires once on a calendar pick / completed type-in
-  // — not per keystroke — and applies immediately instead of waiting for blur.
-  const handleStartChange = (value: string): void => {
-    setStartStr(value)
-    const ts = datetimeLocalToEpoch(value)
-    if (ts !== null && ts !== entry.start_timestamp && ts !== lastSentStart.current) {
-      lastSentStart.current = ts
+  // Free text can't commit per keystroke (a partial string parses as invalid),
+  // so commit on BLUR (and Enter). A valid+changed value mutates; anything else
+  // resets the draft to the persisted value so the field never shows garbage.
+  const commitStart = (): void => {
+    const ts = displayToEpoch(startStr)
+    if (ts !== null && ts !== entry.start_timestamp) {
       onCommitStart(entry.id, ts)
+    } else if (ts === null) {
+      setStartStr(epochToDisplay(entry.start_timestamp))
     }
   }
-  const handleEndChange = (value: string): void => {
+  const commitEnd = (): void => {
     if (isRunning) return
-    setEndStr(value)
-    const ts = datetimeLocalToEpoch(value)
-    if (ts !== null && ts !== entry.end_timestamp && ts !== lastSentEnd.current) {
-      lastSentEnd.current = ts
+    const ts = displayToEpoch(endStr)
+    if (ts !== null && ts !== entry.end_timestamp) {
       onCommitEnd(entry.id, ts)
+    } else if (ts === null) {
+      setEndStr(entry.end_timestamp !== null ? epochToDisplay(entry.end_timestamp) : '')
     }
   }
 
@@ -76,15 +71,16 @@ function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, o
       {/* Start cell */}
       <td className={styles.cellStart}>
         <input
-          type="datetime-local"
-          step="1"
+          type="text"
+          inputMode="text"
           className={styles.datetimeInput}
+          aria-label={`Start time, entry ${idx + 1}`}
+          placeholder="m/d/yy h:mm:ss am"
           value={startStr}
-          onChange={(e) => handleStartChange(e.target.value)}
-          onBlur={() => {
-            if (datetimeLocalToEpoch(startStr) === null) {
-              setStartStr(epochToDatetimeLocal(entry.start_timestamp))
-            }
+          onChange={(e) => setStartStr(e.target.value)}
+          onBlur={commitStart}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
           }}
         />
       </td>
@@ -102,15 +98,16 @@ function EntryRow({ entry, idx, timerId, onCommitStart, onCommitEnd, onDelete, o
           </button>
         ) : (
           <input
-            type="datetime-local"
-            step="1"
+            type="text"
+            inputMode="text"
             className={styles.datetimeInput}
+            aria-label={`End time, entry ${idx + 1}`}
+            placeholder="m/d/yy h:mm:ss am"
             value={endStr}
-            onChange={(e) => handleEndChange(e.target.value)}
-            onBlur={() => {
-              if (datetimeLocalToEpoch(endStr) === null) {
-                setEndStr(entry.end_timestamp !== null ? epochToDatetimeLocal(entry.end_timestamp) : '')
-              }
+            onChange={(e) => setEndStr(e.target.value)}
+            onBlur={commitEnd}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur()
             }}
           />
         )}

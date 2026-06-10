@@ -18,7 +18,7 @@ import { screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils/render-with-providers'
 import { makeMockApi } from '@/test-utils/mock-api'
 import { TimestampEditor } from './TimestampEditor'
-import { epochToDatetimeLocal } from '@/utils/epoch-datetime'
+import { epochToDisplay } from '@/utils/epoch-datetime'
 import type { EpochSeconds } from '@shared/time'
 
 const EPOCH_START_1 = 1748865600 as EpochSeconds // stopped entry start
@@ -103,23 +103,23 @@ describe('TimestampEditor', () => {
     })
   })
 
-  it('a calendar pick (change, no blur) on a stopped Start commits immediately (FIELD-04)', async () => {
+  it('typing + blurring a stopped Start input commits the parsed timestamp (FIELD-04)', async () => {
     const { container } = renderWithProviders(<TimestampEditor timerId={TIMER_ID} />)
     await waitFor(() => {
       // Wait for table to render
       expect(screen.getByRole('columnheader', { name: '#' })).toBeTruthy()
     })
-    const startInput = container.querySelectorAll<HTMLInputElement>(
-      'input[type="datetime-local"]',
-    )[0]!
+    const startInput = container.querySelectorAll<HTMLInputElement>('input[type="text"]')[0]!
     const newEpoch = (EPOCH_START_1 - 3600) as EpochSeconds // 1h earlier
-    // NO blur — a native calendar pick fires `change` only; the edit must apply now.
-    fireEvent.change(startInput, { target: { value: epochToDatetimeLocal(newEpoch) } })
+    // Free text commits on blur (not per keystroke — a partial string is invalid).
+    fireEvent.change(startInput, { target: { value: epochToDisplay(newEpoch) } })
+    expect(window.api.timeEntries.setStart).not.toHaveBeenCalled()
+    fireEvent.blur(startInput)
     await waitFor(() => {
       expect(window.api.timeEntries.setStart).toHaveBeenCalledWith(1, newEpoch)
     })
-    // Dedupe: re-firing the same value must not produce a second mutation.
-    fireEvent.change(startInput, { target: { value: epochToDatetimeLocal(newEpoch) } })
+    // Unchanged re-blur must not produce a second mutation.
+    fireEvent.blur(startInput)
     expect((window.api.timeEntries.setStart as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1)
   })
 
