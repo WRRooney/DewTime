@@ -35,6 +35,7 @@
   flex: 1 1 auto;
   min-height: 0; /* allow the flex child to shrink so overflow-y actually scrolls */
   overflow-y: auto;
+  overflow-x: hidden; /* datetime-local inputs have a wide UA min-width; never scroll the table sideways */
 }
 
 /* =========================================================================
@@ -167,6 +168,7 @@
   font-size: var(--font-size-sm);
   outline: none;
   width: 100%;
+  min-width: 0; /* override UA intrinsic min-width so the input shrinks inside fixed table cells */
   box-sizing: border-box;
 }
 
