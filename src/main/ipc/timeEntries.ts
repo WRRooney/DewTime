@@ -17,8 +17,13 @@ import * as timerService from '@main/services/timer'
 // listByTimer: pure read — repo called directly. All write methods go through
 // timerService. The `listByTimerRepo` alias keeps the intent visible at call sites.
 // setStart/setEnd: pure timestamp writes, no FSM transition — repo called directly.
+// listInRange/createEntry/setTimestamps: Phase 9 gantt methods — pure repo calls.
+// createEntry is a direct repo call (endTs always non-null, no FSM needed — D-21).
 import {
   listByTimer as listByTimerRepo,
+  listInRange as listInRangeRepo,
+  createEntry as createEntryRepo,
+  setTimestamps as setTimestampsRepo,
   setStart as setStartRepo,
   setEnd as setEndRepo,
 } from '@main/db/repositories/timeEntries'
@@ -34,6 +39,9 @@ import {
   SetStartArgsSchema,
   SetEndArgsSchema,
   DeleteEntryArgsSchema,
+  ListInRangeArgsSchema,
+  CreateEntryArgsSchema,
+  SetTimestampsArgsSchema,
 } from '@shared/contracts/timeEntries'
 
 /**
@@ -126,6 +134,40 @@ export const handleDeleteEntry = handler(
 )
 
 /**
+ * `timeEntries.listInRange(fromEpoch, toEpoch)` — cross-timer range query for
+ * the gantt viewport. Pure read; no FSM semantics. Zod gate rejects reversed/
+ * zero-span ranges (T-09-04). Direct repo call.
+ */
+export const handleListInRange = handler(
+  ListInRangeArgsSchema,
+  // fromEpoch/toEpoch are Zod-validated positive ints — sanctioned EpochSeconds cast.
+  async ({ fromEpoch, toEpoch }) =>
+    listInRangeRepo(fromEpoch as EpochSeconds, toEpoch as EpochSeconds),
+)
+
+/**
+ * `timeEntries.createEntry(timerId, startTs, endTs)` — insert a completed entry
+ * for gantt double-click creation. Direct repo call — endTs is schema-guaranteed
+ * non-null so no FSM involvement (D-21, D-26, D-27).
+ */
+export const handleCreateEntry = handler(
+  CreateEntryArgsSchema,
+  async ({ timerId, startTs, endTs }) =>
+    createEntryRepo(timerId, startTs as EpochSeconds, endTs as EpochSeconds),
+)
+
+/**
+ * `timeEntries.setTimestamps(entryId, startTs, endTs)` — atomic body-move for
+ * gantt drag-to-move. Direct repo call — repo guards running entries and ordering
+ * (T-09-01, T-09-06, D-17).
+ */
+export const handleSetTimestamps = handler(
+  SetTimestampsArgsSchema,
+  async ({ entryId, startTs, endTs }) =>
+    setTimestampsRepo(entryId, startTs as EpochSeconds, endTs as EpochSeconds),
+)
+
+/**
  * Register the `timeEntries.*` IPC channels with `ipcMain`.
  *
  * The `_evt` parameter is intentionally unused — handler bodies must not
@@ -145,4 +187,7 @@ export function registerTimeEntriesHandlers(
   ipc.handle('timeEntries.setStart', (_evt, args) => handleSetStart(args))
   ipc.handle('timeEntries.setEnd', (_evt, args) => handleSetEnd(args))
   ipc.handle('timeEntries.deleteEntry', (_evt, args) => handleDeleteEntry(args))
+  ipc.handle('timeEntries.listInRange', (_evt, args) => handleListInRange(args))
+  ipc.handle('timeEntries.createEntry', (_evt, args) => handleCreateEntry(args))
+  ipc.handle('timeEntries.setTimestamps', (_evt, args) => handleSetTimestamps(args))
 }

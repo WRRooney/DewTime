@@ -8,10 +8,12 @@ import init001 from './001_initial.sql?raw'
 import init002 from './002_window_geometry.sql?raw'
 import init003 from './003_always_on_top.sql?raw'
 import init004 from './004_auto_update.sql?raw'
+import init005 from './005_gantt_settings.sql?raw'
 
 export const MIGRATIONS = [
   { version: 1, sql: init001 },
   { version: 2, sql: init002 },
   { version: 3, sql: init003 },
   { version: 4, sql: init004 },
+  { version: 5, sql: init005 },
 ] as const

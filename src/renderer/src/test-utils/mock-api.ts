@@ -89,6 +89,9 @@ export function makeMockApi(overrides?: DeepPartial<ElectronApi>): ElectronApi {
       setStart: stub('timeEntries.setStart') as ElectronApi['timeEntries']['setStart'],
       setEnd: stub('timeEntries.setEnd') as ElectronApi['timeEntries']['setEnd'],
       deleteEntry: stub('timeEntries.deleteEntry') as ElectronApi['timeEntries']['deleteEntry'],
+      listInRange: stub('timeEntries.listInRange') as ElectronApi['timeEntries']['listInRange'],
+      createEntry: stub('timeEntries.createEntry') as ElectronApi['timeEntries']['createEntry'],
+      setTimestamps: stub('timeEntries.setTimestamps') as ElectronApi['timeEntries']['setTimestamps'],
     },
     settings: {
       get: stub('settings.get') as ElectronApi['settings']['get'],
