@@ -363,7 +363,7 @@ Plans:
 
 **Goal**: Users can switch among three tabbed views (Timers \| Gantt \| Projects) and, in the Gantt view, visually reschedule timer entries by dragging continuous bars on a zoomable/pannable timeline — with Projects management moved inline out of the footer
 **Depends on**: Phase 4 (timer table + push-tick), Phase 5 (project combobox + TimestampEditor), Phase 8 (ProjectsManager)
-**Requirements**: (v2.1 feature — requirements TBD during planning; see 09-CONTEXT.md)
+**Requirements**: SC-1..SC-6 (the 6 Success Criteria below) + decisions D-01..D-31 in 09-CONTEXT.md (no formal REQ-IDs for v2.1; every D-NN is a constraint covered by a plan)
 **Success Criteria** (what must be TRUE):
 
   1. The screen header is a tab strip "Timers \| Gantt \| Projects" (replacing the "Timers" h1); the Week-total pill remains visible on all tabs; last-active tab persists across restart (default Timers)
@@ -373,7 +373,29 @@ Plans:
   5. Each lane's left gutter shows a project dropdown above an editable description (lane grows to fit); the gutter width is adjustable and persists as a percent
   6. The Projects tab renders the projects manager inline in the main window; the bottom-left footer Projects link is removed; the footer's version button remains
 
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+**Wave 1**
+
+- [ ] 09-01-PLAN.md — Backend foundation: timeEntries.listInRange/createEntry/setTimestamps IPC + repo + Zod contracts + migration 005 (settings.active_tab, settings.gutter_width_pct) + shared types (Wave 1, autonomous)
+- [ ] 09-02-PLAN.md — gantt-math pure module (epoch↔pixel transform, zoom-aware snap, span clamps) + TDD tests (Wave 1, autonomous)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 09-03-PLAN.md — Renderer data layer: useGanttEntries (distinct gantt query key) + useCreateEntry (triple invalidation) + useActiveTabStore (SQLite write-through) + close the gantt invalidation gap + mock-api extension (Wave 2, autonomous)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 09-04-PLAN.md — Tab shell: TabStrip (Timers|Gantt|Projects) + swap into DateNavToolbar title row (Week-total pill retained) + remove AppFooter Projects button (keep version) (Wave 3, autonomous)
+- [ ] 09-05-PLAN.md — GanttBar (running-bar tick edge, stop icon, edge-resize/body-move drag, select, dblclick→editor, context menu, keyboard delete) + entry-delete confirm path (store + ConfirmEntryDeleteDialog backed by useDeleteEntry) + drag tooltip (Wave 3, autonomous)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 09-06-PLAN.md — Gantt assembly: lane gutter (cmdk project dropdown + description textarea) + useGutterWidth + GanttLane (sub-row overlap) + adaptive two-tier axis + ghost lane + info popover + GanttView (viewport/zoom/pan/now-line/selection) + App.tsx three-view composition + persisted-tab load + inline ProjectsManager (Wave 4, autonomous)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 09-07-PLAN.md — Manual ROADMAP UAT checkpoint: full automated gate + operator verifies SC-1..SC-6 and manual-only behaviors (pan gesture, pulse, sub-row stacking, min bar width, overlap hint); authors 09-HUMAN-UAT.md (Wave 5, autonomous: false — manual UAT)
 
 **UI hint**: yes
 
