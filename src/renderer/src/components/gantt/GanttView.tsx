@@ -58,6 +58,36 @@ function dateKeyOf(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+/** Current epoch-seconds via the Performance API (no banned raw wall-clock read). */
+function nowEpochSeconds(): number {
+  return Math.floor(performance.timeOrigin / 1000 + performance.now() / 1000)
+}
+
+/**
+ * Compute a viewport {startEpoch, spanSeconds} that frames all the given entries with
+ * ~5% padding on each side, clamped to the [MIN, MAX] span and centered on the content.
+ * Returns null when there are no entries (caller falls back to the default day view).
+ * Running entries (end = null) extend to "now".
+ */
+export function computeFitViewport(
+  entries: Array<{ start_timestamp: number; end_timestamp: number | null }>,
+  nowEpoch: number,
+): { startEpoch: number; spanSeconds: number } | null {
+  if (entries.length === 0) return null
+  let min = Infinity
+  let max = -Infinity
+  for (const e of entries) {
+    min = Math.min(min, e.start_timestamp)
+    max = Math.max(max, e.end_timestamp ?? nowEpoch)
+  }
+  if (max <= min) max = min + MIN_SPAN_SECONDS // single instant / zero-length safety
+  const raw = max - min
+  const pad = Math.max(raw * 0.05, 300) // 5% or at least 5 minutes
+  const span = Math.min(MAX_SPAN_SECONDS, Math.max(MIN_SPAN_SECONDS, raw + pad * 2))
+  const mid = (min + max) / 2
+  return { startEpoch: mid - span / 2, spanSeconds: span }
+}
+
 /** GanttView: the full gantt canvas — see module-level comments for detail. */
 export function GanttView(): JSX.Element {
   const selectedDate = useSelectedDateStore((s) => s.date)
@@ -88,16 +118,34 @@ export function GanttView(): JSX.Element {
   const gutterRef = useRef(gutterWidthPct)
   gutterRef.current = gutterWidthPct
 
-  // Re-center ONLY when the selected day actually changes — not on remount, so
-  // switching tabs preserves the current zoom/pan (D-10).
+  // Selected-day entries — used to auto zoom-to-fit on day change and to power the
+  // manual zoom-to-fit button.
+  const dayRange = dayRangeOf(selectedDate)
+  const dayEntriesQuery = useGanttEntries(dayRange.fromEpoch, dayRange.toEpoch)
+  const dayEntries = dayEntriesQuery.data ?? []
+
+  // On day change, auto zoom-to-fit that day's entries (empty day → default day view).
+  // Runs once per day (guarded by lastDateKey) and only after the day's entries have
+  // loaded, so it does NOT fire on remount — switching tabs preserves the current view.
   useEffect(() => {
     const key = dateKeyOf(selectedDate)
     const store = useGanttViewportStore.getState()
-    if (store.lastDateKey !== key) {
-      const range = dayRangeOf(selectedDate)
-      store.recenter(range.fromEpoch, key)
+    if (store.lastDateKey === key) return
+    if (!dayEntriesQuery.isFetched) return
+    const fit = computeFitViewport(dayEntries, nowEpochSeconds())
+    if (fit) {
+      store.setZoom(fit.startEpoch, fit.spanSeconds)
+      useGanttViewportStore.setState({ lastDateKey: key })
+    } else {
+      store.recenter(dayRange.fromEpoch, key)
     }
-  }, [selectedDate])
+  }, [selectedDate, dayEntries, dayEntriesQuery.isFetched, dayRange.fromEpoch])
+
+  // Manual zoom-to-fit: frame the selected day's entries.
+  const handleZoomToFit = (): void => {
+    const fit = computeFitViewport(dayEntries, nowEpochSeconds())
+    if (fit) useGanttViewportStore.getState().setZoom(fit.startEpoch, fit.spanSeconds)
+  }
 
   // ---------------------------------------------------------------------------
   // Refs + canvas width measurement
@@ -271,7 +319,6 @@ export function GanttView(): JSX.Element {
   // Queries
   // ---------------------------------------------------------------------------
 
-  const dayRange = dayRangeOf(selectedDate)
   const { data: timers = [], isError: timersError } = useDayTimers(dayRange.fromEpoch, dayRange.toEpoch)
   const { data: allEntries = [] } = useGanttEntries(startEpoch, startEpoch + spanSeconds)
 
@@ -356,10 +403,38 @@ export function GanttView(): JSX.Element {
       onPointerUp={handlePointerUp}
       onClick={handleClearSelection}
     >
-      {/* Info popover — bottom right, clear of the axis */}
+      {/* Info popover — top-left, over the axis gutter spacer */}
       <div className={styles.infoBtn}>
         <GanttInfoPopover />
       </div>
+
+      {/* Zoom-to-fit — top-right; frames the selected day's entries */}
+      <button
+        type="button"
+        className={styles.fitBtn}
+        onClick={handleZoomToFit}
+        aria-label="Zoom to fit"
+        title="Zoom to fit"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          {/* Four corner brackets — "fit to frame" */}
+          <path d="M2 5V3a1 1 0 0 1 1-1h2" />
+          <path d="M11 2h2a1 1 0 0 1 1 1v2" />
+          <path d="M14 11v2a1 1 0 0 1-1 1h-2" />
+          <path d="M5 14H3a1 1 0 0 1-1-1v-2" />
+        </svg>
+      </button>
 
       {/* Sticky axis header — wheel zoom/pan surface */}
       <GanttAxisHeader viewport={trackViewport} gutterWidthPct={gutterWidthPct} />

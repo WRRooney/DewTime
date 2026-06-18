@@ -16,7 +16,7 @@ import React from 'react'
 import { screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils/render-with-providers'
 import { makeMockApi } from '@/test-utils/mock-api'
-import { GanttView } from './GanttView'
+import { GanttView, computeFitViewport } from './GanttView'
 import type { Timer, TimeEntry } from '@shared/ipc'
 import type { EpochSeconds } from '@shared/time'
 import { useSelectedDateStore } from '@/stores/useSelectedDateStore'
@@ -115,5 +115,54 @@ describe('GanttView', () => {
     // These values are what wheel handler uses — no inline magic numbers
     expect(MIN_SPAN_SECONDS).toBeGreaterThan(0)
     expect(MAX_SPAN_SECONDS).toBeLessThanOrEqual(604800)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// computeFitViewport — pure zoom-to-fit math
+// ---------------------------------------------------------------------------
+
+describe('computeFitViewport', () => {
+  it('returns null for an empty entry list (caller keeps the default day view)', () => {
+    expect(computeFitViewport([], NOW_EPOCH)).toBeNull()
+  })
+
+  it('frames multiple entries with padding and centers them', () => {
+    const fit = computeFitViewport(
+      [
+        { start_timestamp: 1000, end_timestamp: 4000 },
+        { start_timestamp: 7000, end_timestamp: 9000 },
+      ],
+      NOW_EPOCH,
+    )
+    expect(fit).not.toBeNull()
+    // content span = 9000 - 1000 = 8000; padded span clamped to >= MIN
+    expect(fit!.spanSeconds).toBeGreaterThanOrEqual(8000)
+    expect(fit!.spanSeconds).toBeLessThanOrEqual(MAX_SPAN_SECONDS)
+    // centered on the content midpoint (5000)
+    const mid = fit!.startEpoch + fit!.spanSeconds / 2
+    expect(mid).toBeCloseTo(5000, 0)
+    // padding leaves the earliest start strictly inside the window
+    expect(fit!.startEpoch).toBeLessThan(1000)
+  })
+
+  it('clamps a tiny entry up to the minimum span', () => {
+    const fit = computeFitViewport([{ start_timestamp: 5000, end_timestamp: 5060 }], NOW_EPOCH)
+    expect(fit!.spanSeconds).toBe(MIN_SPAN_SECONDS)
+  })
+
+  it('clamps a very wide range down to the maximum span', () => {
+    const fit = computeFitViewport(
+      [{ start_timestamp: 0, end_timestamp: 30 * 86400 }],
+      NOW_EPOCH,
+    )
+    expect(fit!.spanSeconds).toBe(MAX_SPAN_SECONDS)
+  })
+
+  it('extends a running entry (end = null) to "now"', () => {
+    const fit = computeFitViewport([{ start_timestamp: NOW_EPOCH - 7200, end_timestamp: null }], NOW_EPOCH)
+    // content runs from now-2h to now → span >= 2h, framed around it
+    expect(fit!.spanSeconds).toBeGreaterThanOrEqual(7200)
+    expect(fit!.startEpoch + fit!.spanSeconds).toBeGreaterThanOrEqual(NOW_EPOCH)
   })
 })
