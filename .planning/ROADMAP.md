@@ -378,7 +378,7 @@ Plans:
 **Wave 1**
 
 - [ ] 09-01-PLAN.md — Backend foundation: timeEntries.listInRange/createEntry/setTimestamps IPC + repo + Zod contracts + migration 005 (settings.active_tab, settings.gutter_width_pct) + shared types (Wave 1, autonomous)
-- [ ] 09-02-PLAN.md — gantt-math pure module (epoch↔pixel transform, zoom-aware snap, span clamps) + TDD tests (Wave 1, autonomous)
+- [x] 09-02-PLAN.md — gantt-math pure module (epoch↔pixel transform, zoom-aware snap, span clamps) + TDD tests (Wave 1, autonomous)
 
 **Wave 2** *(blocked on Wave 1)*
 
