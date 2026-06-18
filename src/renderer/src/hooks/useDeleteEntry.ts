@@ -4,8 +4,9 @@ import { entriesNamespaceKey } from './useEntriesForTimer'
 
 /**
  * Mutation to delete a time entry. Refreshes the timers cache (so the
- * duration total updates) and the dialog's entry list on success. Deleting
- * the running entry also stops the timer (heartbeat + tick stopped server-side).
+ * duration total updates), the dialog's entry list, and the gantt viewport
+ * on success. Deleting the running entry also stops the timer (heartbeat +
+ * tick stopped server-side).
  */
 export function useDeleteEntry() {
   const qc = useQueryClient()
@@ -15,6 +16,7 @@ export function useDeleteEntry() {
       await Promise.all([
         qc.invalidateQueries({ queryKey: timersQueryKey }),
         qc.invalidateQueries({ queryKey: entriesNamespaceKey }),
+        qc.invalidateQueries({ queryKey: ['timeEntries', 'gantt'] }), // gantt key (D-20)
       ])
     },
   })

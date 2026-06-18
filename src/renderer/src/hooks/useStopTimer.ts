@@ -9,7 +9,7 @@ import type { TimeEntry } from '@shared/ipc'
 import { timersQueryKey } from './useTimers'
 import { entriesNamespaceKey } from './useEntriesForTimer'
 
-/** Mutation to stop a running timer. Invalidates both the timers and entries caches on success. */
+/** Mutation to stop a running timer. Invalidates timers, entries, and gantt caches on success. */
 export function useStopTimer() {
   const qc = useQueryClient()
   return useMutation<TimeEntry | null, Error, number>({
@@ -18,6 +18,7 @@ export function useStopTimer() {
       await Promise.all([
         qc.invalidateQueries({ queryKey: timersQueryKey }),
         qc.invalidateQueries({ queryKey: entriesNamespaceKey }),
+        qc.invalidateQueries({ queryKey: ['timeEntries', 'gantt'] }), // gantt key (D-13)
       ])
     },
   })
