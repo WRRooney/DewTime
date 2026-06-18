@@ -46,6 +46,15 @@ Exceptions:
 - Ghost add-lane height: 32px fixed (de-emphasized, does not grow).
 - Gutter splitter hit target: 8px wide centered on the 1px visual divider.
 
+### Approved Deviations from Standard Set {4, 8, 16, 24, 32, 48, 64}
+
+The following values are multiples of 4 but fall outside the checker's standard set. Both are pre-existing project tokens — changing them would diverge from the established codebase. They are explicitly approved as exceptions:
+
+| Value | Context | Rationale | Approval |
+|-------|---------|-----------|----------|
+| **12px** (`--space-3`) | Cell padding; gutter textarea padding | Pre-existing project token defined in `tokens.css` and used for existing `TimerTable` cell padding. Introducing a new value would create visual inconsistency with the table. 4×3 — valid multiple of 4. | Approved deviation — pre-existing codebase token |
+| **44px** | Lane row minimum height | Matches the existing `TimerTable` row height for visual consistency when both views share the same date context. 4×11 — valid multiple of 4. Not a new value introduced by this phase. | Approved deviation — matches existing row height |
+
 ---
 
 ## Typography
