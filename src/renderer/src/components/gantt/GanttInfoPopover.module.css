@@ -1,0 +1,71 @@
+/* GanttInfoPopover: circle-i trigger + hover popover.
+ * Trigger: 16px icon button, top-right over axis header.
+ * Popover: bg --color-bg-elevated, border 1px --color-border, --radius-md, max-width 280px.
+ * No hex literals — all values via design tokens.
+ * Approved px exceptions: 16px (icon size), 1px (borders), 8px (padding). */
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-fg-muted);
+  transition: color 0.1s;
+}
+
+.trigger:hover {
+  color: var(--color-fg);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Popover panel — positioned below and right-aligned to trigger */
+.popover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 50;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  max-width: 280px;
+  min-width: 220px;
+  box-shadow: var(--shadow-dropdown);
+}
+
+/* Gesture list */
+.gestureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-stack);
+  line-height: var(--line-height-default);
+}
+
+.gestureRow {
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+  padding: var(--space-1) 0;
+}
+
+.gestureRow + .gestureRow {
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
+}

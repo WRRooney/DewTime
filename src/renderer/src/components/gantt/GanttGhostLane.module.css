@@ -1,0 +1,38 @@
+/* GanttGhostLane: pinned bottom add-timer row.
+ * Height: 32px fixed (de-emphasized, does not grow) per UI-SPEC.
+ * No hex literals — all values via design tokens.
+ * Approved px exceptions: 32px (ghost lane height), 1px (borders). */
+
+.ghostLane {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--space-4);
+  background: var(--color-bg);
+  border: none;
+  border-top: 1px dashed var(--color-border);
+  cursor: pointer;
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-stack);
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+
+.ghostLane:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-fg);
+}
+
+.ghostLane:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.label {
+  line-height: var(--line-height-tight);
+}
