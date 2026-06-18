@@ -1,0 +1,94 @@
+/* GanttView: root canvas container for the Gantt view.
+ * Fills the main area via flex layout.
+ * No hex literals — all values via design tokens.
+ * Approved px exceptions: 1px (borders). */
+
+.ganttView {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: var(--color-bg);
+  position: relative;
+}
+
+/* Scrollable lane area — sits between sticky axis header and pinned ghost lane */
+.laneArea {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Full-width horizontal scroll container within the lane area */
+.laneScroll {
+  position: relative;
+  min-height: 100%;
+}
+
+/* Now line: 1px accent vertical line spanning lane area height */
+.nowLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-accent);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Cross-lane overlap hint band (D-27 — shown only at span <= 3 days) */
+.overlapHint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: hsl(0 65% 50% / 0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Empty state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--space-5);
+  text-align: center;
+  gap: var(--space-3);
+}
+
+.emptyHeading {
+  color: var(--color-fg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.emptyBody {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+  max-width: 300px;
+  line-height: var(--line-height-body);
+}
+
+/* Error state */
+.errorState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: var(--space-4);
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Info popover position — top right over axis header area */
+.infoBtn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 15;
+}

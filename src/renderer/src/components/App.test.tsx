@@ -37,6 +37,7 @@ function setupMockApi() {
     settings: {
       get: vi.fn().mockResolvedValue(undefined),
       set: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue([]),
     },
     projects: {
       list: vi.fn().mockResolvedValue([]),
