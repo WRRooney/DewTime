@@ -1,10 +1,11 @@
 ---
 phase: 9
 slug: gantt-timer-control
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-18
+reviewed_at: 2026-06-18
 ---
 
 # Phase 9 — UI Design Contract
