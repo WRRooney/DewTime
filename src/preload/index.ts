@@ -142,6 +142,12 @@ const api: ElectronApi = {
       invokeWrapped<void>('timeEntries.setEnd', { entryId, ts }),
     deleteEntry: (entryId: number) =>
       invokeWrapped<void>('timeEntries.deleteEntry', { entryId }),
+    listInRange: (fromEpoch: number, toEpoch: number) =>
+      invokeWrapped<TimeEntry[]>('timeEntries.listInRange', { fromEpoch, toEpoch }),
+    createEntry: (timerId: number, startTs: number, endTs: number) =>
+      invokeWrapped<TimeEntry>('timeEntries.createEntry', { timerId, startTs, endTs }),
+    setTimestamps: (entryId: number, startTs: number, endTs: number) =>
+      invokeWrapped<void>('timeEntries.setTimestamps', { entryId, startTs, endTs }),
   },
   settings: {
     get: <K extends SettingKey>(key: K) =>

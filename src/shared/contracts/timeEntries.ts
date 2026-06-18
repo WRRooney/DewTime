@@ -67,3 +67,51 @@ export const DeleteEntryArgsSchema = z.object({
   entryId: z.number().int().positive(),
 })
 export type DeleteEntryArgs = z.infer<typeof DeleteEntryArgsSchema>
+
+/**
+ * `timeEntries.listInRange(fromEpoch, toEpoch)` — cross-timer range query for
+ * the gantt viewport. `refine` enforces `fromEpoch < toEpoch` to reject reversed
+ * or zero-span ranges before any DB query reaches the repository (T-09-04).
+ */
+export const ListInRangeArgsSchema = z
+  .object({
+    fromEpoch: z.number().int().positive(),
+    toEpoch: z.number().int().positive(),
+  })
+  .refine((a) => a.fromEpoch < a.toEpoch, {
+    message: 'fromEpoch must be less than toEpoch',
+  })
+export type ListInRangeArgs = z.infer<typeof ListInRangeArgsSchema>
+
+/**
+ * `timeEntries.createEntry(timerId, startTs, endTs)` — insert a completed entry
+ * for the gantt double-click creation flow. `endTs` is NON-NULLABLE — gantt never
+ * creates running entries. `refine` enforces `startTs < endTs` at the Zod boundary
+ * (T-09-01). The repo never writes NULL for end in this path (D-21, D-26, D-27).
+ */
+export const CreateEntryArgsSchema = z
+  .object({
+    timerId: z.number().int().positive(),
+    startTs: z.number().int().positive(),
+    endTs: z.number().int().positive(),
+  })
+  .refine((a) => a.startTs < a.endTs, {
+    message: 'startTs must be before endTs',
+  })
+export type CreateEntryArgs = z.infer<typeof CreateEntryArgsSchema>
+
+/**
+ * `timeEntries.setTimestamps(entryId, startTs, endTs)` — atomic body-move for
+ * gantt drag-to-move. `refine` enforces `startTs < endTs` at the Zod boundary;
+ * the repo additionally guards running entries (T-09-01, T-09-06, D-17).
+ */
+export const SetTimestampsArgsSchema = z
+  .object({
+    entryId: z.number().int().positive(),
+    startTs: z.number().int().positive(),
+    endTs: z.number().int().positive(),
+  })
+  .refine((a) => a.startTs < a.endTs, {
+    message: 'startTs must be before endTs',
+  })
+export type SetTimestampsArgs = z.infer<typeof SetTimestampsArgsSchema>

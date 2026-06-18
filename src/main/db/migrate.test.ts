@@ -35,10 +35,11 @@ describe('migration runner', () => {
     // user_version was bumped inside the same transaction. Plan 03-01
     // added migration 002 (settings.window_geometry seed); quick task
     // 260606-0mc added migration 003 (always_on_top seed); quick task
-    // 260606-16w added migration 004 (auto_update seed), so the head is
-    // now 4; the dedicated MIGR-004 test below asserts this exact value.
+    // 260606-16w added migration 004 (auto_update seed); Phase 9 plan 01
+    // added migration 005 (gantt settings seed), so the head is
+    // now 5; the dedicated MIGR-002 test below asserts this exact value.
     const version = db.pragma('user_version', { simple: true })
-    expect(version).toBe(4)
+    expect(version).toBe(5)
   })
 
   it('idempotent re-run: second runMigrations() does not duplicate seeded settings', () => {
@@ -110,13 +111,13 @@ describe('migration runner', () => {
     expect(row.value).toBe('{"x":120,"y":240,"width":1024,"height":768}')
   })
 
-  it('MIGR-002: PRAGMA user_version is 4 after all migrations (001+002+003+004)', () => {
-    // Verify the full run yields the current latest version (4 after 004_auto_update).
+  it('MIGR-002: PRAGMA user_version is 5 after all migrations (001+002+003+004+005)', () => {
+    // Verify the full run yields the current latest version (5 after 005_gantt_settings).
     runMigrations()
     const db = getDb()
     const version = db.pragma('user_version', { simple: true })
-    // After all migrations (001, 002, 003, 004), version is 4.
-    expect(version).toBe(4)
+    // After all migrations (001, 002, 003, 004, 005), version is 5.
+    expect(version).toBe(5)
   })
 
   // ---- Quick task 260606-0mc additions (MIGR-003) ----

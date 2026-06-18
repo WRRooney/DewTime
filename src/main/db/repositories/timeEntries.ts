@@ -16,6 +16,7 @@ let stmts: {
   insert: Database.Statement<unknown[]>
   byId: Database.Statement<unknown[]>
   listByTimer: Database.Statement<unknown[]>
+  listInRange: Database.Statement<unknown[]>
   running: Database.Statement<unknown[]>
   stopRunning: Database.Statement<unknown[]>
   // Pure timestamp setters — no FSM transition (see setStart/setEnd below).
@@ -34,6 +35,12 @@ function getStmts() {
     byId: db.prepare(`SELECT * FROM time_entries WHERE id = ?`),
     listByTimer: db.prepare(
       `SELECT * FROM time_entries WHERE timer_id = ? ORDER BY start_timestamp ASC, id ASC`,
+    ),
+    listInRange: db.prepare(
+      `SELECT * FROM time_entries
+       WHERE start_timestamp < ?
+         AND (end_timestamp > ? OR end_timestamp IS NULL)
+       ORDER BY timer_id ASC, start_timestamp ASC`,
     ),
     running: db.prepare(
       `SELECT * FROM time_entries WHERE end_timestamp IS NULL ORDER BY start_timestamp DESC LIMIT 1`,
@@ -174,6 +181,88 @@ export function setEnd(entryId: number, endTs: EpochSeconds): void {
   }
   const info = getStmts().setEnd.run([endTs, entryId])
   if (info.changes === 0) throw new NotFoundError(`time_entries ${entryId} not found`)
+}
+
+// ---------------------------------------------------------------------------
+// Gantt viewport query (Phase 9)
+// ---------------------------------------------------------------------------
+
+/**
+ * Return all time entries overlapping the epoch range [fromEpoch, toEpoch).
+ *
+ * Overlap condition: `start_timestamp < toEpoch AND (end_timestamp > fromEpoch
+ * OR end_timestamp IS NULL)`. A running entry whose start is before toEpoch is
+ * included; an entry entirely outside the range is excluded.
+ *
+ * Results ordered by timer_id ASC, start_timestamp ASC — matches gantt lane layout.
+ *
+ * Uses named SQLite parameters (?1, ?2) in the prepared statement; called with
+ * positional array `.all([fromEpoch, toEpoch])` where ?1=fromEpoch, ?2=toEpoch.
+ */
+export function listInRange(
+  fromEpoch: EpochSeconds,
+  toEpoch: EpochSeconds,
+): TimeEntry[] {
+  // SQL: start_timestamp < toEpoch AND (end_timestamp > fromEpoch OR end_timestamp IS NULL)
+  // Positional ? order: first ? = toEpoch, second ? = fromEpoch
+  return getStmts().listInRange.all(toEpoch, fromEpoch) as TimeEntry[]
+}
+
+/**
+ * Insert a completed (non-running) time entry with caller-supplied timestamps.
+ * `end_timestamp` is ALWAYS non-null — use `timerService.start()` for running entries.
+ * `startTs < endTs` is enforced by Zod schema at the IPC boundary; SQLite FK
+ * enforces `timerId` referential integrity.
+ *
+ * This function NEVER calls `nowSeconds()` and NEVER passes NULL for end.
+ * Reuses the existing `insert` + `byId` statements from the single stmts cache.
+ */
+export function createEntry(
+  timerId: number,
+  startTs: EpochSeconds,
+  endTs: EpochSeconds,
+): TimeEntry {
+  const info = getStmts().insert.run(timerId, startTs, endTs)
+  const id = info.lastInsertRowid as number
+  const row = getStmts().byId.get(id) as TimeEntry | undefined
+  if (!row) {
+    throw new NotFoundError(`time_entries ${id} vanished immediately after insert`)
+  }
+  return row
+}
+
+/**
+ * Atomically update both `start_timestamp` and `end_timestamp` for a stopped entry.
+ * Using a single UPDATE prevents intermediate constraint violations during body-move
+ * drag (Pitfall 3 — two separate setStart/setEnd calls could momentarily violate
+ * start < end when the bar is moved forward).
+ *
+ * Throws `NotFoundError` if no row matches `entryId`.
+ * Throws `ValidationError('cannot edit timestamps of a running entry')` when the
+ *   entry is running (`end_timestamp IS NULL`).
+ * Throws `ValidationError('start_timestamp must be before end_timestamp')` when
+ *   `startTs >= endTs`.
+ */
+export function setTimestamps(
+  entryId: number,
+  startTs: EpochSeconds,
+  endTs: EpochSeconds,
+): void {
+  const entry = getStmts().byId.get(entryId) as TimeEntry | undefined
+  if (!entry) throw new NotFoundError(`time_entries ${entryId} not found`)
+  if (entry.end_timestamp === null) {
+    throw new ValidationError('cannot edit timestamps of a running entry')
+  }
+  if (startTs >= endTs) {
+    throw new ValidationError('start_timestamp must be before end_timestamp')
+  }
+  // Single UPDATE with both fields — avoids two round-trips and intermediate
+  // start > old_end violations that two separate calls could hit.
+  getDb()
+    .prepare(
+      `UPDATE time_entries SET start_timestamp = ?, end_timestamp = ? WHERE id = ?`,
+    )
+    .run([startTs, endTs, entryId])
 }
 
 /**

@@ -143,6 +143,8 @@ export type SettingKey =
   | 'settings.always_on_top'
   | 'settings.auto_update'
   | 'settings.window_geometry' // composite JSON key; value type WindowGeometry above
+  | 'settings.active_tab' // Phase 9 — 'timers' | 'gantt' | 'projects' (D-04)
+  | 'settings.gutter_width_pct' // Phase 9 — number in [0, 1] (D-16)
 
 /**
  * Per-key value type. The conditional type here is the renderer-facing source
@@ -161,7 +163,11 @@ export type SettingValue<K extends SettingKey> = K extends 'settings.week_start'
       ? 'floating' | 'windowed' | 'tray'
       : K extends 'settings.window_geometry'
         ? WindowGeometry
-        : never
+        : K extends 'settings.active_tab'
+          ? 'timers' | 'gantt' | 'projects'
+          : K extends 'settings.gutter_width_pct'
+            ? number
+            : never
 
 // ---------------------------------------------------------------------------
 // Per-namespace API interfaces
@@ -225,6 +231,32 @@ export interface TimeEntriesApi {
    * running, NotFoundError when entryId does not exist.
    */
   deleteEntry(entryId: number): Promise<void>
+  /**
+   * Return all entries overlapping the epoch range [fromEpoch, toEpoch). Includes
+   * running entries whose start is before toEpoch. Results ordered by timer_id ASC,
+   * start_timestamp ASC. Zod gate rejects reversed/zero-span ranges (T-09-04).
+   */
+  listInRange(fromEpoch: EpochSeconds, toEpoch: EpochSeconds): Promise<TimeEntry[]>
+  /**
+   * Insert a completed (non-running) time entry. endTs is non-nullable — gantt
+   * double-click creation never creates a running entry (D-21, D-26, D-27).
+   * Zod gate enforces startTs < endTs (T-09-01).
+   */
+  createEntry(
+    timerId: number,
+    startTs: EpochSeconds,
+    endTs: EpochSeconds,
+  ): Promise<TimeEntry>
+  /**
+   * Atomically update both timestamps for a stopped entry (drag body-move).
+   * Repo guards: running entry → ValidationError, startTs >= endTs → ValidationError,
+   * missing id → NotFoundError (T-09-01, T-09-06, D-17).
+   */
+  setTimestamps(
+    entryId: number,
+    startTs: EpochSeconds,
+    endTs: EpochSeconds,
+  ): Promise<void>
 }
 
 export interface SettingsApi {
