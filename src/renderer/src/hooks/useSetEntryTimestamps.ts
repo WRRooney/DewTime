@@ -6,13 +6,16 @@ import { timersQueryKey } from './useTimers'
 import { entriesNamespaceKey } from './useEntriesForTimer'
 
 /**
- * Invalidate the timers cache (so DurationCell refreshes) and the dialog's entries
- * list (so the popup datetime inputs reflect the persisted value).
+ * Invalidate the timers cache (so DurationCell refreshes), the dialog's entries
+ * list (so the popup datetime inputs reflect the persisted value), AND the gantt
+ * viewport key (so drag-committed bar moves are reflected immediately — D-17/D-20,
+ * closes Pitfall 1 from 09-RESEARCH.md).
  */
 async function invalidateAfterTimestampEdit(qc: ReturnType<typeof useQueryClient>): Promise<void> {
   await Promise.all([
     qc.invalidateQueries({ queryKey: timersQueryKey }),
     qc.invalidateQueries({ queryKey: entriesNamespaceKey }),
+    qc.invalidateQueries({ queryKey: ['timeEntries', 'gantt'] }), // gantt key (D-17/D-20)
   ])
 }
 
