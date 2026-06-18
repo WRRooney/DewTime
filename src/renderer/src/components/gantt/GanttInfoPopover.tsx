@@ -17,8 +17,9 @@ import styles from './GanttInfoPopover.module.css'
 // Gesture table from UI-SPEC §"Copywriting Contract"
 // Each entry is displayed as: "{gesture} → {action}"
 const GESTURES: Array<{ label: string }> = [
-  { label: 'Scroll → Zoom in/out' },
-  { label: 'Shift + Scroll → Pan' },
+  { label: 'Scroll over time axis → Zoom in/out' },
+  { label: 'Shift + Scroll over time axis → Pan' },
+  { label: 'Scroll over lanes → Scroll timers' },
   { label: 'Drag empty space → Pan' },
   { label: 'Drag bar edge → Resize' },
   { label: 'Drag bar → Move' },

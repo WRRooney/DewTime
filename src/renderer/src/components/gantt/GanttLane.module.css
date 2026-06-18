@@ -37,9 +37,18 @@
   background: var(--color-row-hover);
 }
 
-/* Sub-row container — absolute positioned within the track */
+/* Sub-row container — absolute, full-width band within the track.
+ * Because each entry gets its own full-width band, two entries that share a sub-row
+ * stack as overlapping transparent layers; without this the topmost band would
+ * intercept clicks meant for a bar beneath it. Make the band itself transparent to
+ * pointer events and re-enable them only on its actual children (the bar + menu). */
 .barRow {
   position: absolute;
   left: 0;
   right: 0;
+  pointer-events: none;
+}
+
+.barRow > * {
+  pointer-events: auto;
 }
