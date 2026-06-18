@@ -14,11 +14,17 @@
   border-bottom: none;
 }
 
-/* Subtle highlight when the lane is active (a bar in it is selected, or its project
- * dropdown / description is focused). Tints the bar track; the gutter is tinted by
- * GanttLaneGutter's own .gutterActive rule. */
+/* Subtle highlight when the lane is active (selected via blank-space click, a bar in
+ * it is selected, or its project dropdown / description is focused). Tints the bar
+ * track; the gutter is tinted by GanttLaneGutter's own .gutterActive rule. */
 .laneActive .track {
   background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+}
+
+/* On an active lane, keep hover gentle — the default row-hover is too strong layered
+ * over the active tint. */
+.laneActive .track:hover {
+  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg));
 }
 
 /* Sticky gutter wrapper — stays pinned during horizontal scroll (D-11) */

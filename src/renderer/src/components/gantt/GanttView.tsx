@@ -170,8 +170,20 @@ export function GanttView(): JSX.Element {
   // ---------------------------------------------------------------------------
 
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
-  const handleSelectEntry = useCallback((entryId: number): void => setSelectedEntryId(entryId), [])
-  const handleClearSelection = (): void => setSelectedEntryId(null)
+  const [selectedLaneId, setSelectedLaneId] = useState<number | null>(null)
+  const handleSelectEntry = useCallback((entryId: number): void => {
+    setSelectedEntryId(entryId)
+    setSelectedLaneId(null) // a bar selection supersedes a blank-space lane selection
+  }, [])
+  // Clicking blank space in a lane selects that lane (highlight) and clears bar selection.
+  const handleSelectLane = useCallback((timerId: number): void => {
+    setSelectedLaneId(timerId)
+    setSelectedEntryId(null)
+  }, [])
+  const handleClearSelection = (): void => {
+    setSelectedEntryId(null)
+    setSelectedLaneId(null)
+  }
 
   // ---------------------------------------------------------------------------
   // Drag tooltip
@@ -500,7 +512,9 @@ export function GanttView(): JSX.Element {
                   viewport={trackViewport}
                   gutterWidthPct={gutterWidthPct}
                   selectedEntryId={selectedEntryId}
+                  laneSelected={selectedLaneId === timer.id}
                   onSelectEntry={handleSelectEntry}
+                  onSelectLane={handleSelectLane}
                   onDragTooltip={setDragTooltip}
                   onCreateEntryAt={handleCreateEntryAt}
                 />

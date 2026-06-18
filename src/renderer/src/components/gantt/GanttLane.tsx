@@ -39,7 +39,9 @@ export interface GanttLaneProps {
   viewport: GanttViewport
   gutterWidthPct: number
   selectedEntryId: number | null
+  laneSelected: boolean
   onSelectEntry: (entryId: number) => void
+  onSelectLane: (timerId: number) => void
   onDragTooltip: (t: { startEpoch: EpochSeconds; endEpoch: EpochSeconds } | null) => void
   onCreateEntryAt: (timerId: number, startTs: number, endTs: number) => void
 }
@@ -88,7 +90,9 @@ export const GanttLane = React.memo(function GanttLane({
   viewport,
   gutterWidthPct,
   selectedEntryId,
+  laneSelected,
   onSelectEntry,
+  onSelectLane,
   onDragTooltip,
   onCreateEntryAt,
 }: GanttLaneProps): JSX.Element {
@@ -98,13 +102,21 @@ export const GanttLane = React.memo(function GanttLane({
 
   // Lane is "active" when a bar in it is selected or its gutter is focused — used for
   // the subtle background highlight.
-  const laneActive = gutterActive || entries.some((e) => e.id === selectedEntryId)
+  const laneActive = laneSelected || gutterActive || entries.some((e) => e.id === selectedEntryId)
 
   const entriesWithSubRows = assignSubRows(entries)
   const maxSubRow = entriesWithSubRows.reduce((max, { subRow }) => Math.max(max, subRow), 0)
 
   // Track height = max sub-rows × (row height + padding), minimum 44px
   const trackMinHeight = Math.max(44, (maxSubRow + 1) * (SUBROW_HEIGHT + SUBROW_PADDING) + SUBROW_PADDING)
+
+  // Single click on blank track space selects the lane (highlight). Bar clicks
+  // stopPropagation, so they never reach here.
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    if ((e.target as Element).closest('[data-testid="gantt-bar"]')) return
+    e.stopPropagation()
+    onSelectLane(timer.id)
+  }
 
   const handleTrackDoubleClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     // Don't create entry if double-clicking on a bar
@@ -149,6 +161,7 @@ export const GanttLane = React.memo(function GanttLane({
         className={styles.track}
         style={trackStyle}
         data-gantt-track
+        onClick={handleTrackClick}
         onDoubleClick={handleTrackDoubleClick}
       >
         {entriesWithSubRows.map(({ entry, subRow }) => {
