@@ -387,7 +387,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2)*
 
 - [ ] 09-04-PLAN.md — Tab shell: TabStrip (Timers|Gantt|Projects) + swap into DateNavToolbar title row (Week-total pill retained) + remove AppFooter Projects button (keep version) (Wave 3, autonomous)
-- [ ] 09-05-PLAN.md — GanttBar (running-bar tick edge, stop icon, edge-resize/body-move drag, select, dblclick→editor, context menu, keyboard delete) + entry-delete confirm path (store + ConfirmEntryDeleteDialog backed by useDeleteEntry) + drag tooltip (Wave 3, autonomous)
+- [x] 09-05-PLAN.md — GanttBar (running-bar tick edge, stop icon, edge-resize/body-move drag, select, dblclick→editor, context menu, keyboard delete) + entry-delete confirm path (store + ConfirmEntryDeleteDialog backed by useDeleteEntry) + drag tooltip (Wave 3, autonomous)
 
 **Wave 4** *(blocked on Wave 3)*
 
