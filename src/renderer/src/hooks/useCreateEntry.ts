@@ -15,11 +15,13 @@ import { entriesNamespaceKey } from './useEntriesForTimer'
 export function useCreateEntry() {
   const qc = useQueryClient()
   return useMutation<TimeEntry, Error, { timerId: number; startTs: number; endTs: number }>({
+    // IPC contract requires integer epochs (Zod `.int()`); round at the boundary
+    // so fractional drag/snap values never reach validation.
     mutationFn: ({ timerId, startTs, endTs }) =>
       window.api.timeEntries.createEntry(
         timerId,
-        startTs as EpochSeconds,
-        endTs as EpochSeconds,
+        Math.round(startTs) as EpochSeconds,
+        Math.round(endTs) as EpochSeconds,
       ),
     onSuccess: async () => {
       await Promise.all([

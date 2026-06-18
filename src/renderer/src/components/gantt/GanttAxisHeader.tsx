@@ -26,18 +26,31 @@ import type { EpochSeconds } from '@shared/time'
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = 3600
 const SECONDS_PER_DAY = 86400
-const TICK_GRANULARITY_THRESHOLD_3D = SECONDS_PER_DAY * 3
 
 export interface GanttAxisHeaderProps {
   viewport: GanttViewport
   gutterWidthPct: number
 }
 
-/** Return the tick interval in seconds based on viewport span (D-12). */
+/**
+ * Return the tick interval in seconds based on viewport span (D-12).
+ *
+ * Brackets are tuned so the visible tick count stays readable (~12–36 labels)
+ * across the full 1h–7d zoom range — in particular the default 1-day view uses
+ * hourly ticks (24), not 15-minute ticks (96, which overlap into an unreadable smear).
+ *
+ *   span >  3 days        → 4-hour ticks
+ *   span >  1 day         → 2-hour ticks
+ *   span >  6 hours       → 1-hour ticks   (default 1-day view → 24 ticks)
+ *   span >  2 hours       → 15-minute ticks
+ *   span <= 2 hours       → 5-minute ticks
+ */
 export function tickIntervalFor(spanSeconds: number): number {
-  if (spanSeconds > TICK_GRANULARITY_THRESHOLD_3D) return SECONDS_PER_HOUR * 4
-  if (spanSeconds > SECONDS_PER_DAY) return SECONDS_PER_HOUR
-  return SECONDS_PER_MINUTE * 15
+  if (spanSeconds > SECONDS_PER_DAY * 3) return SECONDS_PER_HOUR * 4
+  if (spanSeconds > SECONDS_PER_DAY) return SECONDS_PER_HOUR * 2
+  if (spanSeconds > SECONDS_PER_HOUR * 6) return SECONDS_PER_HOUR
+  if (spanSeconds > SECONDS_PER_HOUR * 2) return SECONDS_PER_MINUTE * 15
+  return SECONDS_PER_MINUTE * 5
 }
 
 /** Format a date for the top-tier label (e.g. "Wed 06/18"). No date library. */

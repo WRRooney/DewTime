@@ -124,15 +124,17 @@ export const GanttLane = React.memo(function GanttLane({
 
   return (
     <div className={styles.lane} data-testid="gantt-lane">
-      {/* Sticky gutter pane */}
-      <div className={styles.gutterWrapper} style={gutterStyle}>
+      {/* Sticky gutter pane — marked so canvas pan/wheel never engages over it */}
+      <div className={styles.gutterWrapper} style={gutterStyle} data-gantt-gutter>
         <GanttLaneGutter timer={timer} />
       </div>
 
-      {/* Bar track — double-click creates a new entry at the snapped epoch */}
+      {/* Bar track — double-click creates a new entry at the snapped epoch.
+          data-gantt-track marks the wheel-zoom / pan surface (D-08/D-09). */}
       <div
         className={styles.track}
         style={trackStyle}
+        data-gantt-track
         onDoubleClick={handleTrackDoubleClick}
       >
         {entriesWithSubRows.map(({ entry, subRow }) => {

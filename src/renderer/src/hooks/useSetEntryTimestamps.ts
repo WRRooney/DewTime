@@ -23,7 +23,7 @@ async function invalidateAfterTimestampEdit(qc: ReturnType<typeof useQueryClient
 export function useSetEntryStart() {
   const qc = useQueryClient()
   return useMutation<void, Error, { entryId: number; ts: number }>({
-    mutationFn: ({ entryId, ts }) => window.api.timeEntries.setStart(entryId, ts as EpochSeconds),
+    mutationFn: ({ entryId, ts }) => window.api.timeEntries.setStart(entryId, Math.round(ts) as EpochSeconds),
     onSuccess: () => invalidateAfterTimestampEdit(qc),
   })
 }
@@ -32,7 +32,7 @@ export function useSetEntryStart() {
 export function useSetEntryEnd() {
   const qc = useQueryClient()
   return useMutation<void, Error, { entryId: number; ts: number }>({
-    mutationFn: ({ entryId, ts }) => window.api.timeEntries.setEnd(entryId, ts as EpochSeconds),
+    mutationFn: ({ entryId, ts }) => window.api.timeEntries.setEnd(entryId, Math.round(ts) as EpochSeconds),
     onSuccess: () => invalidateAfterTimestampEdit(qc),
   })
 }

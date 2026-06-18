@@ -135,6 +135,10 @@ export function GanttView(): JSX.Element {
   // ---------------------------------------------------------------------------
 
   const handleWheel = useCallback((e: WheelEvent): void => {
+    // Only hijack the wheel for zoom/pan when the pointer is over the timeline track.
+    // Anywhere else (gutter, between lanes) the wheel scrolls the lane list natively
+    // so the user can scroll through timers without zooming.
+    if (!(e.target as Element).closest('[data-gantt-track]')) return
     e.preventDefault()
 
     setViewport((vp) => {
@@ -177,40 +181,76 @@ export function GanttView(): JSX.Element {
   // ---------------------------------------------------------------------------
 
   interface PanDragState {
-    active: boolean
+    pending: boolean   // pointer is down on empty canvas, not yet panning
+    active: boolean    // movement threshold crossed — panning
     startX: number
     startEpoch: EpochSeconds
+    pointerId: number
   }
 
-  const panRef = useRef<PanDragState>({ active: false, startX: 0, startEpoch: 0 as EpochSeconds })
+  // Movement (px) before a press becomes a pan. Below this a press is a tap/double-click,
+  // so we never capture the pointer for taps — that previously stole clicks from the
+  // gutter combobox, the ghost "new timer" button, and double-click entry creation.
+  const PAN_THRESHOLD_PX = 4
+
+  const panRef = useRef<PanDragState>({
+    pending: false,
+    active: false,
+    startX: 0,
+    startEpoch: 0 as EpochSeconds,
+    pointerId: -1,
+  })
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>): void => {
-    // Hit-test: only pan when not on a bar or handle (D-09 hit-test priority)
-    if ((e.target as Element).closest('[data-testid="gantt-bar"]')) return
-    if ((e.target as Element).closest('[data-handle]')) return
+    // Only arm panning on truly empty timeline track space. Bail on bars, handles,
+    // and any interactive control (gutter combobox, buttons, inputs, the ghost lane)
+    // so their clicks/double-clicks are never captured (D-09 hit-test priority).
+    const target = e.target as Element
+    if (target.closest('[data-testid="gantt-bar"]')) return
+    if (target.closest('[data-handle]')) return
+    if (target.closest('button, input, textarea, [data-gantt-gutter], [cmdk-root]')) return
 
     panRef.current = {
-      active: true,
+      pending: true,
+      active: false,
       startX: e.clientX,
       startEpoch: viewport.startEpoch,
-    }
-    if (typeof e.currentTarget.setPointerCapture === 'function') {
-      e.currentTarget.setPointerCapture(e.pointerId)
+      pointerId: e.pointerId,
     }
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
-    if (!panRef.current.active) return
-    const dx = e.clientX - panRef.current.startX
+    const pan = panRef.current
+    if (!pan.pending && !pan.active) return
+    const dx = e.clientX - pan.startX
+
+    // Cross the threshold once → begin panning and capture the pointer so the drag
+    // keeps tracking even if it leaves the canvas.
+    if (!pan.active) {
+      if (Math.abs(dx) < PAN_THRESHOLD_PX) return
+      pan.active = true
+      if (typeof e.currentTarget.setPointerCapture === 'function') {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }
+    }
+
     const epochDelta = (dx / Math.max(1, viewport.canvasWidthPx)) * viewport.spanSeconds
     setViewport((vp) => ({
       ...vp,
-      startEpoch: (panRef.current.startEpoch - epochDelta) as EpochSeconds,
+      startEpoch: (pan.startEpoch - epochDelta) as EpochSeconds,
     }))
   }
 
-  const handlePointerUp = (): void => {
-    panRef.current.active = false
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const pan = panRef.current
+    if (pan.active && typeof e.currentTarget.releasePointerCapture === 'function') {
+      try {
+        e.currentTarget.releasePointerCapture(pan.pointerId)
+      } catch {
+        /* pointer already released */
+      }
+    }
+    panRef.current = { pending: false, active: false, startX: 0, startEpoch: 0 as EpochSeconds, pointerId: -1 }
   }
 
   // ---------------------------------------------------------------------------
@@ -289,32 +329,26 @@ export function GanttView(): JSX.Element {
 
   const showOverlapHints = viewport.spanSeconds <= CROSS_LANE_HINT_MAX_SPAN
 
-  // Compute cross-lane overlap regions (entries that overlap across different timers)
+  // Compute overlap regions across EVERY pair of distinct entries — whether they
+  // belong to different timers (cross-lane) or the same timer (same-lane sub-row
+  // stacking still represents real time overlap the user wants flagged). Each
+  // unordered pair is compared once (j starts at i+1).
   const overlapRegions: Array<{ leftX: number; rightX: number }> = []
   if (showOverlapHints && allEntries.length > 1) {
-    // Group entries by timer, find cross-timer overlaps
-    const timerEntryMap = new Map<number, typeof allEntries>()
-    for (const entry of allEntries) {
-      const list = timerEntryMap.get(entry.timer_id) ?? []
-      list.push(entry)
-      timerEntryMap.set(entry.timer_id, list)
-    }
-
-    // For each entry, check if it overlaps with entries from other timers
-    for (const entry of allEntries) {
-      const entryEnd = entry.end_timestamp ?? (viewport.startEpoch + viewport.spanSeconds)
-      for (const [otherId, otherEntries] of timerEntryMap) {
-        if (otherId === entry.timer_id) continue
-        for (const other of otherEntries) {
-          const otherEnd = other.end_timestamp ?? (viewport.startEpoch + viewport.spanSeconds)
-          const overlapStart = Math.max(entry.start_timestamp, other.start_timestamp)
-          const overlapEnd = Math.min(entryEnd, otherEnd)
-          if (overlapStart < overlapEnd) {
-            overlapRegions.push({
-              leftX: epochToX(overlapStart as EpochSeconds, viewport),
-              rightX: epochToX(overlapEnd as EpochSeconds, viewport),
-            })
-          }
+    const viewEnd = viewport.startEpoch + viewport.spanSeconds
+    for (let i = 0; i < allEntries.length; i++) {
+      const a = allEntries[i]!
+      const aEnd = a.end_timestamp ?? viewEnd
+      for (let j = i + 1; j < allEntries.length; j++) {
+        const b = allEntries[j]!
+        const bEnd = b.end_timestamp ?? viewEnd
+        const overlapStart = Math.max(a.start_timestamp, b.start_timestamp)
+        const overlapEnd = Math.min(aEnd, bEnd)
+        if (overlapStart < overlapEnd) {
+          overlapRegions.push({
+            leftX: epochToX(overlapStart as EpochSeconds, viewport),
+            rightX: epochToX(overlapEnd as EpochSeconds, viewport),
+          })
         }
       }
     }

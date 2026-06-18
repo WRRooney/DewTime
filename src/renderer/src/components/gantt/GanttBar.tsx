@@ -77,7 +77,11 @@ function useSetEntryBounds() {
   const qc = useQueryClient()
   return useMutation<void, Error, { entryId: number; startTs: EpochSeconds; endTs: EpochSeconds }>({
     mutationFn: ({ entryId, startTs, endTs }) =>
-      window.api.timeEntries.setTimestamps(entryId, startTs, endTs),
+      window.api.timeEntries.setTimestamps(
+        entryId,
+        Math.round(startTs) as EpochSeconds,
+        Math.round(endTs) as EpochSeconds,
+      ),
     onSuccess: async () => {
       await Promise.all([
         qc.invalidateQueries({ queryKey: timersQueryKey }),
@@ -360,8 +364,7 @@ export const GanttBar = React.memo(function GanttBar({
           }}
         />
 
-        {/* Bar label */}
-        <span className={styles.barLabel}>{timer.description}</span>
+        {/* No in-bar description label — the description lives in the lane gutter. */}
 
         {/* Stop icon — running bars only (D-13) */}
         {isRunning && (

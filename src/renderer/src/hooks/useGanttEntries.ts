@@ -12,17 +12,22 @@ export const ganttEntriesKey = (fromEpoch: number, toEpoch: number) =>
 
 /** Fetches all time entries overlapping the epoch range [fromEpoch, toEpoch). */
 export function useGanttEntries(fromEpoch: number, toEpoch: number) {
+  // The IPC contract (listInRange) requires INTEGER epochs (Zod `.int()`). Zoom/pan
+  // produce fractional viewport edges, so floor/ceil here — widening the range
+  // outward by <1s is harmless and keeps the query key stable across sub-second drift.
+  const from = Math.floor(fromEpoch)
+  const to = Math.ceil(toEpoch)
   return useQuery<TimeEntry[]>({
-    queryKey: ganttEntriesKey(fromEpoch, toEpoch),
+    queryKey: ganttEntriesKey(from, to),
     // Brand at the IPC boundary — callers pass plain numbers, IPC expects EpochSeconds.
     queryFn: () =>
       window.api.timeEntries.listInRange(
-        fromEpoch as EpochSeconds,
-        toEpoch as EpochSeconds,
+        from as EpochSeconds,
+        to as EpochSeconds,
       ),
     staleTime: 100,
     // keepPreviousData prevents blank flash during scroll/zoom viewport-key changes.
     placeholderData: keepPreviousData,
-    enabled: fromEpoch < toEpoch,
+    enabled: from < to,
   })
 }
