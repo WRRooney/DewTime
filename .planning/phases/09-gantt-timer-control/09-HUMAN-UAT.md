@@ -87,6 +87,31 @@ blocked: 0
   pan surface.
   fix: covered by G4 (mark the gutter as a no-pan zone + threshold pan).
 
-status: all five fixed in commit(s) below; full automated suite green; awaiting operator re-test.
+status: all five fixed; full automated suite green.
+
+### Round 2 (2026-06-18) — operator re-test
+
+Confirmed working after round 1: double-click to add entry; red overlap highlighting on
+all overlapping entries incl. same-timer; editing project via dropdown and timer
+description. Remaining issues:
+
+- **G6 — Axis labels still overlap**: tick count was span-bracketed, not width-aware.
+  fix: `chooseTickInterval` now picks the smallest "nice" interval whose pixel spacing
+  clears 64px, so label density adapts to canvas width at every zoom.
+- **G7 — Some bars unselectable (still show crosshair on hover)**: bars/ticks/now-line
+  were scaled to the full lane-area width but rendered inside the narrower bar track
+  (`overflow: hidden`), so the right ~25% of the timeline overflowed and was unclickable.
+  fix: introduced a track-width viewport; all geometry now uses (canvas − gutter) width.
+- **G8 — Info icon overlapped the time axis**: moved to the top-left over the axis gutter
+  spacer (no ticks there), popover opens downward.
+- **G9 — Scroll behavior**: zoom now only engages over the time axis; over the bars the
+  wheel scrolls the timer list normally.
+- **G10 — Description padding / no auto-size on mount**: trimmed textarea padding;
+  it now auto-sizes to content on mount, not only while editing.
+- **G11 — Zoom/scroll not retained across tabs**: viewport moved to a session store
+  (useGanttViewportStore); re-center only on actual day change.
+- **G12 — Rename**: the "Gantt" tab is now labelled "Timeline".
+
+status: all round-2 items fixed in commit below; full automated suite green; awaiting operator re-test.
 </content>
 </invoke>
