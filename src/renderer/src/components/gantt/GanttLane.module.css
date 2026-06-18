@@ -8,6 +8,50 @@
   align-items: stretch;
   border-bottom: 1px solid var(--color-border);
   min-height: 44px;
+  position: relative;
+}
+
+/* Hover-revealed lane actions (start/stop + delete), top-right of the swim lane. */
+.laneActions {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-2);
+  z-index: 8;
+  display: flex;
+  gap: var(--space-1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+
+.lane:hover .laneActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.laneActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.laneActionBtn:hover {
+  color: var(--color-fg);
+  border-color: var(--color-fg-muted);
+}
+
+.laneActionBtnDanger:hover {
+  color: var(--color-danger, hsl(0 65% 55%));
+  border-color: var(--color-danger, hsl(0 65% 55%));
 }
 
 .lane:last-child {

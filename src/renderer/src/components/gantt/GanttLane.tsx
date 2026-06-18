@@ -28,6 +28,9 @@ import {
 } from '@/utils/gantt-math'
 import { GanttBar } from './GanttBar'
 import { GanttLaneGutter } from './GanttLaneGutter'
+import { useStartTimer } from '@/hooks/useStartTimer'
+import { useStopTimer } from '@/hooks/useStopTimer'
+import { useConfirmDeleteStore } from '@/stores/useConfirmDeleteStore'
 
 // Height per sub-row in pixels (matches standard bar height from UI-SPEC)
 const SUBROW_HEIGHT = 24
@@ -100,6 +103,19 @@ export const GanttLane = React.memo(function GanttLane({
   // z-index lift (so an open dropdown isn't clipped) and the lane highlight.
   const [gutterActive, setGutterActive] = useState(false)
 
+  // Hover-revealed lane actions: start/stop + delete the timer.
+  const startTimer = useStartTimer()
+  const stopTimer = useStopTimer()
+  const handleToggleRun = (e: React.MouseEvent): void => {
+    e.stopPropagation()
+    if (timer.running) stopTimer.mutate(timer.id)
+    else startTimer.mutate(timer.id)
+  }
+  const handleDeleteTimer = (e: React.MouseEvent): void => {
+    e.stopPropagation()
+    useConfirmDeleteStore.getState().open(timer.id, timer.description || '(no description)')
+  }
+
   // Lane is "active" when a bar in it is selected or its gutter is focused — used for
   // the subtle background highlight.
   const laneActive = laneSelected || gutterActive || entries.some((e) => e.id === selectedEntryId)
@@ -150,6 +166,48 @@ export const GanttLane = React.memo(function GanttLane({
       className={laneActive ? `${styles.lane} ${styles.laneActive}` : styles.lane}
       data-testid="gantt-lane"
     >
+      {/* Hover-revealed lane actions — top-right of the swim lane */}
+      <div className={styles.laneActions}>
+        <button
+          type="button"
+          className={styles.laneActionBtn}
+          onClick={handleToggleRun}
+          aria-label={timer.running ? 'Stop timer' : 'Start timer'}
+          title={timer.running ? 'Stop timer' : 'Start timer'}
+        >
+          {timer.running ? (
+            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M4 3l9 5-9 5z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
+        <button
+          type="button"
+          className={`${styles.laneActionBtn} ${styles.laneActionBtnDanger}`}
+          onClick={handleDeleteTimer}
+          aria-label="Delete timer"
+          title="Delete timer"
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5 4l.7 9a1 1 0 0 0 1 .9h2.6a1 1 0 0 0 1-.9L12 4" />
+          </svg>
+        </button>
+      </div>
+
       {/* Sticky gutter pane — marked so canvas pan/wheel never engages over it */}
       <div className={styles.gutterWrapper} style={gutterStyle} data-gantt-gutter>
         <GanttLaneGutter timer={timer} active={laneActive} onGutterActiveChange={setGutterActive} />
