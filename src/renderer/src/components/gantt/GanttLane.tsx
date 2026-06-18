@@ -92,9 +92,13 @@ export const GanttLane = React.memo(function GanttLane({
   onDragTooltip,
   onCreateEntryAt,
 }: GanttLaneProps): JSX.Element {
-  // When this lane's project dropdown is open, lift the gutter above neighbouring
-  // lanes so the panel isn't painted behind the lane below.
-  const [projectOpen, setProjectOpen] = useState(false)
+  // Gutter activity (project dropdown open or description focused). Drives both the
+  // z-index lift (so an open dropdown isn't clipped) and the lane highlight.
+  const [gutterActive, setGutterActive] = useState(false)
+
+  // Lane is "active" when a bar in it is selected or its gutter is focused — used for
+  // the subtle background highlight.
+  const laneActive = gutterActive || entries.some((e) => e.id === selectedEntryId)
 
   const entriesWithSubRows = assignSubRows(entries)
   const maxSubRow = entriesWithSubRows.reduce((max, { subRow }) => Math.max(max, subRow), 0)
@@ -119,8 +123,8 @@ export const GanttLane = React.memo(function GanttLane({
   const gutterStyle: React.CSSProperties = {
     width: `${gutterWidthPct * 100}%`,
     // CSS sets z-index:2 on .gutterWrapper; lift above sibling lanes while the
-    // project dropdown is open so the panel renders in front.
-    zIndex: projectOpen ? 40 : undefined,
+    // gutter is active so an open project dropdown renders in front.
+    zIndex: gutterActive ? 40 : undefined,
   }
 
   const trackStyle: React.CSSProperties = {
@@ -130,10 +134,13 @@ export const GanttLane = React.memo(function GanttLane({
   }
 
   return (
-    <div className={styles.lane} data-testid="gantt-lane">
+    <div
+      className={laneActive ? `${styles.lane} ${styles.laneActive}` : styles.lane}
+      data-testid="gantt-lane"
+    >
       {/* Sticky gutter pane — marked so canvas pan/wheel never engages over it */}
       <div className={styles.gutterWrapper} style={gutterStyle} data-gantt-gutter>
-        <GanttLaneGutter timer={timer} onProjectOpenChange={setProjectOpen} />
+        <GanttLaneGutter timer={timer} active={laneActive} onGutterActiveChange={setGutterActive} />
       </div>
 
       {/* Bar track — double-click creates a new entry at the snapped epoch.

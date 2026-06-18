@@ -25,10 +25,11 @@ import { useSetDescription } from '@/hooks/useSetDescription'
 
 interface GanttLaneGutterProps {
   timer: Timer
-  /** Notifies the parent lane when the project dropdown opens/closes so it can lift
-   *  the lane's stacking order above neighbouring lanes (otherwise the open panel is
-   *  painted behind the lane below). */
-  onProjectOpenChange?: (open: boolean) => void
+  /** When true, the lane is active (selected/focused) — tints the gutter background. */
+  active?: boolean
+  /** Reports gutter activity (project dropdown open OR description focused) so the
+   *  parent lane can lift its stacking order and apply the active highlight. */
+  onGutterActiveChange?: (active: boolean) => void
 }
 
 /** Case-insensitive substring filter for cmdk — NOT fuzzy. */
@@ -38,7 +39,8 @@ const substringFilter = (value: string, searchStr: string): number =>
 /** Lane gutter with project combobox (D-14) and description textarea (D-14/D-15). */
 export const GanttLaneGutter = React.memo(function GanttLaneGutter({
   timer,
-  onProjectOpenChange,
+  active = false,
+  onGutterActiveChange,
 }: GanttLaneGutterProps): JSX.Element {
   const { data: projects } = useProjects()
   const setProject = useSetProject()
@@ -52,6 +54,7 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
 
   // Description textarea state
   const [descDraft, setDescDraft] = useState(timer.description)
+  const [descFocused, setDescFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Resync draft when upstream description changes while not editing
@@ -59,10 +62,10 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
     setDescDraft(timer.description)
   }, [timer.description])
 
-  // Let the parent lane raise its stacking order while the dropdown is open.
+  // Report gutter activity (dropdown open or description focused) to the parent lane.
   useEffect(() => {
-    onProjectOpenChange?.(open)
-  }, [open, onProjectOpenChange])
+    onGutterActiveChange?.(open || descFocused)
+  }, [open, descFocused, onGutterActiveChange])
 
   // Auto-size the textarea to its content on mount and whenever the text changes —
   // not only while the user is typing (D-15: lane grows to fit the description).
@@ -128,7 +131,7 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
   }
 
   return (
-    <div className={styles.gutter}>
+    <div className={active ? `${styles.gutter} ${styles.gutterActive}` : styles.gutter}>
       {/* Project combobox */}
       <div
         ref={containerRef}
@@ -216,7 +219,11 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
         placeholder="(no description)"
         rows={1}
         onChange={(e) => setDescDraft(e.target.value)}
-        onBlur={commitDescription}
+        onFocus={() => setDescFocused(true)}
+        onBlur={() => {
+          setDescFocused(false)
+          commitDescription()
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
             commitDescription()
