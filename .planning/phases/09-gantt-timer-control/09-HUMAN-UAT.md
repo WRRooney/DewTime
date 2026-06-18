@@ -1,5 +1,5 @@
 ---
-status: partial
+status: diagnosed
 phase: 09-gantt-timer-control
 source: [09-07-PLAN.md]
 started: 2026-06-18
@@ -8,7 +8,7 @@ updated: 2026-06-18
 
 ## Current Test
 
-[awaiting human testing — launch `npm run dev` (or `npm run dev:no-sandbox`) and verify each criterion below]
+[round 1 failed — defects diagnosed and fix applied; awaiting re-test]
 
 ## Tests
 
@@ -44,11 +44,49 @@ result: [pending]
 
 total: 7
 passed: 0
-issues: 0
+issues: 5
 pending: 7
 skipped: 0
 blocked: 0
 
 ## Gaps
+
+### Round 1 (2026-06-18) — operator findings
+
+- **G1 — Axis unreadable**: at single-day view the time axis shows so many overlapping
+  ticks/labels it looks fully filled in.
+  root cause: `tickIntervalFor(86400)` — default day span is exactly 86400s; `86400 > 86400`
+  is false so it fell through to the 15-minute bracket → 96 ticks across the canvas.
+  fix: rebracket `tickIntervalFor` so 1-day = hourly (24 ticks) and tick count stays bounded.
+
+- **G2 — Bars disappear on zoom; ValidationError**: scroll-wheel zoom makes bars vanish and
+  only sometimes reappear back at the original zoom. Console: `ValidationError: [VALIDATION]
+  fromEpoch: Expected integer, received float; toEpoch: Expected integer, received float`.
+  root cause: wheel-zoom/pan set `viewport.startEpoch` to a float; `useGanttEntries` passed it
+  straight to `timeEntries.listInRange`, whose Zod contract requires `.int()` → every viewport
+  query rejected → no entries returned.
+  fix: floor/ceil the range at the `useGanttEntries` boundary; round all epochs at every IPC
+  mutation boundary (create/setStart/setEnd/setTimestamps).
+
+- **G3 — Drag jumps back**: dragging a bar partly works but sometimes fails to apply and snaps
+  to the original position.
+  root cause: same float bug — after a successful drag commit the gantt key is invalidated and
+  refetched with a float viewport, the refetch throws, the cache keeps the old entry, and the
+  bar's display position resets to the pre-drag timestamp.
+  fix: covered by G2 (integer epochs).
+
+- **G4 — Double-click does not create an entry; "New timer" ghost lane does nothing**:
+  root cause: `GanttView` root `onPointerDown` calls `setPointerCapture` on every pointer-down
+  (any non-bar/non-handle target) and never releases it, stealing the click/double-click from
+  child controls and the ghost-lane button.
+  fix: only begin panning after a movement threshold, guard interactive targets
+  (gutter/buttons/inputs), and release pointer capture on pointer-up.
+
+- **G5 — Project dropdown does nothing when clicked**:
+  root cause: same pointer-capture theft as G4 — the gutter combobox trigger sits inside the
+  pan surface.
+  fix: covered by G4 (mark the gutter as a no-pan zone + threshold pan).
+
+status: all five fixed in commit(s) below; full automated suite green; awaiting operator re-test.
 </content>
 </invoke>
