@@ -15,6 +15,7 @@ import { useSettings } from '@/contexts/SettingsContext'
 import { dayRangeOf, weekRangeOf } from '@/utils/date-ranges'
 import { DailyTotal } from './DailyTotal'
 import { WeeklyTotal } from './WeeklyTotal'
+import { TabStrip } from './TabStrip'
 import type { WeekStart } from '@/contexts/SettingsContext'
 
 // Fixed-width layout: 3-char weekday + zero-padded MM/DD/YYYY so the label
@@ -45,9 +46,9 @@ export function DateNavToolbar(): JSX.Element {
 
   return (
     <div className={styles.dateNavToolbar}>
-      {/* Title row: "Timers" screen heading + the week-total accent chip */}
+      {/* Title row: TabStrip (Timers|Gantt|Projects) + the week-total accent chip (D-02/D-03) */}
       <div className={styles.titleRow}>
-        <h1 className={styles.title}>Timers</h1>
+        <TabStrip />
         <span className={styles.weekTotalLabel}>Week total</span>
         <span className={styles.weekPill}>
           <WeeklyTotal
