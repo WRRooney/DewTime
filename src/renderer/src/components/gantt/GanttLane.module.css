@@ -1,0 +1,45 @@
+/* GanttLane: swim lane row — gutter pane (left) + bar track (right).
+ * No hex literals — all values via design tokens.
+ * Approved px exceptions: 44px (lane min height), 1px (borders). */
+
+.lane {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border-bottom: 1px solid var(--color-border);
+  min-height: 44px;
+}
+
+.lane:last-child {
+  border-bottom: none;
+}
+
+/* Sticky gutter wrapper — stays pinned during horizontal scroll (D-11) */
+.gutterWrapper {
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-bg-elevated);
+  /* width is set via inline style (gutterWidthPct) */
+}
+
+/* Bar track — scrollable horizontal area where entries are positioned */
+.track {
+  flex: 1;
+  position: relative;
+  background: var(--color-bg);
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.track:hover {
+  background: var(--color-row-hover);
+}
+
+/* Sub-row container — absolute positioned within the track */
+.barRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+}

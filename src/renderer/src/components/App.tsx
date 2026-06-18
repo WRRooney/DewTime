@@ -22,15 +22,6 @@ export function App(): JSX.Element {
     dialogRef.current?.showModal()
   }
 
-  const handleOpenProjects = (): void => {
-    // Projects manager opens in its own OS window (resizable/movable),
-    // not an in-renderer dialog. Fire-and-forget IPC.
-    void window.api.projects.openManager().catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error('projects.openManager IPC failed:', err)
-    })
-  }
-
   return (
     <SettingsProvider>
       <TickBridge />
@@ -44,7 +35,7 @@ export function App(): JSX.Element {
           <TimerTable />
         </div>
       </main>
-      <AppFooter onOpenProjects={handleOpenProjects} />
+      <AppFooter />
       <SettingsDialog ref={dialogRef} />
       <ConfirmDialog />
       <CalendarPickerDialog />
