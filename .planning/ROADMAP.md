@@ -4,7 +4,8 @@
 
 - ✅ **v1.0 MVP** — Phases 1–2 (shipped 2026-02-25) — See [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Phase 3** — Settings Foundation (shipped 2026-03-22) — See completed milestones below
-- 📋 **v2.0 Electron Rewrite** — Phases 1–7 (active)
+- ✅ **v2.0 Electron Rewrite** — Phases 1–8 (complete)
+- 📋 **v2.1 Gantt & Tabbed Views** — Phase 9 (active)
 
 ---
 
@@ -22,6 +23,16 @@
 - [ ] **Phase 6: Date Navigation + Calendar Picker** - prev/next/today + react-day-picker + daily/weekly totals + week-start
 - [ ] **Phase 7: Packaging + E2E Hardening** - electron-builder NSIS/AppImage + Playwright/xvfb E2E suite + cross-platform smoke
 - [x] **Phase 8: Projects Management + App Footer** - projects CRUD popup + footer (bottom-left link to popup, bottom-right version → releases page)
+
+---
+
+## Current Milestone: v2.1 Gantt & Tabbed Views
+
+**Goal:** Add a Gantt-style alternative view for visually rescheduling timer entries by dragging, and convert the screen header into a tab bar (Timers / Gantt / Projects) — moving Projects management inline out of the footer.
+
+### Phases
+
+- [ ] **Phase 9: Gantt Timer Control** - tab bar (Timers \| Gantt \| Projects) + continuous zoomable/pannable Gantt canvas with draggable entry bars (resize/move via setTimestamps) + per-lane project/description gutter + inline Projects tab
 
 ---
 
@@ -343,6 +354,26 @@ Plans:
 **Wave 3** *(blocked on Wave 2)*
 
 - [x] 08-03-PLAN.md — ProjectsDialog (native <dialog>: list/inline-edit/add/count-aware delete-confirm, SC-2/SC-3/SC-4) + App.tsx mount of footer + dialog (Wave 3, autonomous)
+
+**UI hint**: yes
+
+---
+
+### Phase 9: Gantt Timer Control
+
+**Goal**: Users can switch among three tabbed views (Timers \| Gantt \| Projects) and, in the Gantt view, visually reschedule timer entries by dragging continuous bars on a zoomable/pannable timeline — with Projects management moved inline out of the footer
+**Depends on**: Phase 4 (timer table + push-tick), Phase 5 (project combobox + TimestampEditor), Phase 8 (ProjectsManager)
+**Requirements**: (v2.1 feature — requirements TBD during planning; see 09-CONTEXT.md)
+**Success Criteria** (what must be TRUE):
+
+  1. The screen header is a tab strip "Timers \| Gantt \| Projects" (replacing the "Timers" h1); the Week-total pill remains visible on all tabs; last-active tab persists across restart (default Timers)
+  2. The Gantt view renders one swim lane per timer with its time_entries as continuous bars on a continuous timeline; default zoom shows the current day; scroll-wheel zooms (clamped between 1 hour and 7 days of span); Shift+Scroll or empty-canvas click-drag pans; prev/next/today re-center on the selected day
+  3. Dragging a bar's edge changes its start/end and dragging its body moves the whole entry; on drop the change persists via timeEntries.setTimestamps and survives restart; snapping is zoom-aware with Alt for free-drag
+  4. A running entry renders as a live bar to "now" (start draggable, end pinned) with a stop icon that stops the timer and then unlocks the end edge; double-click in a lane creates an entry (snapped); a bottom ghost lane creates a new timer; double-click on a bar opens the TimestampEditor; entries can be selected and deleted (key + context menu, with confirm)
+  5. Each lane's left gutter shows a project dropdown above an editable description (lane grows to fit); the gutter width is adjustable and persists as a percent
+  6. The Projects tab renders the projects manager inline in the main window; the bottom-left footer Projects link is removed; the footer's version button remains
+
+**Plans**: TBD
 
 **UI hint**: yes
 

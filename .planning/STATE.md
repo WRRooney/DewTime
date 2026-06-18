@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Electron Rewrite
-status: milestone_complete
-stopped_at: Milestone complete (Phase 08 was final phase)
-last_updated: 2026-06-08T21:35:38.170Z
-last_activity: 2026-06-08
+status: completed
+stopped_at: Phase 09 context gathered
+last_updated: "2026-06-18T14:45:29.899Z"
+last_activity: "2026-06-09 - Completed quick task 260609-o1c: timestamp editor table UX (table view, deletable running entry, Stop control)"
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 7
   total_plans: 51
   completed_plans: 50
-  percent: 88
+  percent: 78
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-29)
 Phase: 08
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-06-08
+Last activity: 2026-06-09 - Completed quick task 260609-o1c: timestamp editor table UX (table view, deletable running entry, Stop control)
 
 Progress: [██████████] 98%
 
@@ -141,16 +141,18 @@ None.
 | 14 | Fix Phase 2 UI issues - proper implementation (offset persistence, delete icon, dropdown, double-click, toolbar border, web app polish) | 2026-03-06 | 9bb79a4 | [14-fix-phase-2-ui-issues-proper-implementat](./quick/14-fix-phase-2-ui-issues-proper-implementat/) |
 | 15 | Fix remaining Phase 2 UI issues and implement text wrapping (dropdown autocomplete, text wrapping with row scaling, ENTER key, selection styling, font/button sizing) | 2026-03-06 | 0ad7aad | [15-fix-remaining-phase-2-ui-issues-and-impl](./quick/15-fix-remaining-phase-2-ui-issues-and-impl/) |
 | 16 | Rename app from Timerz to DewTime | 2026-06-05 | 98394fe | [260605-m1k-rename-app-from-timerz-to-dewtime](./quick/260605-m1k-rename-app-from-timerz-to-dewtime/) |
+| 260609-nq6 | Front-end tweaks: fix overflowing blue focus outline on project dropdown search field; wrap timer description text and grow row height | 2026-06-09 | acd6aad | [260609-nq6-front-end-tweaks-fix-blue-border-on-proj](./quick/260609-nq6-front-end-tweaks-fix-blue-border-on-proj/) |
+| 260609-o1c | Timestamp editor popup UX: table view (#, Start, End, Delete); deletable running entry (FSM-safe); Stop control in End column for active entry | 2026-06-09 | 1ce98a4 | [260609-o1c-timestamp-editor-popup-ux-table-view-sta](./quick/260609-o1c-timestamp-editor-popup-ux-table-view-sta/) |
 | 260606-0mc | Add "Always on top" option to settings; default to windowed (not always on top) | 2026-06-06 | 0e90822 | [260606-0mc-add-always-on-top-as-an-option-in-the-se](./quick/260606-0mc-add-always-on-top-as-an-option-in-the-se/) |
 | 260606-16w | Add auto-update toggle in settings popup (default on, disableable) | 2026-06-06 | 87f2598 | [260606-16w-add-auto-update-toggle-in-settings-popup](./quick/260606-16w-add-auto-update-toggle-in-settings-popup/) |
 | 260607-972 | Update confirmation prompt (approve before applying) + Check for updates button in settings | 2026-06-07 | 6d1c314 | [260607-972-add-update-confirmation-prompt-approve-b](./quick/260607-972-add-update-confirmation-prompt-approve-b/) |
 
 ## Session Continuity
 
-Last session: 2026-06-08T15:14:28.046Z
-Stopped at: Phase 8 context gathered
+Last session: 2026-06-18T14:45:29.876Z
+Stopped at: Phase 09 context gathered
 Resumed: —
 Current action: Ready to plan Phase 1 (Foundation)
-Resume file: None
+Resume file: .planning/phases/09-gantt-timer-control/09-CONTEXT.md
 
 **Status:** Milestone complete
