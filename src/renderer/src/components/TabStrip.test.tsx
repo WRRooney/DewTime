@@ -52,7 +52,7 @@ describe('TabStrip', () => {
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(3)
     expect(tabs[0]).toHaveTextContent('Timers')
-    expect(tabs[1]).toHaveTextContent('Gantt')
+    expect(tabs[1]).toHaveTextContent('Timeline')
     expect(tabs[2]).toHaveTextContent('Projects')
   })
 
@@ -69,7 +69,7 @@ describe('TabStrip', () => {
     const user = userEvent.setup()
     await renderTabStrip()
 
-    const ganttTab = screen.getByRole('tab', { name: 'Gantt' })
+    const ganttTab = screen.getByRole('tab', { name: 'Timeline' })
     await user.click(ganttTab)
 
     expect(useActiveTabStore.getState().tab).toBe('gantt')

@@ -85,10 +85,11 @@
   font-size: var(--font-size-sm);
 }
 
-/* Info popover position — top right over axis header area */
+/* Info popover position — top-left, over the axis gutter spacer (no ticks there,
+ * so it never covers time labels). */
 .infoBtn {
   position: absolute;
   top: var(--space-2);
-  right: var(--space-2);
+  left: var(--space-2);
   z-index: 15;
 }

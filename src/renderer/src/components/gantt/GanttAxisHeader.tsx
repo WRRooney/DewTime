@@ -33,24 +33,48 @@ export interface GanttAxisHeaderProps {
 }
 
 /**
- * Return the tick interval in seconds based on viewport span (D-12).
- *
- * Brackets are tuned so the visible tick count stays readable (~12–36 labels)
- * across the full 1h–7d zoom range — in particular the default 1-day view uses
- * hourly ticks (24), not 15-minute ticks (96, which overlap into an unreadable smear).
- *
- *   span >  3 days        → 4-hour ticks
- *   span >  1 day         → 2-hour ticks
- *   span >  6 hours       → 1-hour ticks   (default 1-day view → 24 ticks)
- *   span >  2 hours       → 15-minute ticks
- *   span <= 2 hours       → 5-minute ticks
+ * "Nice" tick intervals in seconds, ascending. The first interval whose on-screen
+ * spacing reaches MIN_LABEL_SPACING_PX is chosen, so labels never overlap regardless
+ * of canvas width — at any zoom the axis shows as many labels as comfortably fit.
  */
-export function tickIntervalFor(spanSeconds: number): number {
-  if (spanSeconds > SECONDS_PER_DAY * 3) return SECONDS_PER_HOUR * 4
-  if (spanSeconds > SECONDS_PER_DAY) return SECONDS_PER_HOUR * 2
-  if (spanSeconds > SECONDS_PER_HOUR * 6) return SECONDS_PER_HOUR
-  if (spanSeconds > SECONDS_PER_HOUR * 2) return SECONDS_PER_MINUTE * 15
-  return SECONDS_PER_MINUTE * 5
+const NICE_INTERVALS = [
+  SECONDS_PER_MINUTE,          // 1m
+  SECONDS_PER_MINUTE * 2,      // 2m
+  SECONDS_PER_MINUTE * 5,      // 5m
+  SECONDS_PER_MINUTE * 10,     // 10m
+  SECONDS_PER_MINUTE * 15,     // 15m
+  SECONDS_PER_MINUTE * 30,     // 30m
+  SECONDS_PER_HOUR,            // 1h
+  SECONDS_PER_HOUR * 2,        // 2h
+  SECONDS_PER_HOUR * 3,        // 3h
+  SECONDS_PER_HOUR * 6,        // 6h
+  SECONDS_PER_HOUR * 12,       // 12h
+  SECONDS_PER_DAY,             // 1d
+  SECONDS_PER_DAY * 2,         // 2d
+] as const
+
+/** Minimum horizontal space (px) reserved per time label to prevent overlap. */
+const MIN_LABEL_SPACING_PX = 64
+
+/**
+ * Choose a tick interval (seconds) so labels stay legible at the current width (D-12).
+ *
+ * Picks the smallest "nice" interval whose pixel spacing is at least
+ * MIN_LABEL_SPACING_PX. Falls back to a span-only heuristic before the track width
+ * has been measured (canvasWidthPx === 0).
+ */
+export function chooseTickInterval(spanSeconds: number, canvasWidthPx: number): number {
+  if (canvasWidthPx <= 0) {
+    // Pre-measurement fallback — keep the default 1-day view at hourly ticks.
+    if (spanSeconds > SECONDS_PER_DAY) return SECONDS_PER_HOUR * 2
+    if (spanSeconds > SECONDS_PER_HOUR * 6) return SECONDS_PER_HOUR
+    return SECONDS_PER_MINUTE * 15
+  }
+  const pxPerSecond = canvasWidthPx / spanSeconds
+  for (const interval of NICE_INTERVALS) {
+    if (interval * pxPerSecond >= MIN_LABEL_SPACING_PX) return interval
+  }
+  return NICE_INTERVALS[NICE_INTERVALS.length - 1]!
 }
 
 /** Format a date for the top-tier label (e.g. "Wed 06/18"). No date library. */
@@ -101,7 +125,7 @@ function getTickEpochs(startEpoch: number, endEpoch: number, interval: number): 
 /** Sticky two-tier gantt axis header: date row (top) + time-tick row (bottom). */
 export function GanttAxisHeader({ viewport, gutterWidthPct }: GanttAxisHeaderProps): JSX.Element {
   const endEpoch = viewport.startEpoch + viewport.spanSeconds
-  const tickInterval = tickIntervalFor(viewport.spanSeconds)
+  const tickInterval = chooseTickInterval(viewport.spanSeconds, viewport.canvasWidthPx)
 
   const midnights = getMidnightBoundaries(viewport.startEpoch, endEpoch)
   const tickEpochs = getTickEpochs(viewport.startEpoch, endEpoch, tickInterval)
@@ -114,8 +138,8 @@ export function GanttAxisHeader({ viewport, gutterWidthPct }: GanttAxisHeaderPro
       {/* Left gutter spacer — matches the lane gutter width */}
       <div className={styles.gutterSpacer} style={{ width: gutterWidth }} />
 
-      {/* Axis track area */}
-      <div className={styles.axisTrack} style={{ width: trackWidth }}>
+      {/* Axis track area — the wheel zoom/pan surface (data-gantt-axis-track) */}
+      <div className={styles.axisTrack} style={{ width: trackWidth }} data-gantt-axis-track>
         {/* Top tier: date labels at midnight boundaries */}
         <div className={styles.dateTier}>
           {midnights.map((midnightEpoch) => {

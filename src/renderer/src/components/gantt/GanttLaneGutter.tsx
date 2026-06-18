@@ -47,11 +47,21 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
 
   // Description textarea state
   const [descDraft, setDescDraft] = useState(timer.description)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Resync draft when upstream description changes while not editing
   useEffect(() => {
     setDescDraft(timer.description)
   }, [timer.description])
+
+  // Auto-size the textarea to its content on mount and whenever the text changes —
+  // not only while the user is typing (D-15: lane grows to fit the description).
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [descDraft])
 
   const currentProject = timer.project_id !== null
     ? (projects ?? []).find((p) => p.id === timer.project_id)
@@ -190,17 +200,12 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
 
       {/* Description textarea — D-14, grows to fit content (D-15) */}
       <textarea
+        ref={textareaRef}
         className={styles.textarea}
         value={descDraft}
         placeholder="(no description)"
         rows={1}
-        onChange={(e) => {
-          setDescDraft(e.target.value)
-          // Auto-resize: reset height then set to scrollHeight
-          const el = e.target
-          el.style.height = 'auto'
-          el.style.height = `${el.scrollHeight}px`
-        }}
+        onChange={(e) => setDescDraft(e.target.value)}
         onBlur={commitDescription}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {

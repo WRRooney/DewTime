@@ -142,6 +142,7 @@
 /* ── Description textarea ──────────────────────────────────────────────── */
 
 .textarea {
+  display: block;
   width: 100%;
   box-sizing: border-box;
   background: transparent;
@@ -149,13 +150,13 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   outline: none;
-  padding: var(--space-3);
+  padding: var(--space-1) var(--space-2);
   font: inherit;
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-default);
+  line-height: var(--line-height-tight);
   resize: none;
   overflow: hidden;
-  min-height: 28px;
+  min-height: 24px;
   transition: border-color 0.1s;
 }
 

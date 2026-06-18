@@ -14,9 +14,10 @@ import styles from './TabStrip.module.css'
 import { useActiveTabStore } from '@/stores/useActiveTabStore'
 import type { ActiveTab } from '@/stores/useActiveTabStore'
 
+// `gantt` is the persisted tab id (settings.active_tab); the visible label is "Timeline".
 const TABS: Array<{ id: ActiveTab; label: string }> = [
   { id: 'timers', label: 'Timers' },
-  { id: 'gantt', label: 'Gantt' },
+  { id: 'gantt', label: 'Timeline' },
   { id: 'projects', label: 'Projects' },
 ]
 

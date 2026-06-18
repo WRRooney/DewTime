@@ -1,43 +1,33 @@
-// GanttView: root canvas for the Gantt view.
+// GanttView: root canvas for the Gantt (Timeline) view.
 //
 // Owns:
-//   - viewport state (startEpoch, spanSeconds, canvasWidthPx) — local, not persisted
+//   - viewport state (startEpoch, spanSeconds, canvasWidthPx) via useGanttViewportStore
+//     so zoom/pan SURVIVE tab switches (GanttView unmounts when another tab is active)
 //   - ResizeObserver measuring canvasWidthPx
-//   - Wheel zoom (D-08): scroll → zoom with cursor pivot; Shift+scroll → pan
-//   - Empty-canvas pointer drag pan (D-09): only when not on a bar or handle
-//   - Re-center on selectedDate changes (D-10): sets startEpoch to day's start + resets span
-//   - selectedEntryId state (D-25: single-select; clear on empty-canvas click)
-//   - Drag tooltip state (passed to GanttBar via onDragTooltip)
+//   - Wheel zoom/pan — ONLY when the pointer is over the time axis (D-08); over the
+//     lanes the wheel scrolls the timer list natively
+//   - Empty-track pointer drag pan (D-09) with a movement threshold so taps/double-clicks
+//     are never captured
+//   - Re-center on selectedDate change (D-10) — only when the day actually changes
+//   - selectedEntryId state (D-25)
+//   - Drag tooltip state
 //
-// Composes:
-//   - GanttAxisHeader (sticky top, D-11/D-12)
-//   - GanttLane per timer from useDayTimers (D-05, entries from useGanttEntries D-06)
-//   - GanttGhostLane (pinned bottom, D-22)
-//   - GanttInfoPopover (top-right over axis)
-//   - Now-line via useTickStore (D-13)
-//   - Cross-lane overlap hint at span <= 3 days (D-27)
-//   - GanttDragTooltip when drag active
-//
-// Anti-patterns avoided:
-//   - Raw wall-clock access NEVER called — "now" comes from useTickStore (tick-epoch rule)
-//   - No auto-viewport advance (Pitfall 5)
-//   - Drag state in useRef, not useState (Pitfall — 60fps)
+// Coordinate model: bars, ticks, and the now-line are positioned against the TRACK
+// width (canvas width minus the gutter), not the full lane-area width — otherwise the
+// right portion of the timeline overflows the narrower track and becomes unclickable.
 //
 // Refs:
 //   - 09-06-PLAN.md Task 3
 //   - 09-UI-SPEC.md §"Gantt Canvas Layout", §"Gantt Zoom & Pan"
-//   - 09-PATTERNS.md §"GanttView.tsx"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './GanttView.module.css'
 import {
   epochToX,
   xToEpoch,
-  snapIncrementFor,
   type GanttViewport,
   MIN_SPAN_SECONDS,
   MAX_SPAN_SECONDS,
-  DEFAULT_SPAN_SECONDS,
 } from '@/utils/gantt-math'
 import { dayRangeOf } from '@/utils/date-ranges'
 import { useSelectedDateStore } from '@/stores/useSelectedDateStore'
@@ -47,6 +37,7 @@ import { useGanttEntries } from '@/hooks/useGanttEntries'
 import { useCreateTimer } from '@/hooks/useCreateTimer'
 import { useCreateEntry } from '@/hooks/useCreateEntry'
 import { useGutterWidth } from '@/hooks/useGutterWidth'
+import { useGanttViewportStore } from '@/stores/useGanttViewportStore'
 import { GanttAxisHeader } from './GanttAxisHeader'
 import { GanttLane } from './GanttLane'
 import { GanttGhostLane } from './GanttGhostLane'
@@ -55,7 +46,17 @@ import { GanttDragTooltip } from './GanttDragTooltip'
 import type { EpochSeconds } from '@shared/time'
 
 const SECONDS_PER_DAY = 86400
-const CROSS_LANE_HINT_MAX_SPAN = SECONDS_PER_DAY * 3  // D-27: hint only at span <= 3 days
+const CROSS_LANE_HINT_MAX_SPAN = SECONDS_PER_DAY * 3 // D-27: hint only at span <= 3 days
+const PAN_THRESHOLD_PX = 4 // movement before a press becomes a pan (taps stay taps)
+const ZOOM_STEP = 1.15
+
+/** Local YYYY-MM-DD key for a Date — used to detect day changes for re-centering. */
+function dateKeyOf(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 /** GanttView: the full gantt canvas — see module-level comments for detail. */
 export function GanttView(): JSX.Element {
@@ -66,63 +67,66 @@ export function GanttView(): JSX.Element {
   const { widthPct: gutterWidthPct, setWidthPct: setGutterWidthPct, persist: persistGutterWidth } = useGutterWidth()
 
   // ---------------------------------------------------------------------------
-  // Viewport state — local (not persisted; reset to today on mount)
+  // Viewport — store-backed so zoom/pan persist across tab switches
   // ---------------------------------------------------------------------------
 
-  const [viewport, setViewport] = useState<GanttViewport>(() => {
-    const range = dayRangeOf(new Date())
-    return {
-      startEpoch: range.fromEpoch,
-      spanSeconds: DEFAULT_SPAN_SECONDS,
-      canvasWidthPx: 0,
-    }
-  })
+  const startEpoch = useGanttViewportStore((s) => s.startEpoch)
+  const spanSeconds = useGanttViewportStore((s) => s.spanSeconds)
+  const canvasWidthPx = useGanttViewportStore((s) => s.canvasWidthPx)
+  const setCanvasWidth = useGanttViewportStore((s) => s.setCanvasWidth)
 
-  // Re-center when selectedDate changes (D-10) — do NOT auto-advance on clock tick (Pitfall 5)
+  // Track-width viewport: the actual bar/tick rendering area (canvas minus gutter).
+  const trackWidthPx = Math.max(0, canvasWidthPx * (1 - gutterWidthPct))
+  const trackViewport: GanttViewport = {
+    startEpoch: startEpoch as EpochSeconds,
+    spanSeconds,
+    canvasWidthPx: trackWidthPx,
+  }
+  const gutterPx = gutterWidthPct * canvasWidthPx
+
+  // Gutter fraction available to imperative pan handler without re-subscribing.
+  const gutterRef = useRef(gutterWidthPct)
+  gutterRef.current = gutterWidthPct
+
+  // Re-center ONLY when the selected day actually changes — not on remount, so
+  // switching tabs preserves the current zoom/pan (D-10).
   useEffect(() => {
-    const range = dayRangeOf(selectedDate)
-    setViewport((vp) => ({
-      ...vp,
-      startEpoch: range.fromEpoch,
-      spanSeconds: DEFAULT_SPAN_SECONDS,
-    }))
+    const key = dateKeyOf(selectedDate)
+    const store = useGanttViewportStore.getState()
+    if (store.lastDateKey !== key) {
+      const range = dayRangeOf(selectedDate)
+      store.recenter(range.fromEpoch, key)
+    }
   }, [selectedDate])
 
   // ---------------------------------------------------------------------------
-  // Canvas width measurement via ResizeObserver
+  // Refs + canvas width measurement
   // ---------------------------------------------------------------------------
 
   const canvasRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = canvasRef.current
     if (!el) return
     const observer = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width ?? 0
-      if (width > 0) {
-        setViewport((vp) => ({ ...vp, canvasWidthPx: width }))
-      }
+      if (width > 0) setCanvasWidth(width)
     })
     observer.observe(el)
     return () => observer.disconnect()
-  }, [])
+  }, [setCanvasWidth])
 
   // ---------------------------------------------------------------------------
-  // Selection state (D-25: single-select)
+  // Selection (D-25)
   // ---------------------------------------------------------------------------
 
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
-
-  const handleSelectEntry = useCallback((entryId: number): void => {
-    setSelectedEntryId(entryId)
-  }, [])
-
-  const handleClearSelection = (): void => {
-    setSelectedEntryId(null)
-  }
+  const handleSelectEntry = useCallback((entryId: number): void => setSelectedEntryId(entryId), [])
+  const handleClearSelection = (): void => setSelectedEntryId(null)
 
   // ---------------------------------------------------------------------------
-  // Drag tooltip state
+  // Drag tooltip
   // ---------------------------------------------------------------------------
 
   const [dragTooltip, setDragTooltip] = useState<{
@@ -131,90 +135,73 @@ export function GanttView(): JSX.Element {
   } | null>(null)
 
   // ---------------------------------------------------------------------------
-  // Wheel handler — zoom (plain scroll) vs pan (Shift+Scroll) (D-08/D-09)
+  // Wheel — zoom/pan ONLY over the time axis (D-08); lanes scroll natively otherwise
   // ---------------------------------------------------------------------------
 
   const handleWheel = useCallback((e: WheelEvent): void => {
-    // Only hijack the wheel for zoom/pan when the pointer is over the timeline track.
-    // Anywhere else (gutter, between lanes) the wheel scrolls the lane list natively
-    // so the user can scroll through timers without zooming.
-    if (!(e.target as Element).closest('[data-gantt-track]')) return
+    const axisTrackEl = (e.target as Element).closest('[data-gantt-axis-track]')
+    if (!axisTrackEl) return // over lanes/gutter → allow native vertical scroll
     e.preventDefault()
 
-    setViewport((vp) => {
-      if (e.shiftKey) {
-        // Shift+Scroll: pan the viewport
-        const panDelta = (e.deltaY / vp.canvasWidthPx) * vp.spanSeconds
-        return { ...vp, startEpoch: (vp.startEpoch + panDelta) as EpochSeconds }
-      }
+    const rect = axisTrackEl.getBoundingClientRect()
+    const trackW = Math.max(1, rect.width)
+    const store = useGanttViewportStore.getState()
 
-      // Zoom: pivot on cursor epoch, clamp span to [MIN, MAX]
-      const ZOOM_FACTOR = e.deltaY > 0 ? 1.15 : 1 / 1.15
-      const newSpan = Math.min(
-        MAX_SPAN_SECONDS,
-        Math.max(MIN_SPAN_SECONDS, vp.spanSeconds * ZOOM_FACTOR),
-      )
+    if (e.shiftKey) {
+      // Shift+Scroll over the axis: pan
+      const panDelta = (e.deltaY / trackW) * store.spanSeconds
+      store.setStartEpoch(store.startEpoch + panDelta)
+      return
+    }
 
-      if (newSpan === vp.spanSeconds) return vp
+    // Zoom: clamp span, pivot on the cursor epoch so the point under the cursor stays put
+    const factor = e.deltaY > 0 ? ZOOM_STEP : 1 / ZOOM_STEP
+    const newSpan = Math.min(MAX_SPAN_SECONDS, Math.max(MIN_SPAN_SECONDS, store.spanSeconds * factor))
+    if (newSpan === store.spanSeconds) return
 
-      // Pivot around the cursor position so the point under cursor stays fixed
-      const rect = canvasRef.current?.getBoundingClientRect()
-      const cursorX = rect ? e.clientX - rect.left - vp.canvasWidthPx * (1 - 1) : vp.canvasWidthPx / 2
-      const cursorEpoch = xToEpoch(cursorX, vp)
-      const cursorFraction = cursorX / Math.max(1, vp.canvasWidthPx)
-      const newStart = (cursorEpoch - cursorFraction * newSpan) as EpochSeconds
-
-      return { ...vp, startEpoch: newStart, spanSeconds: newSpan }
-    })
+    const cursorX = Math.min(trackW, Math.max(0, e.clientX - rect.left))
+    const tvp: GanttViewport = {
+      startEpoch: store.startEpoch as EpochSeconds,
+      spanSeconds: store.spanSeconds,
+      canvasWidthPx: trackW,
+    }
+    const cursorEpoch = xToEpoch(cursorX, tvp)
+    const fraction = cursorX / trackW
+    store.setZoom(cursorEpoch - fraction * newSpan, newSpan)
   }, [])
 
-  // Attach wheel handler with { passive: false } to allow preventDefault
+  // Attach wheel on the ROOT so it also covers the axis (which sits above the lane area).
   useEffect(() => {
-    const el = canvasRef.current
+    const el = rootRef.current
     if (!el) return
     el.addEventListener('wheel', handleWheel, { passive: false })
     return () => el.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
   // ---------------------------------------------------------------------------
-  // Empty-canvas pointer drag → pan (D-09)
+  // Empty-track pointer drag → horizontal pan (D-09)
   // ---------------------------------------------------------------------------
 
   interface PanDragState {
-    pending: boolean   // pointer is down on empty canvas, not yet panning
-    active: boolean    // movement threshold crossed — panning
+    pending: boolean
+    active: boolean
     startX: number
-    startEpoch: EpochSeconds
+    startEpoch: number
     pointerId: number
   }
 
-  // Movement (px) before a press becomes a pan. Below this a press is a tap/double-click,
-  // so we never capture the pointer for taps — that previously stole clicks from the
-  // gutter combobox, the ghost "new timer" button, and double-click entry creation.
-  const PAN_THRESHOLD_PX = 4
-
-  const panRef = useRef<PanDragState>({
-    pending: false,
-    active: false,
-    startX: 0,
-    startEpoch: 0 as EpochSeconds,
-    pointerId: -1,
-  })
+  const panRef = useRef<PanDragState>({ pending: false, active: false, startX: 0, startEpoch: 0, pointerId: -1 })
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>): void => {
-    // Only arm panning on truly empty timeline track space. Bail on bars, handles,
-    // and any interactive control (gutter combobox, buttons, inputs, the ghost lane)
-    // so their clicks/double-clicks are never captured (D-09 hit-test priority).
     const target = e.target as Element
     if (target.closest('[data-testid="gantt-bar"]')) return
     if (target.closest('[data-handle]')) return
     if (target.closest('button, input, textarea, [data-gantt-gutter], [cmdk-root]')) return
-
     panRef.current = {
       pending: true,
       active: false,
       startX: e.clientX,
-      startEpoch: viewport.startEpoch,
+      startEpoch: useGanttViewportStore.getState().startEpoch,
       pointerId: e.pointerId,
     }
   }
@@ -223,9 +210,6 @@ export function GanttView(): JSX.Element {
     const pan = panRef.current
     if (!pan.pending && !pan.active) return
     const dx = e.clientX - pan.startX
-
-    // Cross the threshold once → begin panning and capture the pointer so the drag
-    // keeps tracking even if it leaves the canvas.
     if (!pan.active) {
       if (Math.abs(dx) < PAN_THRESHOLD_PX) return
       pan.active = true
@@ -233,12 +217,10 @@ export function GanttView(): JSX.Element {
         e.currentTarget.setPointerCapture(e.pointerId)
       }
     }
-
-    const epochDelta = (dx / Math.max(1, viewport.canvasWidthPx)) * viewport.spanSeconds
-    setViewport((vp) => ({
-      ...vp,
-      startEpoch: (pan.startEpoch - epochDelta) as EpochSeconds,
-    }))
+    const store = useGanttViewportStore.getState()
+    const trackW = Math.max(1, store.canvasWidthPx * (1 - gutterRef.current))
+    const epochDelta = (dx / trackW) * store.spanSeconds
+    store.setStartEpoch(pan.startEpoch - epochDelta)
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>): void => {
@@ -250,7 +232,7 @@ export function GanttView(): JSX.Element {
         /* pointer already released */
       }
     }
-    panRef.current = { pending: false, active: false, startX: 0, startEpoch: 0 as EpochSeconds, pointerId: -1 }
+    panRef.current = { pending: false, active: false, startX: 0, startEpoch: 0, pointerId: -1 }
   }
 
   // ---------------------------------------------------------------------------
@@ -291,51 +273,35 @@ export function GanttView(): JSX.Element {
 
   const dayRange = dayRangeOf(selectedDate)
   const { data: timers = [], isError: timersError } = useDayTimers(dayRange.fromEpoch, dayRange.toEpoch)
-  const { data: allEntries = [] } = useGanttEntries(viewport.startEpoch, viewport.startEpoch + viewport.spanSeconds)
+  const { data: allEntries = [] } = useGanttEntries(startEpoch, startEpoch + spanSeconds)
 
   // ---------------------------------------------------------------------------
   // Now-line position (D-13)
   // ---------------------------------------------------------------------------
 
-  // "Now" epoch is tracked in state, updated every second via the tick store event.
-  // The tick fires from main process every second — we update our local epoch counter
-  // in sync with it. This ties the now-line advance to the same push-tick mechanism
-  // used by DurationCell and GanttBar.
-  //
-  // Initial value: floor(performance.timeOrigin + performance.now()) gives epoch-seconds
-  // via the Performance API — performance.timeOrigin is set at navigation start,
-  // performance.now() gives monotonic offset from it, sum = current epoch-ms.
   const [nowEpochState, setNowEpochState] = useState<EpochSeconds>(
     () => Math.floor(performance.timeOrigin / 1000 + performance.now() / 1000) as EpochSeconds,
   )
 
-  // Update nowEpoch whenever a tick arrives (every second from main process)
   useEffect(() => {
     if (tick !== null) {
-      // performance.timeOrigin + performance.now() gives epoch-ms without the
-      // raw clock call that is banned in pure math modules.
       const epochMs = performance.timeOrigin + performance.now()
       setNowEpochState(Math.floor(epochMs / 1000) as EpochSeconds)
     }
   }, [tick])
 
-  const nowLineX = epochToX(nowEpochState, viewport)
-
-  const showNowLine = nowLineX >= 0 && nowLineX <= viewport.canvasWidthPx
+  const nowLineX = epochToX(nowEpochState, trackViewport)
+  const showNowLine = nowLineX >= 0 && nowLineX <= trackWidthPx
 
   // ---------------------------------------------------------------------------
-  // Cross-lane overlap hint (D-27): only at span <= 3 days
+  // Overlap hints (D-27): at span <= 3 days, flag every overlapping entry pair —
+  // cross-timer AND same-timer.
   // ---------------------------------------------------------------------------
 
-  const showOverlapHints = viewport.spanSeconds <= CROSS_LANE_HINT_MAX_SPAN
-
-  // Compute overlap regions across EVERY pair of distinct entries — whether they
-  // belong to different timers (cross-lane) or the same timer (same-lane sub-row
-  // stacking still represents real time overlap the user wants flagged). Each
-  // unordered pair is compared once (j starts at i+1).
+  const showOverlapHints = spanSeconds <= CROSS_LANE_HINT_MAX_SPAN
   const overlapRegions: Array<{ leftX: number; rightX: number }> = []
   if (showOverlapHints && allEntries.length > 1) {
-    const viewEnd = viewport.startEpoch + viewport.spanSeconds
+    const viewEnd = startEpoch + spanSeconds
     for (let i = 0; i < allEntries.length; i++) {
       const a = allEntries[i]!
       const aEnd = a.end_timestamp ?? viewEnd
@@ -346,8 +312,8 @@ export function GanttView(): JSX.Element {
         const overlapEnd = Math.min(aEnd, bEnd)
         if (overlapStart < overlapEnd) {
           overlapRegions.push({
-            leftX: epochToX(overlapStart as EpochSeconds, viewport),
-            rightX: epochToX(overlapEnd as EpochSeconds, viewport),
+            leftX: epochToX(overlapStart as EpochSeconds, trackViewport),
+            rightX: epochToX(overlapEnd as EpochSeconds, trackViewport),
           })
         }
       }
@@ -382,6 +348,7 @@ export function GanttView(): JSX.Element {
 
   return (
     <div
+      ref={rootRef}
       className={styles.ganttView}
       data-testid="gantt-view"
       onPointerDown={handlePointerDown}
@@ -389,13 +356,13 @@ export function GanttView(): JSX.Element {
       onPointerUp={handlePointerUp}
       onClick={handleClearSelection}
     >
-      {/* Info popover — top right over axis */}
+      {/* Info popover — bottom right, clear of the axis */}
       <div className={styles.infoBtn}>
         <GanttInfoPopover />
       </div>
 
-      {/* Sticky axis header */}
-      <GanttAxisHeader viewport={viewport} gutterWidthPct={gutterWidthPct} />
+      {/* Sticky axis header — wheel zoom/pan surface */}
+      <GanttAxisHeader viewport={trackViewport} gutterWidthPct={gutterWidthPct} />
 
       {/* Splitter (D-16 gutter width adjustment) */}
       <div
@@ -427,25 +394,23 @@ export function GanttView(): JSX.Element {
           </div>
         ) : (
           <div className={styles.laneScroll}>
-            {/* Cross-lane overlap hint bands (D-27) */}
+            {/* Overlap hint bands (D-27) */}
             {overlapRegions.map((region, i) => (
               <div
                 key={i}
                 className={styles.overlapHint}
                 style={{
-                  left: `${region.leftX + gutterWidthPct * viewport.canvasWidthPx}px`,
+                  left: `${region.leftX + gutterPx}px`,
                   width: `${region.rightX - region.leftX}px`,
                 }}
               />
             ))}
 
             {/* Now line (D-13) */}
-            {showNowLine && nowLineX !== null && (
+            {showNowLine && (
               <div
                 className={styles.nowLine}
-                style={{
-                  left: `${nowLineX + gutterWidthPct * viewport.canvasWidthPx}px`,
-                }}
+                style={{ left: `${nowLineX + gutterPx}px` }}
               />
             )}
 
@@ -457,7 +422,7 @@ export function GanttView(): JSX.Element {
                   key={timer.id}
                   timer={timer}
                   entries={timerEntries}
-                  viewport={viewport}
+                  viewport={trackViewport}
                   gutterWidthPct={gutterWidthPct}
                   selectedEntryId={selectedEntryId}
                   onSelectEntry={handleSelectEntry}
@@ -470,7 +435,7 @@ export function GanttView(): JSX.Element {
         )}
       </div>
 
-      {/* Ghost add-lane (D-22) — pinned below lanes, above ghost lane */}
+      {/* Ghost add-lane (D-22) — pinned below lanes */}
       <GanttGhostLane onAddTimer={handleAddTimer} />
 
       {/* Drag tooltip — rendered at GanttView scope (floats over everything) */}
