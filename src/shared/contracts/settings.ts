@@ -25,6 +25,9 @@ export const SettingKeySchema = z.enum([
   // Composite window geometry; the legacy four-scalar window.x|y|width|height
   // keys were never seeded and do not appear in this enum.
   'settings.window_geometry',
+  // Phase 9 gantt keys — seeded by migration 005 (D-04, D-16).
+  'settings.active_tab',
+  'settings.gutter_width_pct',
 ])
 export type SettingKeyParsed = z.infer<typeof SettingKeySchema>
 
@@ -105,6 +108,15 @@ export const SetArgsSchema = z.discriminatedUnion('key', [
   z.object({
     key: z.literal('settings.window_geometry'),
     value: WindowGeometryValueSchema,
+  }),
+  // Phase 9 gantt settings (D-04, D-16)
+  z.object({
+    key: z.literal('settings.active_tab'),
+    value: z.enum(['timers', 'gantt', 'projects']),
+  }),
+  z.object({
+    key: z.literal('settings.gutter_width_pct'),
+    value: z.number().min(0).max(1),
   }),
 ])
 export type SetArgs = z.infer<typeof SetArgsSchema>

@@ -194,7 +194,7 @@ describe('timeEntries repository — listInRange', () => {
     const entry = createEntry(timer.id, 1700001000 as EpochSeconds, 1700002000 as EpochSeconds)
     const results = listInRange(1700000000 as EpochSeconds, 1700003000 as EpochSeconds)
     expect(results).toHaveLength(1)
-    expect(results[0].id).toBe(entry.id)
+    expect(results[0]!.id).toBe(entry.id)
   })
 
   it('excludes an entry fully outside (before) the range', () => {
@@ -234,10 +234,10 @@ describe('timeEntries repository — listInRange', () => {
     expect(results).toHaveLength(2)
     // Ordered by timer_id ASC then start_timestamp ASC
     // timerA.id < timerB.id (created first)
-    expect(results[0].timer_id).toBe(timerA.id)
-    expect(results[0].id).toBe(ea.id)
-    expect(results[1].timer_id).toBe(timerB.id)
-    expect(results[1].id).toBe(eb.id)
+    expect(results[0]!.timer_id).toBe(timerA.id)
+    expect(results[0]!.id).toBe(ea.id)
+    expect(results[1]!.timer_id).toBe(timerB.id)
+    expect(results[1]!.id).toBe(eb.id)
   })
 })
 
@@ -303,8 +303,8 @@ describe('timeEntries repository — setTimestamps', () => {
     const entry = createEntry(timer.id, 1700001000 as EpochSeconds, 1700002000 as EpochSeconds)
     setTimestamps(entry.id, 1700001500 as EpochSeconds, 1700003000 as EpochSeconds)
     const updated = listByTimer(timer.id)
-    expect(updated[0].start_timestamp).toBe(1700001500)
-    expect(updated[0].end_timestamp).toBe(1700003000)
+    expect(updated[0]!.start_timestamp).toBe(1700001500)
+    expect(updated[0]!.end_timestamp).toBe(1700003000)
   })
 
   it('throws ValidationError when the target entry is running (end IS NULL)', () => {
