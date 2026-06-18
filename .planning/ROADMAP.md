@@ -395,7 +395,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 09-07-PLAN.md — Manual ROADMAP UAT checkpoint: full automated gate + operator verifies SC-1..SC-6 and manual-only behaviors (pan gesture, pulse, sub-row stacking, min bar width, overlap hint); authors 09-HUMAN-UAT.md (Wave 5, autonomous: false — manual UAT)
+- [x] 09-07-PLAN.md — Manual ROADMAP UAT checkpoint: full automated gate + operator verifies SC-1..SC-6 and manual-only behaviors (pan gesture, pulse, sub-row stacking, min bar width, overlap hint); authors 09-HUMAN-UAT.md (Wave 5, autonomous: false — manual UAT)
 
 **UI hint**: yes
 
