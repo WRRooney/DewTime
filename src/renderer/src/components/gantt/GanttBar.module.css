@@ -1,0 +1,171 @@
+/*
+ * GanttBar — single time-entry bar styles.
+ *
+ * No hex literals: all color values are CSS custom properties (tokens).
+ * Allowed px exceptions: 8px (hit target, D-28 min-width, edge handle) and 2px (stroke/pulse).
+ *
+ * D-19: running bar pulse animation
+ * D-25: selected bar 2px stroke
+ * D-28: min-width 8px
+ */
+
+/* ---------------------------------------------------------------------------
+ * Bar body
+ * --------------------------------------------------------------------------- */
+
+.bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 24px;
+  min-width: 8px;
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, var(--bar-color) 35%, transparent);
+  border: 1px solid var(--bar-color);
+  box-sizing: border-box;
+  cursor: move;
+  user-select: none;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+}
+
+.bar:hover {
+  background-color: color-mix(in srgb, var(--bar-color) 50%, transparent);
+}
+
+/* D-25: selected bar — 2px stroke with accent fill */
+.barSelected {
+  border: 2px solid var(--bar-color);
+  background-color: color-mix(in srgb, var(--bar-color) 60%, transparent);
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Running bar (D-19)
+ * --------------------------------------------------------------------------- */
+
+.barRunning {
+  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border: 1px solid var(--color-accent);
+  animation: runningPulse 2s ease-in-out infinite;
+}
+
+@keyframes runningPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 100%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Bar label
+ * --------------------------------------------------------------------------- */
+
+.barLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-fg);
+  padding-left: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Stop icon (running bar, D-13)
+ * --------------------------------------------------------------------------- */
+
+.stopIcon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.stopIcon:hover {
+  color: var(--color-success-hover, var(--color-success));
+}
+
+.stopIcon svg rect {
+  fill: currentColor;
+}
+
+/* ---------------------------------------------------------------------------
+ * Edge resize handles (D-17)
+ * --------------------------------------------------------------------------- */
+
+/* Shared base for both handles */
+.edgeHandleStart,
+.edgeHandleEnd {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;      /* 8px hit target (4px inside + 4px outside) */
+  cursor: ew-resize;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity var(--transition-fast, 150ms);
+}
+
+.bar:hover .edgeHandleStart,
+.bar:hover .edgeHandleEnd,
+.barSelected .edgeHandleStart,
+.barSelected .edgeHandleEnd {
+  opacity: 1;
+}
+
+.edgeHandleStart {
+  left: -4px;
+  background: color-mix(in srgb, var(--color-fg) 50%, transparent);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.edgeHandleEnd {
+  right: -4px;
+  background: color-mix(in srgb, var(--color-fg) 50%, transparent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Context menu (D-24)
+ * --------------------------------------------------------------------------- */
+
+.contextMenu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) 0;
+  min-width: 140px;
+  box-shadow: 0 var(--space-1) var(--space-3) color-mix(in srgb, var(--color-fg) 15%, transparent);
+}
+
+.contextMenuItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--color-fg);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.contextMenuItem:hover {
+  background: var(--color-bg-hover);
+}
