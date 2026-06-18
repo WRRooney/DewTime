@@ -8,7 +8,9 @@
  */
 
 .tooltip {
-  position: absolute;
+  /* fixed so the bar can position it with viewport (clientX/clientY) coords */
+  position: fixed;
+  pointer-events: none;
   z-index: 100;
   display: flex;
   flex-direction: column;

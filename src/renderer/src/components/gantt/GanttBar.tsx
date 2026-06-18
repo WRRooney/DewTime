@@ -46,7 +46,9 @@ export interface GanttBarProps {
   color: string
   selected: boolean
   onSelect: (entryId: number) => void
-  onDragTooltip: (t: { startEpoch: EpochSeconds; endEpoch: EpochSeconds } | null) => void
+  onDragTooltip: (
+    t: { startEpoch: EpochSeconds; endEpoch: EpochSeconds; x: number; y: number } | null,
+  ) => void
 }
 
 type DragKind = 'idle' | 'move' | 'resize-start' | 'resize-end'
@@ -222,7 +224,7 @@ export const GanttBar = React.memo(function GanttBar({
     }
 
     setDisplayPos(computePos(newStart, newEnd))
-    onDragTooltip({ startEpoch: newStart, endEpoch: newEnd })
+    onDragTooltip({ startEpoch: newStart, endEpoch: newEnd, x: e.clientX, y: e.clientY })
   }
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -232,6 +234,10 @@ export const GanttBar = React.memo(function GanttBar({
     const dx = e.clientX - drag.startX
     const epochDelta = (dx / viewport.canvasWidthPx) * viewport.spanSeconds
     const snap = snapIncrementFor(viewport.spanSeconds)
+
+    // On a rejected commit, snap the bar back to its persisted position rather than
+    // leaving it stranded at the dropped (un-persisted) location.
+    const revertDisplay = (): void => setDisplayPos(computePos(entry.start_timestamp, liveEndEpoch))
 
     let newStart = drag.origStart
     let newEnd = drag.origEnd
@@ -245,7 +251,7 @@ export const GanttBar = React.memo(function GanttBar({
       const duration = drag.origEnd - drag.origStart
       newEnd = (newStart + duration) as EpochSeconds
       // Atomic body-move: setTimestamps (Pitfall 3)
-      void setEntryBounds.mutate({ entryId: entry.id, startTs: newStart, endTs: newEnd })
+      setEntryBounds.mutate({ entryId: entry.id, startTs: newStart, endTs: newEnd }, { onError: revertDisplay })
     } else if (drag.kind === 'resize-start') {
       newStart = snapEpoch(
         (drag.origStart + epochDelta) as EpochSeconds,
@@ -253,7 +259,7 @@ export const GanttBar = React.memo(function GanttBar({
         e.altKey,
       )
       if (newStart >= drag.origEnd) newStart = (drag.origEnd - 1) as EpochSeconds
-      void setEntryStart.mutate({ entryId: entry.id, ts: newStart })
+      setEntryStart.mutate({ entryId: entry.id, ts: newStart }, { onError: revertDisplay })
     } else if (drag.kind === 'resize-end') {
       newEnd = snapEpoch(
         (drag.origEnd + epochDelta) as EpochSeconds,
@@ -261,7 +267,7 @@ export const GanttBar = React.memo(function GanttBar({
         e.altKey,
       )
       if (newEnd <= drag.origStart) newEnd = (drag.origStart + 1) as EpochSeconds
-      void setEntryEnd.mutate({ entryId: entry.id, ts: newEnd })
+      setEntryEnd.mutate({ entryId: entry.id, ts: newEnd }, { onError: revertDisplay })
     }
 
     dragRef.current = { kind: 'idle', startX: 0, origStart: entry.start_timestamp, origEnd: liveEndEpoch }
@@ -348,8 +354,11 @@ export const GanttBar = React.memo(function GanttBar({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerDown={(e) => {
-          // Hit-test: body-move if not on a handle
+          // Hit-test: body-move if not on a handle.
           if ((e.target as Element).closest('[data-handle]')) return
+          // Running bars cannot body-move: setTimestamps rejects running entries.
+          // Only the left edge (resize-start) is draggable for them (D-19).
+          if (isRunning) return
           handlePointerDown(e, 'move')
         }}
       >

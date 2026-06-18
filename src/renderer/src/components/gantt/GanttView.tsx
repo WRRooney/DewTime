@@ -192,6 +192,8 @@ export function GanttView(): JSX.Element {
   const [dragTooltip, setDragTooltip] = useState<{
     startEpoch: EpochSeconds
     endEpoch: EpochSeconds
+    x: number
+    y: number
   } | null>(null)
 
   // ---------------------------------------------------------------------------
@@ -269,12 +271,13 @@ export function GanttView(): JSX.Element {
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>): void => {
     const pan = panRef.current
     if (!pan.pending && !pan.active) return
+    if (e.pointerId !== pan.pointerId) return // ignore a second pointer hijacking the pan
     const dx = e.clientX - pan.startX
     if (!pan.active) {
       if (Math.abs(dx) < PAN_THRESHOLD_PX) return
       pan.active = true
       if (typeof e.currentTarget.setPointerCapture === 'function') {
-        e.currentTarget.setPointerCapture(e.pointerId)
+        e.currentTarget.setPointerCapture(pan.pointerId)
       }
     }
     const store = useGanttViewportStore.getState()
@@ -532,8 +535,8 @@ export function GanttView(): JSX.Element {
         <GanttDragTooltip
           startEpoch={dragTooltip.startEpoch}
           endEpoch={dragTooltip.endEpoch}
-          x={0}
-          y={0}
+          x={dragTooltip.x}
+          y={dragTooltip.y}
         />
       )}
     </div>

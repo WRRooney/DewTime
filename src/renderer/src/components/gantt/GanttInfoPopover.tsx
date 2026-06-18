@@ -11,7 +11,7 @@
 //   - 09-UI-SPEC.md §"Info Popover"
 //   - 09-PATTERNS.md §"GanttInfoPopover" (No Analog — use UI-SPEC)
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import styles from './GanttInfoPopover.module.css'
 
 // Gesture table from UI-SPEC §"Copywriting Contract"
@@ -34,6 +34,14 @@ export function GanttInfoPopover(): JSX.Element {
   const [visible, setVisible] = useState(false)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cancel any pending show/hide timers on unmount so they can't fire after teardown.
+  useEffect(() => {
+    return () => {
+      if (showTimerRef.current !== null) clearTimeout(showTimerRef.current)
+      if (hideTimerRef.current !== null) clearTimeout(hideTimerRef.current)
+    }
+  }, [])
 
   const handleMouseEnter = (): void => {
     if (hideTimerRef.current !== null) {

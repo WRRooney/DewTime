@@ -2,6 +2,10 @@
 // The TimerService FSM enforces the single-active-timer invariant when these schemas pass.
 import { z } from 'zod'
 
+/** Epoch-seconds bound — mirrors timers.ts EpochSecondsValue (09-RESEARCH security domain):
+ *  rejects out-of-range values (e.g. a stray `1`) before they reach SQLite. */
+const EpochSecondsValue = z.number().int().min(1_700_000_000).max(1_999_999_999)
+
 /** `timeEntries.start(timerId)`. */
 export const StartArgsSchema = z.object({
   timerId: z.number().int().positive(),
@@ -75,8 +79,8 @@ export type DeleteEntryArgs = z.infer<typeof DeleteEntryArgsSchema>
  */
 export const ListInRangeArgsSchema = z
   .object({
-    fromEpoch: z.number().int().positive(),
-    toEpoch: z.number().int().positive(),
+    fromEpoch: EpochSecondsValue,
+    toEpoch: EpochSecondsValue,
   })
   .refine((a) => a.fromEpoch < a.toEpoch, {
     message: 'fromEpoch must be less than toEpoch',
@@ -92,8 +96,8 @@ export type ListInRangeArgs = z.infer<typeof ListInRangeArgsSchema>
 export const CreateEntryArgsSchema = z
   .object({
     timerId: z.number().int().positive(),
-    startTs: z.number().int().positive(),
-    endTs: z.number().int().positive(),
+    startTs: EpochSecondsValue,
+    endTs: EpochSecondsValue,
   })
   .refine((a) => a.startTs < a.endTs, {
     message: 'startTs must be before endTs',
@@ -108,8 +112,8 @@ export type CreateEntryArgs = z.infer<typeof CreateEntryArgsSchema>
 export const SetTimestampsArgsSchema = z
   .object({
     entryId: z.number().int().positive(),
-    startTs: z.number().int().positive(),
-    endTs: z.number().int().positive(),
+    startTs: EpochSecondsValue,
+    endTs: EpochSecondsValue,
   })
   .refine((a) => a.startTs < a.endTs, {
     message: 'startTs must be before endTs',

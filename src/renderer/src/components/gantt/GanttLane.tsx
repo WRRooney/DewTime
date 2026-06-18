@@ -45,7 +45,9 @@ export interface GanttLaneProps {
   laneSelected: boolean
   onSelectEntry: (entryId: number) => void
   onSelectLane: (timerId: number) => void
-  onDragTooltip: (t: { startEpoch: EpochSeconds; endEpoch: EpochSeconds } | null) => void
+  onDragTooltip: (
+    t: { startEpoch: EpochSeconds; endEpoch: EpochSeconds; x: number; y: number } | null,
+  ) => void
   onCreateEntryAt: (timerId: number, startTs: number, endTs: number) => void
 }
 
