@@ -25,6 +25,10 @@ import { useSetDescription } from '@/hooks/useSetDescription'
 
 interface GanttLaneGutterProps {
   timer: Timer
+  /** Notifies the parent lane when the project dropdown opens/closes so it can lift
+   *  the lane's stacking order above neighbouring lanes (otherwise the open panel is
+   *  painted behind the lane below). */
+  onProjectOpenChange?: (open: boolean) => void
 }
 
 /** Case-insensitive substring filter for cmdk — NOT fuzzy. */
@@ -34,6 +38,7 @@ const substringFilter = (value: string, searchStr: string): number =>
 /** Lane gutter with project combobox (D-14) and description textarea (D-14/D-15). */
 export const GanttLaneGutter = React.memo(function GanttLaneGutter({
   timer,
+  onProjectOpenChange,
 }: GanttLaneGutterProps): JSX.Element {
   const { data: projects } = useProjects()
   const setProject = useSetProject()
@@ -53,6 +58,11 @@ export const GanttLaneGutter = React.memo(function GanttLaneGutter({
   useEffect(() => {
     setDescDraft(timer.description)
   }, [timer.description])
+
+  // Let the parent lane raise its stacking order while the dropdown is open.
+  useEffect(() => {
+    onProjectOpenChange?.(open)
+  }, [open, onProjectOpenChange])
 
   // Auto-size the textarea to its content on mount and whenever the text changes —
   // not only while the user is typing (D-15: lane grows to fit the description).
