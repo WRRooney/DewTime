@@ -1,0 +1,106 @@
+/* GanttAxisHeader: two-tier sticky time axis.
+ * Height: 48px (24px top date tier + 24px tick tier) per UI-SPEC.
+ * Background: --color-bg-elevated; bottom border: 1px --color-border.
+ * Sticky: z-index 10 keeps axis above lane content during vertical scroll.
+ * No hex literals — all values via design tokens.
+ * Approved px exceptions: 48px (axis height), 24px (tier heights), 1px (borders). */
+
+.header {
+  display: flex;
+  flex-direction: row;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 48px;
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Gutter spacer — aligns axis track with lane bar tracks */
+.gutterSpacer {
+  flex-shrink: 0;
+  height: 100%;
+  background: var(--color-bg-elevated);
+  border-right: 1px solid var(--color-border);
+}
+
+/* Axis track fills the remaining width */
+.axisTrack {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Top 24px tier: date + day-of-week labels */
+.dateTier {
+  position: relative;
+  height: 24px;
+  overflow: hidden;
+}
+
+/* Bottom 24px tier: time-of-day tick marks */
+.tickTier {
+  position: relative;
+  height: 24px;
+  overflow: hidden;
+}
+
+/* Date label positioned at the midnight x position */
+.dateLabel {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-stack);
+  line-height: var(--line-height-tight);
+  padding: var(--space-1) var(--space-2);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Midnight vertical separator line extending through full lane height */
+.midnightSeparator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 200vh; /* extends visually through all lanes */
+  background: var(--color-border);
+  pointer-events: none;
+}
+
+/* Tick mark positioned at its time x position */
+.tick {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Thin tick line — 40% opacity per UI-SPEC */
+.tickLine {
+  width: 1px;
+  height: var(--space-1);
+  background: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+/* Midnight ticks get a slightly taller line for visual hierarchy */
+.tickMidnight .tickLine {
+  height: var(--space-2);
+  background: var(--color-border);
+}
+
+.tickLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-stack-mono);
+  line-height: var(--line-height-tight);
+  margin-top: 1px;
+  white-space: nowrap;
+}
