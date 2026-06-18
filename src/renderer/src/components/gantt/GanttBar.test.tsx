@@ -38,6 +38,7 @@ const mockTimer: Timer = {
   project_id: null,
   description: 'Test Timer',
   notes: '',
+  offset: null,
   created_at: 0 as import('@shared/time').EpochSeconds,
   totalSeconds: 0,
   running: false,
@@ -138,7 +139,7 @@ describe('GanttBar', () => {
     // Parse width from inline style. min-width is 8px by CSS, but we also clamp
     // inline width to at least 8px.
     const widthMatch = /width:\s*([\d.]+)px/.exec(style)
-    const width = widthMatch ? parseFloat(widthMatch[1]) : 0
+    const width = widthMatch ? parseFloat(widthMatch[1] ?? '0') : 0
     expect(width).toBeGreaterThanOrEqual(8)
   })
 
