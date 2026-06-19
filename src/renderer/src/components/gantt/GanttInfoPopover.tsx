@@ -18,6 +18,7 @@ import styles from './GanttInfoPopover.module.css'
 // Each entry is displayed as: "{gesture} → {action}"
 const GESTURES: Array<{ label: string }> = [
   { label: 'Scroll over time axis → Zoom in/out' },
+  { label: 'Ctrl + Scroll over lanes → Zoom in/out' },
   { label: 'Shift + Scroll over time axis → Pan' },
   { label: 'Scroll over lanes → Scroll timers' },
   { label: 'Drag empty space → Pan' },

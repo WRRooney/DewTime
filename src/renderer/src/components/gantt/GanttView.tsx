@@ -197,11 +197,18 @@ export function GanttView(): JSX.Element {
   // ---------------------------------------------------------------------------
 
   const handleWheel = useCallback((e: WheelEvent): void => {
-    const axisTrackEl = (e.target as Element).closest('[data-gantt-axis-track]')
-    if (!axisTrackEl) return // over lanes/gutter → allow native vertical scroll
+    const target = e.target as Element
+    const zoomModifier = e.ctrlKey || e.metaKey
+    // Zoom when scrolling over the time axis, OR Ctrl/Cmd+scroll over a lane track.
+    // The pivot element supplies the track geometry (axis track and lane tracks are
+    // horizontally aligned and share width).
+    const pivotEl =
+      target.closest('[data-gantt-axis-track]') ??
+      (zoomModifier ? target.closest('[data-gantt-track]') : null)
+    if (!pivotEl) return // elsewhere → allow native vertical scroll
     e.preventDefault()
 
-    const rect = axisTrackEl.getBoundingClientRect()
+    const rect = pivotEl.getBoundingClientRect()
     const trackW = Math.max(1, rect.width)
     const store = useGanttViewportStore.getState()
 
