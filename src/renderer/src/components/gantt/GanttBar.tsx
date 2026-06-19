@@ -70,6 +70,24 @@ interface DisplayPos {
 // ---------------------------------------------------------------------------
 
 const MIN_BAR_WIDTH = 8   // D-28: minimum rendered width in px
+// Below this rendered width, the idle (unselected) duration label is hidden to avoid clutter.
+const MIN_DURATION_LABEL_WIDTH = 34
+
+/** Compressed local datetime for the endpoint labels: "M/D HH:MM" (24h). */
+function formatEndpoint(epoch: EpochSeconds): string {
+  const d = new Date(epoch * 1000)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${d.getMonth() + 1}/${d.getDate()} ${hh}:${mm}`
+}
+
+/** Short human duration: "45m", "1.5hr", "2hr". */
+function formatShortDuration(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds))
+  if (s < 3600) return `${Math.round(s / 60)}m`
+  const hr = Math.round((s / 3600) * 10) / 10
+  return `${Number.isInteger(hr) ? hr : hr.toFixed(1)}hr`
+}
 
 // ---------------------------------------------------------------------------
 // Inline body-move mutation (atomic setTimestamps for D-20)
@@ -134,10 +152,20 @@ export const GanttBar = React.memo(function GanttBar({
     computePos(entry.start_timestamp, liveEndEpoch),
   )
 
-  // Update display position when entry props or live end changes (outside drag)
+  // Live start/end epochs for the inline labels — tracks the drag in real time, falls
+  // back to the entry's persisted timestamps when idle.
+  const [displayEpochs, setDisplayEpochs] = useState<{ start: EpochSeconds; end: EpochSeconds }>(
+    () => ({ start: entry.start_timestamp, end: liveEndEpoch }),
+  )
+
+  // True while a drag/resize is in progress (reactive — drives label visibility).
+  const [dragging, setDragging] = useState(false)
+
+  // Update display position/epochs when entry props or live end changes (outside drag)
   useEffect(() => {
     if (dragRef.current.kind === 'idle') {
       setDisplayPos(computePos(entry.start_timestamp, liveEndEpoch))
+      setDisplayEpochs({ start: entry.start_timestamp, end: liveEndEpoch })
     }
   }, [entry.start_timestamp, liveEndEpoch, computePos])
 
@@ -184,6 +212,7 @@ export const GanttBar = React.memo(function GanttBar({
       origStart: entry.start_timestamp,
       origEnd: liveEndEpoch,
     }
+    setDragging(true)
   }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -224,6 +253,7 @@ export const GanttBar = React.memo(function GanttBar({
     }
 
     setDisplayPos(computePos(newStart, newEnd))
+    setDisplayEpochs({ start: newStart, end: newEnd })
     onDragTooltip({ startEpoch: newStart, endEpoch: newEnd, x: e.clientX, y: e.clientY })
   }
 
@@ -271,6 +301,7 @@ export const GanttBar = React.memo(function GanttBar({
     }
 
     dragRef.current = { kind: 'idle', startX: 0, origStart: entry.start_timestamp, origEnd: liveEndEpoch }
+    setDragging(false)
     onDragTooltip(null)
   }
 
@@ -323,9 +354,18 @@ export const GanttBar = React.memo(function GanttBar({
   // Styles
   // ---------------------------------------------------------------------------
 
+  // Inline label state: endpoints (start/end) show only when active (selected/dragging);
+  // duration always shows (dim + hidden on tiny bars when idle, bright when active).
+  const isActive = selected || dragging
+  const showEndpoints = isActive
+  const showDuration = isActive || displayPos.width >= MIN_DURATION_LABEL_WIDTH
+  const durationSeconds = displayEpochs.end - displayEpochs.start
+
   const barStyle: React.CSSProperties = {
     left: `${displayPos.left}px`,
     width: `${displayPos.width}px`,
+    // Lift active bars (and their overflowing endpoint labels) above neighbouring bars.
+    zIndex: isActive ? 7 : undefined,
     // Color is passed as a prop; we use CSS custom property for fill
     '--bar-color': color,
   } as React.CSSProperties
@@ -373,7 +413,24 @@ export const GanttBar = React.memo(function GanttBar({
           }}
         />
 
-        {/* No in-bar description label — the description lives in the lane gutter. */}
+        {/* Endpoint labels — start (left of bar) / end (right of bar); active only */}
+        {showEndpoints && (
+          <span className={`${styles.endpointLabel} ${styles.endpointStart}`}>
+            {formatEndpoint(displayEpochs.start)}
+          </span>
+        )}
+        {showEndpoints && (
+          <span className={`${styles.endpointLabel} ${styles.endpointEnd}`}>
+            {formatEndpoint(displayEpochs.end)}
+          </span>
+        )}
+
+        {/* Duration — centered; dim + short when idle, bright when active */}
+        {showDuration && (
+          <span className={isActive ? styles.durationLabel : `${styles.durationLabel} ${styles.durationDim}`}>
+            {formatShortDuration(durationSeconds)}
+          </span>
+        )}
 
         {/* Stop icon — running bars only (D-13) */}
         {isRunning && (

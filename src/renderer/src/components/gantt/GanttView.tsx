@@ -42,7 +42,6 @@ import { GanttAxisHeader } from './GanttAxisHeader'
 import { GanttLane } from './GanttLane'
 import { GanttGhostLane } from './GanttGhostLane'
 import { GanttInfoPopover } from './GanttInfoPopover'
-import { GanttDragTooltip } from './GanttDragTooltip'
 import type { EpochSeconds } from '@shared/time'
 
 const SECONDS_PER_DAY = 86400
@@ -189,12 +188,9 @@ export function GanttView(): JSX.Element {
   // Drag tooltip
   // ---------------------------------------------------------------------------
 
-  const [dragTooltip, setDragTooltip] = useState<{
-    startEpoch: EpochSeconds
-    endEpoch: EpochSeconds
-    x: number
-    y: number
-  } | null>(null)
+  // Drag feedback is rendered inline on the bar (start/end/duration labels), so the
+  // viewport no longer needs a floating tooltip — the bar's callback is a no-op.
+  const handleDragTooltip = useCallback(() => {}, [])
 
   // ---------------------------------------------------------------------------
   // Wheel — zoom/pan ONLY over the time axis (D-08); lanes scroll natively otherwise
@@ -518,7 +514,7 @@ export function GanttView(): JSX.Element {
                   laneSelected={selectedLaneId === timer.id}
                   onSelectEntry={handleSelectEntry}
                   onSelectLane={handleSelectLane}
-                  onDragTooltip={setDragTooltip}
+                  onDragTooltip={handleDragTooltip}
                   onCreateEntryAt={handleCreateEntryAt}
                 />
               )
@@ -529,16 +525,6 @@ export function GanttView(): JSX.Element {
 
       {/* Ghost add-lane (D-22) — pinned below lanes */}
       <GanttGhostLane onAddTimer={handleAddTimer} />
-
-      {/* Drag tooltip — rendered at GanttView scope (floats over everything) */}
-      {dragTooltip !== null && (
-        <GanttDragTooltip
-          startEpoch={dragTooltip.startEpoch}
-          endEpoch={dragTooltip.endEpoch}
-          x={dragTooltip.x}
-          y={dragTooltip.y}
-        />
-      )}
     </div>
   )
 }
