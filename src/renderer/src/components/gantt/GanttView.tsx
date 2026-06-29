@@ -25,6 +25,7 @@ import styles from './GanttView.module.css'
 import {
   epochToX,
   xToEpoch,
+  getGridlines,
   type GanttViewport,
   MIN_SPAN_SECONDS,
   MAX_SPAN_SECONDS,
@@ -358,6 +359,9 @@ export function GanttView(): JSX.Element {
   const nowLineX = epochToX(nowEpochState, trackViewport)
   const showNowLine = nowLineX >= 0 && nowLineX <= trackWidthPx
 
+  // Gridlines — 15-min and hour boundaries across the lane area (same transform as axis ticks)
+  const gridlines = getGridlines(trackViewport)
+
   // ---------------------------------------------------------------------------
   // Overlap hints (D-27): at span <= 3 days, flag every overlapping entry pair —
   // cross-timer AND same-timer.
@@ -487,6 +491,18 @@ export function GanttView(): JSX.Element {
           </div>
         ) : (
           <div className={styles.laneScroll}>
+            {/* Gridlines — 15-min (dashed) and hour (solid) local-clock boundaries */}
+            {gridlines.map((line, i) => {
+              if (line.x < 0 || line.x > trackWidthPx) return null
+              return (
+                <div
+                  key={i}
+                  className={`${styles.gridLine}${line.isHour ? ` ${styles.gridLineHour}` : ''}`}
+                  style={{ left: `${line.x + gutterPx}px` }}
+                />
+              )
+            })}
+
             {/* Overlap hint bands (D-27) */}
             {overlapRegions.map((region, i) => (
               <div

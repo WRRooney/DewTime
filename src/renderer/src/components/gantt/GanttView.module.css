@@ -37,6 +37,24 @@
   z-index: 5;
 }
 
+/* Vertical gridline — 15-min boundary (dashed, faint) or 1-hour boundary (solid, faint).
+ * z-index: 0 keeps gridlines behind bars (rendered inside the lane) and overlapHint (z-index 1).
+ * pointer-events: none so lines never intercept clicks or drags. */
+.gridLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed hsl(220 10% 24% / 0.18);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hour boundaries are solid and slightly more visible */
+.gridLineHour {
+  border-left: 1px solid hsl(220 10% 24% / 0.30);
+}
+
 /* Cross-lane overlap hint band (D-27 — shown only at span <= 3 days) */
 .overlapHint {
   position: absolute;

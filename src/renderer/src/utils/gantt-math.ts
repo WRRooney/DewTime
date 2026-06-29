@@ -77,6 +77,54 @@ export function snapEpoch(
 }
 
 /**
+ * Enumerate all 15-minute LOCAL-clock boundaries within the given viewport.
+ *
+ * Returns an array of { x, isHour } for each boundary epoch in
+ * [startEpoch, startEpoch + spanSeconds] inclusive, ordered left-to-right.
+ *
+ * - x: pixel position via epochToX (aligned with axis ticks)
+ * - isHour: true when the boundary falls on a full hour (:00), false for :15/:30/:45
+ *
+ * Boundaries are derived from local-time Date arithmetic (NOT epoch % 900) so
+ * they track the user's wall clock in all timezones including DST transitions.
+ *
+ * Returns [] for degenerate viewports (span <= 0 or canvasWidthPx <= 0).
+ */
+export function getGridlines(vp: GanttViewport): Array<{ x: number; isHour: boolean }> {
+  if (vp.spanSeconds <= 0 || vp.canvasWidthPx <= 0) return []
+
+  const endEpoch = vp.startEpoch + vp.spanSeconds
+  const result: Array<{ x: number; isHour: boolean }> = []
+
+  // Find the first 15-min local boundary >= startEpoch.
+  // Anchor on a Date object so we respect the local timezone.
+  const cursor = new Date(vp.startEpoch * 1000)
+  cursor.setSeconds(0, 0) // truncate sub-minute
+
+  // Round up minutes to the next multiple of 15
+  const m = cursor.getMinutes()
+  const remainder = m % 15
+  if (remainder !== 0) {
+    cursor.setMinutes(m + (15 - remainder))
+  }
+  // setMinutes can carry into the next hour; Date handles this automatically.
+
+  while (true) {
+    const boundaryEpoch = cursor.getTime() / 1000
+    if (boundaryEpoch > endEpoch) break
+
+    const x = epochToX(boundaryEpoch as EpochSeconds, vp)
+    const isHour = cursor.getMinutes() === 0
+    result.push({ x, isHour })
+
+    // Advance by exactly 15 minutes in local time (handles DST correctly)
+    cursor.setMinutes(cursor.getMinutes() + 15)
+  }
+
+  return result
+}
+
+/**
  * Return the appropriate snap-grid increment (in seconds) for a given viewport span.
  *
  * Brackets (D-27 zoom-aware grid):
