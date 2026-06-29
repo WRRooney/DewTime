@@ -13,7 +13,7 @@ interface DescriptionCellProps {
 export function DescriptionCell({ timer }: DescriptionCellProps): JSX.Element {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(timer.description)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const setDescription = useSetDescription()
 
   // Auto-focus on the newly-added row.
@@ -54,18 +54,23 @@ export function DescriptionCell({ timer }: DescriptionCellProps): JSX.Element {
 
   if (isEditing) {
     return (
-      <input
+      <textarea
         ref={inputRef}
-        type="text"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-          if (e.key === 'Escape') cancel()
+          if (e.key === 'Escape') {
+            cancel()
+          } else if (e.key === 'Enter' && !e.shiftKey) {
+            // Plain Enter commits; Shift+Enter lets the default newline insert proceed.
+            e.preventDefault()
+            commit()
+          }
         }}
         className={styles.input}
         data-testid="description-input"
+        rows={2}
         // autoFocus omitted — the pendingFocusId path uses queueMicrotask + inputRef.focus()
         // instead; direct click focuses via the same inputRef path.
       />
