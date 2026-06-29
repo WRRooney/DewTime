@@ -158,6 +158,94 @@ describe('snapIncrementFor (D-27 zoom-aware grid)', () => {
   })
 })
 
+describe('getGridlines', () => {
+  // A viewport anchored on a known local :00 boundary for deterministic tests.
+  // We pick midnight 2024-01-01 in LOCAL time via Date arithmetic so the epoch
+  // is always aligned regardless of the runner's timezone.
+  function localMidnightEpoch(): number {
+    const d = new Date(2024, 0, 1, 0, 0, 0, 0) // Jan 1 2024 00:00 local
+    return Math.floor(d.getTime() / 1000)
+  }
+
+  it('degenerate: span=0 returns []', () => {
+    const { getGridlines } = require('./gantt-math')
+    const vp: GanttViewport = { startEpoch: localMidnightEpoch() as EpochSeconds, spanSeconds: 0, canvasWidthPx: 1000 }
+    expect(getGridlines(vp)).toEqual([])
+  })
+
+  it('degenerate: canvasWidthPx=0 returns []', () => {
+    const { getGridlines } = require('./gantt-math')
+    const vp: GanttViewport = { startEpoch: localMidnightEpoch() as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 0 }
+    expect(getGridlines(vp)).toEqual([])
+  })
+
+  it('1-hour viewport starting on local :00 yields exactly 5 lines (at 0,15,30,45,60 min)', () => {
+    const { getGridlines } = require('./gantt-math')
+    const start = localMidnightEpoch()
+    const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
+    const lines = getGridlines(vp)
+    expect(lines).toHaveLength(5)
+  })
+
+  it('isHour is true for the two :00 entries (start and end of the hour)', () => {
+    const { getGridlines } = require('./gantt-math')
+    const start = localMidnightEpoch()
+    const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
+    const lines = getGridlines(vp)
+    // The :00 boundaries at the start and end of the hour should both be isHour=true
+    expect(lines.filter((l: { x: number; isHour: boolean }) => l.isHour)).toHaveLength(2)
+    // The three quarter marks should be isHour=false
+    expect(lines.filter((l: { x: number; isHour: boolean }) => !l.isHour)).toHaveLength(3)
+  })
+
+  it('x values align with epochToX: first line at x=0 when start is on :00', () => {
+    const { getGridlines } = require('./gantt-math')
+    const start = localMidnightEpoch()
+    const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
+    const lines = getGridlines(vp)
+    // First boundary = start of viewport (startEpoch is already on :00)
+    expect(lines[0].x).toBeCloseTo(0, 3)
+    // Last boundary = exactly 60 min in → x should be canvasWidthPx
+    expect(lines[lines.length - 1].x).toBeCloseTo(1000, 3)
+  })
+
+  it('alignment starts on a clean boundary even when startEpoch is mid-quarter', () => {
+    const { getGridlines } = require('./gantt-math')
+    // Start 7 minutes past a local :00 boundary
+    const midnight = localMidnightEpoch()
+    const start = midnight + 7 * 60 // 00:07 local
+    const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
+    const lines = getGridlines(vp)
+    // The first gridline should be at the :15 boundary (8 min after start)
+    // x = epochToX(:15 epoch, vp) = (8*60/3600)*1000 ≈ 133.33
+    const firstX = lines[0].x
+    expect(firstX).toBeGreaterThan(0)
+    // Verify it lands on a real :15 local boundary by checking the corresponding Date
+    const firstEpoch = start + (firstX / 1000) * 3600
+    const d = new Date(firstEpoch * 1000)
+    expect(d.getSeconds()).toBe(0)
+    expect(d.getMilliseconds()).toBe(0)
+    expect(d.getMinutes() % 15).toBe(0)
+  })
+
+  it('isHour correct: :15/:30/:45 boundaries have isHour=false', () => {
+    const { getGridlines } = require('./gantt-math')
+    const start = localMidnightEpoch()
+    const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
+    const lines = getGridlines(vp)
+    for (const line of lines) {
+      const epoch = start + (line.x / 1000) * 3600
+      const d = new Date(epoch * 1000)
+      const mins = d.getMinutes()
+      if (mins === 0) {
+        expect(line.isHour).toBe(true)
+      } else {
+        expect(line.isHour).toBe(false)
+      }
+    }
+  })
+})
+
 describe('Span clamp constants (D-07, D-08)', () => {
   it('MIN_SPAN_SECONDS === 3600 (D-08 minimum zoom = 1 hour)', () => {
     expect(MIN_SPAN_SECONDS).toBe(3600)
