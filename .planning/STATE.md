@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-29)
 Phase: 09
 Plan: Not started
 Status: Executing Phase 09
-Last activity: 2026-06-18
+Last activity: 2026-06-29 - Completed quick task 260629-ob1: add faint gridlines to timeline view
 
 Progress: [██████████] 98%
 
@@ -147,6 +147,7 @@ None.
 | 260606-0mc | Add "Always on top" option to settings; default to windowed (not always on top) | 2026-06-06 | 0e90822 | [260606-0mc-add-always-on-top-as-an-option-in-the-se](./quick/260606-0mc-add-always-on-top-as-an-option-in-the-se/) |
 | 260606-16w | Add auto-update toggle in settings popup (default on, disableable) | 2026-06-06 | 87f2598 | [260606-16w-add-auto-update-toggle-in-settings-popup](./quick/260606-16w-add-auto-update-toggle-in-settings-popup/) |
 | 260607-972 | Update confirmation prompt (approve before applying) + Check for updates button in settings | 2026-06-07 | 6d1c314 | [260607-972-add-update-confirmation-prompt-approve-b](./quick/260607-972-add-update-confirmation-prompt-approve-b/) |
+| 260629-ob1 | Add faint gridlines to timeline view (dashed at 15min, solid at 1hr) | 2026-06-29 | 72c9539 | [260629-ob1-add-faint-gridlines-to-timeline-view-das](./quick/260629-ob1-add-faint-gridlines-to-timeline-view-das/) |
 
 ## Session Continuity
 
