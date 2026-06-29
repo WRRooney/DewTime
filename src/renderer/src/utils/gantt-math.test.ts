@@ -16,6 +16,7 @@ import {
   xToEpoch,
   snapEpoch,
   snapIncrementFor,
+  getGridlines,
   MIN_SPAN_SECONDS,
   MAX_SPAN_SECONDS,
   DEFAULT_SPAN_SECONDS,
@@ -168,19 +169,19 @@ describe('getGridlines', () => {
   }
 
   it('degenerate: span=0 returns []', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const vp: GanttViewport = { startEpoch: localMidnightEpoch() as EpochSeconds, spanSeconds: 0, canvasWidthPx: 1000 }
     expect(getGridlines(vp)).toEqual([])
   })
 
   it('degenerate: canvasWidthPx=0 returns []', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const vp: GanttViewport = { startEpoch: localMidnightEpoch() as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 0 }
     expect(getGridlines(vp)).toEqual([])
   })
 
   it('1-hour viewport starting on local :00 yields exactly 5 lines (at 0,15,30,45,60 min)', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const start = localMidnightEpoch()
     const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
     const lines = getGridlines(vp)
@@ -188,7 +189,7 @@ describe('getGridlines', () => {
   })
 
   it('isHour is true for the two :00 entries (start and end of the hour)', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const start = localMidnightEpoch()
     const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
     const lines = getGridlines(vp)
@@ -199,7 +200,7 @@ describe('getGridlines', () => {
   })
 
   it('x values align with epochToX: first line at x=0 when start is on :00', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const start = localMidnightEpoch()
     const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
     const lines = getGridlines(vp)
@@ -210,7 +211,7 @@ describe('getGridlines', () => {
   })
 
   it('alignment starts on a clean boundary even when startEpoch is mid-quarter', () => {
-    const { getGridlines } = require('./gantt-math')
+
     // Start 7 minutes past a local :00 boundary
     const midnight = localMidnightEpoch()
     const start = midnight + 7 * 60 // 00:07 local
@@ -229,7 +230,7 @@ describe('getGridlines', () => {
   })
 
   it('isHour correct: :15/:30/:45 boundaries have isHour=false', () => {
-    const { getGridlines } = require('./gantt-math')
+
     const start = localMidnightEpoch()
     const vp: GanttViewport = { startEpoch: start as EpochSeconds, spanSeconds: 3600, canvasWidthPx: 1000 }
     const lines = getGridlines(vp)
