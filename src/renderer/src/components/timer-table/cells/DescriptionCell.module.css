@@ -26,18 +26,23 @@
   cursor: text;
 }
 
-/* Edit state: controlled <input> filling the cell.
+/* Edit state: controlled <textarea> filling the cell.
  * border acts as the focus indicator — outline: none is acceptable here
- * because the accent border replaces it. */
+ * because the accent border replaces it.
+ * resize: vertical lets the user drag the textarea taller.
+ * white-space: pre-wrap + overflow-wrap: anywhere mirrors the rest-state span. */
 .input {
   width: 100%;
-  height: 100%;
+  min-height: calc(var(--line-height-body, 1.5) * 2em);
   background: transparent;
   color: var(--color-fg);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-sm);
-  padding: 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
   outline: none;
   font: inherit;
   text-align: right; /* match the right-aligned rest state */
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
