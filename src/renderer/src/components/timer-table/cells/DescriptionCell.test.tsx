@@ -136,4 +136,29 @@ describe('DescriptionCell', () => {
     // Original text is still visible
     expect(screen.getByText('orig')).toBeInTheDocument()
   })
+
+  it('Shift+Enter inserts a newline and does NOT commit', async () => {
+    const user = userEvent.setup()
+    const timer = makeTimer({ id: 7, description: 'orig' })
+
+    renderWithProviders(<DescriptionCell timer={timer} />)
+
+    // Click to enter edit mode
+    await user.click(screen.getByText('orig'))
+    const textarea = screen.getByRole('textbox')
+
+    // Clear and type a value, then press Shift+Enter
+    await user.clear(textarea)
+    await user.type(textarea, 'line1')
+    await user.keyboard('{Shift>}{Enter}{/Shift}')
+
+    // setDescription was NOT called (no commit)
+    expect(setDescriptionMock).not.toHaveBeenCalled()
+
+    // Textarea stays open (edit mode still active)
+    expect(screen.getByRole('textbox')).toBeInTheDocument()
+
+    // The textarea value contains a newline
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toContain('\n')
+  })
 })
