@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-29)
 Phase: 09
 Plan: Not started
 Status: Executing Phase 09
-Last activity: 2026-06-29 - Completed quick task 260629-om9: timer description editor textarea
+Last activity: 2026-06-29 - Completed quick task 260629-oww: project page weekly/total hours badges
 
 Progress: [██████████] 98%
 
@@ -149,6 +149,8 @@ None.
 | 260607-972 | Update confirmation prompt (approve before applying) + Check for updates button in settings | 2026-06-07 | 6d1c314 | [260607-972-add-update-confirmation-prompt-approve-b](./quick/260607-972-add-update-confirmation-prompt-approve-b/) |
 | 260629-ob1 | Add faint gridlines to timeline view (dashed at 15min, solid at 1hr) | 2026-06-29 | 72c9539 | [260629-ob1-add-faint-gridlines-to-timeline-view-das](./quick/260629-ob1-add-faint-gridlines-to-timeline-view-das/) |
 | 260629-om9 | Timer description editor → resizable multiline textarea (wraps when editing, Shift+Enter newline) | 2026-06-29 | e17c5a8 | [260629-om9-timer-description-edit-field-should-be-a](./quick/260629-om9-timer-description-edit-field-should-be-a/) |
+| 260629-oww | Project page: weekly hours (blue) + total hours (purple) badges next to name, display-state only | 2026-06-29 | 7c143b5 | [260629-oww-project-page-show-weekly-hours-subtly-bl](./quick/260629-oww-project-page-show-weekly-hours-subtly-bl/) |
+| 260629-oww | Projects manager: inline blue weekly + purple all-time hours badges beside each project name | 2026-06-29 | 7c143b5 | [260629-oww-project-page-show-weekly-hours-subtly-bl](./quick/260629-oww-project-page-show-weekly-hours-subtly-bl/) |
 
 ## Session Continuity
 
