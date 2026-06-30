@@ -127,17 +127,16 @@ export function getGridlines(vp: GanttViewport): Array<{ x: number; isHour: bool
 /**
  * Return the appropriate snap-grid increment (in seconds) for a given viewport span.
  *
- * Brackets (D-27 zoom-aware grid):
+ * Brackets (D-27 zoom-aware grid). Snap matches the visible 15-min gridlines up
+ * to a full day so users can snap to the lines they see without zooming in:
  *   span <=  3600s (1h)   → 60s   (1 min)
  *   span <= 10800s (3h)   → 300s  (5 min)
- *   span <= 43200s (12h)  → 900s  (15 min)
- *   span <= 86400s (1 day) → 1800s (30 min)
+ *   span <= 86400s (1 day) → 900s  (15 min)
  *   span >  86400s        → 3600s (1 hour)
  */
 export function snapIncrementFor(spanSeconds: number): number {
   if (spanSeconds <= 3600) return 60
   if (spanSeconds <= 3600 * 3) return 300
-  if (spanSeconds <= 3600 * 12) return 900
-  if (spanSeconds <= 86400) return 1800
+  if (spanSeconds <= 86400) return 900
   return 3600
 }

@@ -129,12 +129,12 @@ describe('snapIncrementFor (D-27 zoom-aware grid)', () => {
     expect(snapIncrementFor(43200)).toBe(900)
   })
 
-  it('span=43201 (just above 12 hours) → increment=1800 (30 min)', () => {
-    expect(snapIncrementFor(43201)).toBe(1800)
+  it('span=43201 (just above 12 hours) → increment=900 (15 min)', () => {
+    expect(snapIncrementFor(43201)).toBe(900)
   })
 
-  it('span=86400 (1 day / DEFAULT_SPAN_SECONDS) → increment=1800 (30 min)', () => {
-    expect(snapIncrementFor(86400)).toBe(1800)
+  it('span=86400 (1 day / DEFAULT_SPAN_SECONDS) → increment=900 (15 min, matches visible gridlines)', () => {
+    expect(snapIncrementFor(86400)).toBe(900)
   })
 
   it('span=86401 (just above 1 day) → increment=3600 (1 hour)', () => {
@@ -150,8 +150,8 @@ describe('snapIncrementFor (D-27 zoom-aware grid)', () => {
     expect(snapIncrementFor(3600)).toBe(60)
   })
 
-  it('snapIncrementFor(86400)===1800 (acceptance criteria)', () => {
-    expect(snapIncrementFor(86400)).toBe(1800)
+  it('snapIncrementFor(86400)===900 (acceptance criteria)', () => {
+    expect(snapIncrementFor(86400)).toBe(900)
   })
 
   it('snapIncrementFor(604800)===3600 (acceptance criteria)', () => {
