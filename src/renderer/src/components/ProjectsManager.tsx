@@ -20,6 +20,9 @@ import { useUpdateProjectName } from '@/hooks/useUpdateProjectName'
 import { useUpdateProjectNumber } from '@/hooks/useUpdateProjectNumber'
 import { useDeleteProject } from '@/hooks/useDeleteProject'
 import { useConfirmDeleteProjectStore } from '@/stores/useConfirmDeleteProjectStore'
+import { useProjectHours } from '@/hooks/useProjectHours'
+import type { ProjectHoursEntry } from '@/hooks/useProjectHours'
+import { formatDuration } from '@/utils/format-duration'
 
 // ---------------------------------------------------------------------------
 // ProjectRow — file-local sub-component (not exported)
@@ -28,9 +31,10 @@ import { useConfirmDeleteProjectStore } from '@/stores/useConfirmDeleteProjectSt
 interface ProjectRowProps {
   project: Project
   autoFocusField?: 'name' | null
+  hoursEntry?: ProjectHoursEntry | undefined
 }
 
-function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
+function ProjectRow({ project, autoFocusField, hoursEntry }: ProjectRowProps): JSX.Element {
   const updateName = useUpdateProjectName()
   const updateNumber = useUpdateProjectNumber()
 
@@ -177,9 +181,27 @@ function ProjectRow({ project, autoFocusField }: ProjectRowProps): JSX.Element {
             className={styles.input}
           />
         ) : (
-          <span className={styles.nameText} onClick={() => setIsEditingName(true)}>
-            {project.project_name}
-          </span>
+          <div className={styles.nameDisplay}>
+            <span className={styles.nameText} onClick={() => setIsEditingName(true)}>
+              {project.project_name}
+            </span>
+            {hoursEntry !== undefined && hoursEntry.weekSeconds > 0 && (
+              <span
+                className={styles.hoursWeek}
+                aria-label="this week"
+              >
+                {formatDuration(hoursEntry.weekSeconds)}
+              </span>
+            )}
+            {hoursEntry !== undefined && hoursEntry.totalSeconds > 0 && (
+              <span
+                className={styles.hoursTotal}
+                aria-label="all-time total"
+              >
+                {formatDuration(hoursEntry.totalSeconds)}
+              </span>
+            )}
+          </div>
         )}
         {nameError !== null && (
           <p className={styles.error} role="status" aria-live="polite">
@@ -339,6 +361,7 @@ function ProjectDeleteConfirmDialog(): JSX.Element {
 export function ProjectsManager(): JSX.Element {
   const { data: projects = [] } = useProjects()
   const createProject = useCreateProject()
+  const { hours } = useProjectHours()
 
   // Track the id of the newly created project so its name field auto-focuses
   const [newProjectId, setNewProjectId] = useState<number | null>(null)
@@ -372,6 +395,7 @@ export function ProjectsManager(): JSX.Element {
               key={project.id}
               project={project}
               autoFocusField={project.id === newProjectId ? 'name' : null}
+              hoursEntry={hours.get(project.id)}
             />
           ))
         )}

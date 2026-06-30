@@ -279,6 +279,31 @@
   background: var(--color-danger-hover);
 }
 
+/* ---- Hours badges (display state, inline after project name) ---- */
+
+.nameDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.hoursWeek {
+  color: var(--color-hours-week);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-normal);
+  flex-shrink: 0;
+}
+
+.hoursTotal {
+  color: var(--color-hours-total);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-normal);
+  flex-shrink: 0;
+}
+
 /* ---- Error inline ---- */
 
 .error {
