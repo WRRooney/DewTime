@@ -62,8 +62,8 @@ export function DescriptionCell({ timer }: DescriptionCellProps): JSX.Element {
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             cancel()
-          } else if (e.key === 'Enter' && !e.shiftKey) {
-            // Plain Enter commits; Shift+Enter lets the default newline insert proceed.
+          } else if (e.key === 'Enter') {
+            // Enter applies (commit); Escape reverts; blur also commits.
             e.preventDefault()
             commit()
           }

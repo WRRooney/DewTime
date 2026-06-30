@@ -137,28 +137,40 @@ describe('DescriptionCell', () => {
     expect(screen.getByText('orig')).toBeInTheDocument()
   })
 
-  it('Shift+Enter inserts a newline and does NOT commit', async () => {
+  it('Enter commits even with Shift held (no newline insertion)', async () => {
     const user = userEvent.setup()
     const timer = makeTimer({ id: 7, description: 'orig' })
 
     renderWithProviders(<DescriptionCell timer={timer} />)
 
-    // Click to enter edit mode
     await user.click(screen.getByText('orig'))
     const textarea = screen.getByRole('textbox')
 
-    // Clear and type a value, then press Shift+Enter
     await user.clear(textarea)
     await user.type(textarea, 'line1')
     await user.keyboard('{Shift>}{Enter}{/Shift}')
 
-    // setDescription was NOT called (no commit)
-    expect(setDescriptionMock).not.toHaveBeenCalled()
+    // Commits the trimmed value and closes the editor
+    expect(setDescriptionMock).toHaveBeenCalledWith(7, 'line1')
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
 
-    // Textarea stays open (edit mode still active)
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+  it('blur (focus loss) commits the edited value', async () => {
+    const user = userEvent.setup()
+    const timer = makeTimer({ id: 7, description: 'orig' })
 
-    // The textarea value contains a newline
-    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toContain('\n')
+    renderWithProviders(<DescriptionCell timer={timer} />)
+
+    await user.click(screen.getByText('orig'))
+    const textarea = screen.getByRole('textbox')
+
+    await user.clear(textarea)
+    await user.type(textarea, 'blurred')
+    // Move focus away — React's onBlur listens for focusout (which bubbles),
+    // not the non-bubbling native blur event.
+    await user.tab()
+
+    expect(setDescriptionMock).toHaveBeenCalledWith(7, 'blurred')
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
 })
