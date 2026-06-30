@@ -85,7 +85,10 @@
 .track {
   flex: 1;
   position: relative;
-  background: var(--color-bg);
+  /* Transparent so the lane-area gridlines (rendered behind the lanes in
+   * GanttView) show through the empty track; the base bg is painted once on
+   * .laneScroll. */
+  background: transparent;
   cursor: crosshair;
   overflow: hidden;
 }
