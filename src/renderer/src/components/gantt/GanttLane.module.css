@@ -62,13 +62,15 @@
  * it is selected, or its project dropdown / description is focused). Tints the bar
  * track; the gutter is tinted by GanttLaneGutter's own .gutterActive rule. */
 .laneActive .track {
-  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+  /* Mix with transparent (not --color-bg) so the gridlines beneath the track
+   * still show through the active tint. The base bg is on .laneScroll. */
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
 }
 
 /* On an active lane, keep hover gentle — the default row-hover is too strong layered
  * over the active tint. */
 .laneActive .track:hover {
-  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg));
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 
 /* Sticky gutter wrapper — stays pinned during horizontal scroll (D-11) */
@@ -94,7 +96,9 @@
 }
 
 .track:hover {
-  background: var(--color-row-hover);
+  /* Translucent wash so the row-hover tint layers over the gridlines instead of
+   * occluding them (--color-row-hover is an opaque solid). */
+  background: color-mix(in srgb, var(--color-row-hover) 70%, transparent);
 }
 
 /* Sub-row container — absolute, full-width band within the track.
