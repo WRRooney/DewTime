@@ -85,14 +85,19 @@ function formatDateLabel(date: Date): string {
   return `${weekday} ${mm}/${dd}`
 }
 
-/** Format a time-of-day tick label (e.g. "14:00" or "09:30"). No date library. */
+/**
+ * Format a time-of-day tick label in 12-hour "Ha" style (e.g. "9am", "12pm").
+ * Sub-hour ticks include minutes (e.g. "9:15am"). No date library.
+ */
 function formatTimeLabel(epochSeconds: number, tickInterval: number): string {
   const date = new Date(epochSeconds * 1000)
-  const hh = String(date.getHours()).padStart(2, '0')
-  const mm = String(date.getMinutes()).padStart(2, '0')
+  const h = date.getHours()
+  const period = h < 12 ? 'am' : 'pm'
+  const h12 = h % 12 === 0 ? 12 : h % 12
   // Only show minutes when tick interval < 1 hour
-  if (tickInterval >= SECONDS_PER_HOUR) return `${hh}:00`
-  return `${hh}:${mm}`
+  if (tickInterval >= SECONDS_PER_HOUR) return `${h12}${period}`
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${h12}:${mm}${period}`
 }
 
 /** Enumerate midnight epoch boundaries within the viewport range. */
