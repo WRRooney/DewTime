@@ -39,8 +39,18 @@ export function DescriptionCell({ timer }: DescriptionCellProps): JSX.Element {
     if (!isEditing) setDraft(timer.description)
   }, [timer.description, isEditing])
 
+  // Mirror state in refs so the document-level pointerdown handler (and any late
+  // blur) reads current values instead of stale closure captures.
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+  const editingRef = useRef(isEditing)
+  editingRef.current = isEditing
+
   const commit = (): void => {
-    const trimmed = draft.trim()
+    // Guard so the pointerdown-outside handler and onBlur can't double-commit.
+    if (!editingRef.current) return
+    editingRef.current = false
+    const trimmed = draftRef.current.trim()
     if (trimmed !== timer.description) {
       setDescription.mutate({ id: timer.id, description: trimmed })
     }
@@ -48,9 +58,29 @@ export function DescriptionCell({ timer }: DescriptionCellProps): JSX.Element {
   }
 
   const cancel = (): void => {
+    editingRef.current = false
     setDraft(timer.description)
     setIsEditing(false)
   }
+
+  // Commit on any pointer interaction outside the textarea. onBlur alone misses
+  // this because clicking a non-focusable element (another description span, empty
+  // table area) does not move focus, so the textarea never fires blur.
+  useEffect(() => {
+    if (!isEditing) return
+    const handlePointerDown = (e: PointerEvent): void => {
+      const el = inputRef.current
+      if (el && !el.contains(e.target as Node)) {
+        commit()
+      }
+    }
+    // Capture phase so we commit before the target's own click handler (e.g. another
+    // description span opening its own editor) runs.
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
+    // commit reads refs, so it does not need to be a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing])
 
   if (isEditing) {
     return (

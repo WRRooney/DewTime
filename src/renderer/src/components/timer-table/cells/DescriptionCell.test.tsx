@@ -173,4 +173,29 @@ describe('DescriptionCell', () => {
     expect(setDescriptionMock).toHaveBeenCalledWith(7, 'blurred')
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
+
+  it('pointer-down outside the textarea (non-focusable target) commits', async () => {
+    const user = userEvent.setup()
+    const timer = makeTimer({ id: 7, description: 'orig' })
+
+    // An outside, non-focusable element — clicking it does not move focus, so
+    // onBlur never fires; the document pointerdown handler must commit instead.
+    const outside = document.createElement('div')
+    outside.textContent = 'outside'
+    document.body.appendChild(outside)
+
+    renderWithProviders(<DescriptionCell timer={timer} />)
+
+    await user.click(screen.getByText('orig'))
+    const textarea = screen.getByRole('textbox')
+    await user.clear(textarea)
+    await user.type(textarea, 'clicked away')
+
+    await user.click(outside)
+
+    expect(setDescriptionMock).toHaveBeenCalledWith(7, 'clicked away')
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+
+    outside.remove()
+  })
 })
