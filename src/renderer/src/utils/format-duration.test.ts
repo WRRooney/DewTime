@@ -13,7 +13,7 @@
 //   - 04-06-PLAN.md Task 1 acceptance criteria
 
 import { describe, it, expect } from 'vitest'
-import { formatDuration } from './format-duration'
+import { formatDuration, formatHours } from './format-duration'
 
 describe('formatDuration', () => {
   // Rule 1: negative seconds → clamp to '00:00:00'
@@ -50,5 +50,27 @@ describe('formatDuration', () => {
   it('output contains only digits and colons', () => {
     const result = formatDuration(3661)
     expect(result).toMatch(/^\d+:\d{2}:\d{2}$/)
+  })
+})
+
+describe('formatHours', () => {
+  it('clamps negative seconds to 0 hrs', () => {
+    expect(formatHours(-1)).toBe('0 hrs')
+  })
+
+  it('drops the decimal for whole hours', () => {
+    expect(formatHours(3600)).toBe('1 hrs')
+  })
+
+  it('shows a single decimal place', () => {
+    expect(formatHours(1800)).toBe('0.5 hrs')
+  })
+
+  it('rounds to one decimal and adds a thousands separator', () => {
+    expect(formatHours(4_444_567)).toBe('1,234.6 hrs')
+  })
+
+  it('formats zero as 0 hrs', () => {
+    expect(formatHours(0)).toBe('0 hrs')
   })
 })

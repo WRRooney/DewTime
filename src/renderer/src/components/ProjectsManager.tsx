@@ -22,7 +22,7 @@ import { useDeleteProject } from '@/hooks/useDeleteProject'
 import { useConfirmDeleteProjectStore } from '@/stores/useConfirmDeleteProjectStore'
 import { useProjectHours } from '@/hooks/useProjectHours'
 import type { ProjectHoursEntry } from '@/hooks/useProjectHours'
-import { formatDuration } from '@/utils/format-duration'
+import { formatHours } from '@/utils/format-duration'
 
 // ---------------------------------------------------------------------------
 // ProjectRow — file-local sub-component (not exported)
@@ -188,17 +188,19 @@ function ProjectRow({ project, autoFocusField, hoursEntry }: ProjectRowProps): J
             {hoursEntry !== undefined && hoursEntry.weekSeconds > 0 && (
               <span
                 className={styles.hoursWeek}
-                aria-label="this week"
+                aria-label="hours this week"
+                title="Hours this week"
               >
-                {formatDuration(hoursEntry.weekSeconds)}
+                {formatHours(hoursEntry.weekSeconds)}
               </span>
             )}
             {hoursEntry !== undefined && hoursEntry.totalSeconds > 0 && (
               <span
                 className={styles.hoursTotal}
-                aria-label="all-time total"
+                aria-label="total hours"
+                title="Total hours (all time)"
               >
-                {formatDuration(hoursEntry.totalSeconds)}
+                {formatHours(hoursEntry.totalSeconds)}
               </span>
             )}
           </div>

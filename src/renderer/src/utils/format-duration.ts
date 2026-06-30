@@ -46,3 +46,26 @@ export function formatDuration(seconds: number): string {
     return `${h.toString()}:${mm}:${ss}`
   }
 }
+
+/**
+ * Formats an elapsed-seconds count as a decimal-hours string with a thousands
+ * separator and an optional single decimal place, suffixed with ' hrs'
+ * (numeric pattern "#,##0.# hrs").
+ *
+ * @param seconds - Total elapsed seconds. May be negative (clamps to 0).
+ *
+ * @example
+ * formatHours(-1)          // '0 hrs'      (clamp)
+ * formatHours(3600)        // '1 hrs'      (.0 dropped)
+ * formatHours(1800)        // '0.5 hrs'
+ * formatHours(4_444_567)   // '1,234.6 hrs'
+ */
+export function formatHours(seconds: number): string {
+  const safe = seconds < 0 ? 0 : seconds
+  const hours = safe / 3600
+  const formatted = hours.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  })
+  return `${formatted} hrs`
+}
