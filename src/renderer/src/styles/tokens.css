@@ -109,6 +109,10 @@
 
   /* Success hover — darken --color-success ~7% for the START pill :hover */
   --color-success-hover: hsl(142 60% 38%);
+
+  /* Per-project hours badges (Projects manager, display state only) */
+  --color-hours-week:  hsl(210 70% 62%);  /* subtle blue — weekly hours inline badge */
+  --color-hours-total: hsl(265 55% 68%);  /* subtle purple — all-time total inline badge */
 }
 
 /* ── Light theme ──────────────────────────────────────────────────────────
@@ -166,4 +170,8 @@
 
   /* Zebra — accent tint reads a touch stronger on a light row */
   --color-row-zebra: hsl(192 80% 42% / 0.08);
+
+  /* Per-project hours badges — deepened for contrast on light surfaces */
+  --color-hours-week:  hsl(210 75% 45%);  /* deeper blue on light */
+  --color-hours-total: hsl(265 50% 50%);  /* deeper purple on light */
 }
